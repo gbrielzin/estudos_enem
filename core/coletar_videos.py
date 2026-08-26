@@ -54,20 +54,72 @@ def extrair_materia_do_titulo(titulo: str):
     return None
 
 
+_PADRAO_CADERNO_DESCRICAO = re.compile(r"Quest[ãa]o\s+(\d+)\s*-\s*Caderno\s+(\w+)", re.IGNORECASE)
+
+
+def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
+    """Alguns canais (Xequemat) colam, na descrição do vídeo, o número
+    da MESMA questão em cada caderno de cor -- o conteúdo é idêntico,
+    só a ordem/numeração muda por cor -- ex:
+        Questão 165 - Caderno Azul
+        Questão 143 - Caderno Cinza
+        Questão 151 - Caderno Amarelo
+        Questão 174 - Caderno Rosa
+    Quando existe, isso permite ligar UM vídeo a VÁRIAS provas (uma por
+    cor) de uma vez, em vez de só à cor que está sendo coletada no
+    momento. Retorna {caderno_normalizado: numero}; vazio se a
+    descrição não seguir esse formato (a maioria dos vídeos mais
+    antigos não segue -- funciona como fallback silencioso)."""
+    if not descricao:
+        return {}
+    return {
+        db.normalizar_texto(cad): int(num)
+        for num, cad in _PADRAO_CADERNO_DESCRICAO.findall(descricao)
+    }
+
+
+def _atualizar_materia_se_pendente(id_q: str, ano: int, caderno: str, numero: int, materia: str) -> str | None:
+    """Só sobrescreve materia se a questão ainda estava nao_classificado
+    -- não troca uma classificação já feita por uma nova adivinhação.
+    Retorna o status de db.inserir_questao() se atualizou, None se a
+    questão não existe ainda ou já estava classificada."""
+    with db._conectar() as conn:
+        atual = conn.execute(
+            "SELECT alternativa_correta, grande_area, status_classificacao "
+            "FROM questoes WHERE id_questao=?", (id_q,)
+        ).fetchone()
+    if not atual or atual[2] != "nao_classificado":
+        return None
+    gabarito_atual, grande_area_atual, _ = atual
+    _, status = db.inserir_questao(
+        ano=ano, caderno=caderno, numero=numero,
+        grande_area=grande_area_atual, materia=materia,
+        alternativa_correta=gabarito_atual, sobrescrever=True,
+    )
+    return status
+
+
 def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
     """Recebe a lista de vídeos já buscada (formato da API do YouTube:
-    video['snippet']['title'], video['snippet']['resourceId']['videoId'],
+    video['snippet']['title'], video['snippet']['description'],
+    video['snippet']['resourceId']['videoId'],
     video['snippet'].get('videoOwnerChannelTitle')) e liga cada um à
     questão canônica correspondente, quando existe gabarito pra ela.
+    Quando a descrição traz o bloco 'Questão N - Caderno X' de outras
+    cores (ver extrair_cadernos_da_descricao), o mesmo vídeo também é
+    ligado a essas outras provas -- só funciona pra cor que já tem
+    gabarito carregado, as demais caem em 'cruzados_sem_questao'.
 
     Retorna um resumo detalhado -- nada é escrito silenciosamente."""
     resultado = {
         "ligados": [], "sem_questao": [], "digital_ignorado": [],
         "titulo_nao_reconhecido": [], "materia_atualizada": [], "materia_nao_extraida": [],
+        "ligados_cruzados": [], "cruzados_sem_questao": [],
     }
 
     for video in videos:
         titulo = video["snippet"]["title"]
+        descricao = video["snippet"].get("description", "")
         video_id = video["snippet"]["resourceId"]["videoId"]
         canal = video["snippet"].get("videoOwnerChannelTitle", "")
         link = f"https://www.youtube.com/watch?v={video_id}"
@@ -95,23 +147,25 @@ def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
         if not materia:
             resultado["materia_nao_extraida"].append({"id_questao": id_q, "titulo": titulo})
         else:
-            with db._conectar() as conn:
-                atual = conn.execute(
-                    "SELECT alternativa_correta, grande_area, status_classificacao "
-                    "FROM questoes WHERE id_questao=?", (id_q,)
-                ).fetchone()
-            if atual and atual[2] == "nao_classificado":
-                # só sobrescreve se a questão ainda estava pendente -- não
-                # troca uma matéria já classificada por uma nova adivinhação
-                gabarito_atual, grande_area_atual, _ = atual
-                _, status = db.inserir_questao(
-                    ano=ano, caderno=caderno, numero=numero,
-                    grande_area=grande_area_atual, materia=materia,
-                    alternativa_correta=gabarito_atual, sobrescrever=True,
-                )
+            status = _atualizar_materia_se_pendente(id_q, ano, caderno, numero, materia)
+            if status:
                 resultado["materia_atualizada"].append(
                     {"id_questao": id_q, "materia_nova": materia, "status": status}
                 )
+
+        caderno_norm = db.normalizar_texto(caderno)
+        for caderno_extra, numero_extra in extrair_cadernos_da_descricao(descricao).items():
+            if caderno_extra == caderno_norm and numero_extra == numero:
+                continue  # já é o link principal acima
+            id_extra = db.gerar_id_canonico(ano, caderno_extra, numero_extra)
+            try:
+                db.inserir_resolucao(id_extra, "video", link, canal=canal)
+            except ValueError:
+                resultado["cruzados_sem_questao"].append({"id_questao": id_extra, "titulo": titulo})
+                continue
+            resultado["ligados_cruzados"].append({"id_questao": id_extra, "titulo": titulo})
+            if materia:
+                _atualizar_materia_se_pendente(id_extra, ano, caderno_extra, numero_extra, materia)
 
     return resultado
 
@@ -384,12 +438,23 @@ def render_coletar_videos() -> None:
 
         st.success(
             f"{len(resultado['ligados'])} resolução(ões) ligada(s) | "
+            f"{len(resultado['ligados_cruzados'])} ligada(s) em outras cores via descrição | "
             f"{len(resultado['materia_atualizada'])} matéria(s) atualizada(s)"
         )
 
         if resultado["sem_questao"]:
             with st.expander(f"⚠️ {len(resultado['sem_questao'])} sem gabarito cadastrado ainda"):
                 for r in resultado["sem_questao"]:
+                    st.write(f"`{r['id_questao']}` — {r['titulo']}")
+
+        if resultado["ligados_cruzados"]:
+            with st.expander(f"🔀 {len(resultado['ligados_cruzados'])} ligação(ões) extra via 'Questão N - Caderno X' na descrição"):
+                for r in resultado["ligados_cruzados"]:
+                    st.write(f"`{r['id_questao']}` — {r['titulo']}")
+
+        if resultado["cruzados_sem_questao"]:
+            with st.expander(f"⚠️ {len(resultado['cruzados_sem_questao'])} outra(s) cor(es) citada(s) na descrição sem gabarito carregado ainda"):
+                for r in resultado["cruzados_sem_questao"]:
                     st.write(f"`{r['id_questao']}` — {r['titulo']}")
 
         if resultado["digital_ignorado"]:
