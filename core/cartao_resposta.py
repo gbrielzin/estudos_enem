@@ -25,6 +25,7 @@ import db
 import coletar_videos
 import triagem
 import backup_db
+import ui_theme
 
 
 def render_carregar_gabarito() -> None:
@@ -178,9 +179,9 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
             st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
 
     with st.form(f"cartao_resposta_form_{sufixo}"):
-        cols = st.columns(5)
+        cols = st.columns(3)
         for i, q in enumerate(questoes):
-            with cols[i % 5]:
+            with cols[i % 3]:
                 rotulo = f"Q{q['numero_questao']}"
                 if q["status_classificacao"] == "nao_classificado":
                     rotulo += " ⚠️"
@@ -258,8 +259,12 @@ def render_analise() -> None:
 
     st.caption("Últimos 30 dias:")
     dias = ofensiva["calendario_30_dias"]
-    linha_html = "".join("🟩" if d["ativo"] else "⬜" for d in dias)
-    st.markdown(f"<div style='font-size:20px;letter-spacing:2px'>{linha_html}</div>", unsafe_allow_html=True)
+    quadrados = "".join(
+        f'<span class="dia-ativo" title="{d["data"]}"></span>' if d["ativo"]
+        else f'<span class="dia-inativo" title="{d["data"]}"></span>'
+        for d in dias
+    )
+    st.markdown(f'<div class="app-streak-calendar">{quadrados}</div>', unsafe_allow_html=True)
 
     st.divider()
 
@@ -489,7 +494,8 @@ def render_guia_estudante() -> None:
 
 if __name__ == "__main__":
     st.set_page_config(page_title="Cartão-resposta", page_icon="📝", layout="wide")
-    st.title("📝 Cartão-resposta digital")
+    ui_theme.injetar_tema()
+    ui_theme.hero("📝 Cartão-resposta digital", "treino com prova real, corrigido na hora")
 
     pagina = st.sidebar.radio(
         "Menu",

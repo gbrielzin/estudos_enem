@@ -68,15 +68,16 @@ def render_triagem() -> None:
         escolhas = {}
         for q in pendentes:
             grande_area = q["grande_area"] or "matematica"
-            opcoes_materia = [""] + db.materias_validas(grande_area)
+            opcoes_materia = db.materias_validas(grande_area)
             col1, col2 = st.columns([2, 2])
             with col1:
                 st.write(f"**{q['id_questao']}**")
                 st.caption(f"matéria bruta: {q['materia_bruta']} ({grande_area})")
             with col2:
                 escolhas[q["id_questao"]] = st.selectbox(
-                    "Matéria correta", opcoes_materia,
-                    key=f"triagem_{q['id_questao']}", label_visibility="collapsed",
+                    "Matéria correta", opcoes_materia, index=None,
+                    placeholder="Selecione a matéria", key=f"triagem_{q['id_questao']}",
+                    label_visibility="collapsed",
                 )
         salvar = st.form_submit_button("Salvar classificações", type="primary")
 
