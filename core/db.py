@@ -807,6 +807,24 @@ def listar_provas() -> list[tuple[int, str, str]]:
     return linhas
 
 
+_COLUNAS_QUESTAO_GRADE = (
+    "id_questao, numero_questao, materia, status_classificacao, "
+    "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path"
+)
+
+
+def _linha_para_questao_grade(r: tuple) -> dict:
+    """Mapeia uma linha de _COLUNAS_QUESTAO_GRADE pro dict que a grade
+    do cartão-resposta (e o enunciado inline) esperam -- um lugar só
+    pra esse formato, usado por toda consulta que alimenta a grade
+    (prova inteira, revisão do dia, prática por matéria)."""
+    return {
+        "id_questao": r[0], "numero_questao": r[1], "materia": r[2],
+        "status_classificacao": r[3], "ano": r[4], "caderno": r[5],
+        "grande_area": r[6], "enunciado_texto": r[7], "enunciado_imagem_path": r[8],
+    }
+
+
 def listar_questoes_da_prova(ano: int, caderno: str, grande_area: str) -> list[dict]:
     """Questões de uma prova específica (ano+caderno+área), ordenadas
     por número — monta a grade do cartão-resposta. 'caderno' é
@@ -815,18 +833,75 @@ def listar_questoes_da_prova(ano: int, caderno: str, grande_area: str) -> list[d
     grande_area_norm = normalizar_texto(grande_area)
     with _conectar() as conn:
         linhas = conn.execute(
-            """
-            SELECT id_questao, numero_questao, materia, status_classificacao
+            f"""
+            SELECT {_COLUNAS_QUESTAO_GRADE}
             FROM questoes
             WHERE ano = ? AND caderno = ? AND grande_area = ?
             ORDER BY numero_questao
             """,
             (ano, caderno_norm, grande_area_norm),
         ).fetchall()
-    return [
-        {"id_questao": r[0], "numero_questao": r[1], "materia": r[2], "status_classificacao": r[3]}
-        for r in linhas
-    ]
+    return [_linha_para_questao_grade(r) for r in linhas]
+
+
+def questoes_por_ids(ids: list[str]) -> list[dict]:
+    """Busca questões por id_questao, na ordem em que os ids foram
+    passados — usado pela Revisão do Dia, cuja ordem (mais atrasada
+    primeiro) já vem de questoes_para_revisar() e não deve ser
+    reordenada por ano/número."""
+    if not ids:
+        return []
+    marcadores = ",".join("?" * len(ids))
+    with _conectar() as conn:
+        linhas = conn.execute(
+            f"SELECT {_COLUNAS_QUESTAO_GRADE} FROM questoes WHERE id_questao IN ({marcadores})",
+            ids,
+        ).fetchall()
+    por_id = {r[0]: _linha_para_questao_grade(r) for r in linhas}
+    return [por_id[id_q] for id_q in ids if id_q in por_id]
+
+
+def questoes_por_materia(grande_area: str, materia: str) -> list[dict]:
+    """Todas as questões JÁ CLASSIFICADAS de uma matéria, de qualquer
+    ano/caderno -- alimenta o modo 'Praticar por matéria', que mistura
+    anos de propósito (o oposto do cartão-resposta de prova única, que
+    nunca mistura). Só questão 'classificado' entra, mesma regra do
+    resto do sistema: matéria de questão pendente é só um placeholder,
+    não um assunto de verdade pra praticar."""
+    grande_area_norm = normalizar_texto(grande_area)
+    materia_norm = normalizar_texto(materia)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            f"""
+            SELECT {_COLUNAS_QUESTAO_GRADE}
+            FROM questoes
+            WHERE grande_area = ? AND materia = ? AND status_classificacao = 'classificado'
+            ORDER BY ano DESC, numero_questao
+            """,
+            (grande_area_norm, materia_norm),
+        ).fetchall()
+    return [_linha_para_questao_grade(r) for r in linhas]
+
+
+def atualizar_enunciado(id_questao: str, texto: str | None = None, imagem_path: str | None = None) -> None:
+    """Atualiza só o enunciado (texto e/ou imagem) de uma questão que
+    já existe -- não mexe em matéria, gabarito nem status, então não
+    passa por inserir_questao()/historico_alteracoes (não é uma
+    correção de conteúdo classificatório, é só anexar o enunciado que
+    faltava). Passar None num campo mantém o valor atual (COALESCE)."""
+    with _conectar() as conn:
+        existe = conn.execute("SELECT 1 FROM questoes WHERE id_questao = ?", (id_questao,)).fetchone()
+        if not existe:
+            raise ValueError(f"Questão '{id_questao}' não existe.")
+        conn.execute(
+            """
+            UPDATE questoes SET
+                enunciado_texto = COALESCE(?, enunciado_texto),
+                enunciado_imagem_path = COALESCE(?, enunciado_imagem_path)
+            WHERE id_questao = ?
+            """,
+            (texto, imagem_path, id_questao),
+        )
 
 
 def prioridade_de_estudo(grande_area: str, peso_recorrencia: float = 0.5) -> dict:

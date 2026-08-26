@@ -18,6 +18,7 @@ nova aba dentro do app.py existente, junto das outras abas.
 
 import os
 import tempfile
+from pathlib import Path
 
 import streamlit as st
 
@@ -74,12 +75,21 @@ def render_cartao_resposta() -> None:
 
     modo = st.radio(
         "Modo",
-        ["Uma prova por vez", "Simulado completo (Matemática + Ciências)"],
+        ["Uma prova por vez", "Simulado completo (Matemática + Ciências)",
+         "Revisão de hoje", "Praticar por matéria"],
         horizontal=True,
     )
 
     if modo == "Simulado completo (Matemática + Ciências)":
         _render_simulado_completo(provas)
+        return
+
+    if modo == "Revisão de hoje":
+        render_revisao_hoje()
+        return
+
+    if modo == "Praticar por matéria":
+        render_praticar_por_materia()
         return
 
     areas_disponiveis = sorted({area for _, _, area in provas})
@@ -139,11 +149,12 @@ def _render_simulado_completo(provas: list[tuple[int, str, str]]) -> None:
 
 
 def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> None:
-    """Corpo real da tela de responder + corrigir uma prova. Recebe a
-    área como parâmetro (em vez de pegar de um seletor global) pra
-    poder ser chamada duas vezes na mesma página, uma por aba, no modo
-    simulado completo — por isso toda chave de widget/session_state
-    aqui dentro é sufixada com ano+caderno+área, senão colidiria."""
+    """Corpo real da tela de responder + corrigir UMA PROVA INTEIRA.
+    Recebe a área como parâmetro (em vez de pegar de um seletor
+    global) pra poder ser chamada duas vezes na mesma página, uma por
+    aba, no modo simulado completo — por isso toda chave de widget/
+    session_state aqui dentro é sufixada com ano+caderno+área, senão
+    colidiria."""
     sufixo = f"{ano_sel}_{caderno_sel}_{area_sel}"
 
     questoes = db.listar_questoes_da_prova(ano_sel, caderno_sel, area_sel)
@@ -164,6 +175,58 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
                 pct = f"{h['taxa_acerto']*100:.0f}%" if h["taxa_acerto"] is not None else "—"
                 st.write(f"**Tentativa {h['tentativa']}**: {h['acertos']}/{h['total']} ({pct}) — {h['inicio'][:10]}")
 
+    _renderizar_grade_questoes(questoes, sufixo)
+
+
+def render_revisao_hoje() -> None:
+    """Fila do dia estilo Anki: só questões cuja proxima_revisao (do
+    Leitner simplificado) já chegou. Mistura anos/áreas de propósito
+    -- o ponto é revisar o que está atrasado, não fingir que é uma
+    prova única."""
+    ids = db.questoes_para_revisar()
+    if not ids:
+        st.success("Nada atrasado pra revisão hoje. 🎉")
+        st.caption("Isso só cobre questão já respondida ao menos uma vez — a fila enche conforme você usa o cartão-resposta.")
+        return
+
+    st.caption(f"{len(ids)} questão(ões) atrasada(s), das mais atrasadas pras mais recentes.")
+    questoes = db.questoes_por_ids(ids)
+    _renderizar_grade_questoes(questoes, sufixo="revisao_hoje")
+
+
+def render_praticar_por_materia() -> None:
+    """Pega a matéria mais fraca do painel 'Minha análise' e transforma
+    em prática de verdade, misturando questões de qualquer ano/prova
+    -- sem isso, 'Prioridade de estudo' é só diagnóstico que não dá pra
+    agir em cima na hora."""
+    area_sel = st.radio(
+        "Área", ["matematica", "ciencias_natureza"],
+        format_func=lambda a: RÓTULO_AREA[a], horizontal=True, key="praticar_materia_area",
+    )
+    materias = db.materias_validas(area_sel)
+    if not materias:
+        st.info("Nenhuma matéria válida cadastrada pra essa área.")
+        return
+
+    materia_sel = st.selectbox("Matéria", materias, key="praticar_materia_sel")
+    questoes = db.questoes_por_materia(area_sel, materia_sel)
+    if not questoes:
+        st.info(f"Nenhuma questão classificada como '{materia_sel}' ainda.")
+        return
+
+    anos = sorted({q["ano"] for q in questoes}, reverse=True)
+    st.caption(f"{len(questoes)} questão(ões) de {materia_sel}, de {len(anos)} prova(s) ({', '.join(str(a) for a in anos)}).")
+    _renderizar_grade_questoes(questoes, sufixo=f"materia_{area_sel}_{materia_sel}")
+
+
+def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
+    """Núcleo compartilhado por prova única, simulado, revisão do dia
+    e prática por matéria: grade de resposta A-E, correção contra o
+    gabarito via registrar_tentativa(), classificação de erro e vídeo
+    de resolução. Todo mundo que monta uma lista de questões (não
+    importa a origem) cai aqui — não duplica essa lógica em cada modo."""
+    _renderizar_editor_enunciado(questoes, sufixo)
+
     with st.expander("⚡ Preenchimento rápido (cola a sequência de letras)"):
         st.caption(
             "Cola as letras na ordem das questões, sem espaço nem pontuação (ex: ABCDEBAACD...). "
@@ -178,11 +241,13 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
                     aplicadas += 1
             st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
 
+    mostrar_ano = len({q["ano"] for q in questoes}) > 1
+
     with st.form(f"cartao_resposta_form_{sufixo}"):
         cols = st.columns(3)
         for i, q in enumerate(questoes):
             with cols[i % 3]:
-                rotulo = f"Q{q['numero_questao']}"
+                rotulo = f"Q{q['numero_questao']} · {q['ano']}" if mostrar_ano else f"Q{q['numero_questao']}"
                 if q["status_classificacao"] == "nao_classificado":
                     rotulo += " ⚠️"
                 st.radio(
@@ -191,6 +256,7 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
                     horizontal=True,
                     key=f"resp_{q['id_questao']}",
                 )
+                _mostrar_enunciado_leitura(q)
         enviado = st.form_submit_button("Corrigir", type="primary")
 
     chave_resultado = f"resultados_{sufixo}"
@@ -243,6 +309,64 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
 
     if total < len(questoes):
         st.caption(f"{len(questoes) - total} questão(ões) não foi(ram) respondida(s) e não entrou(aram) no cálculo.")
+
+
+PASTA_ENUNCIADOS = Path(__file__).parent / "enunciados"
+
+
+def _mostrar_enunciado_leitura(q: dict) -> None:
+    """Exibição só-leitura dentro da grade (dentro do st.form — por
+    isso não tem botão nenhum aqui, só texto/imagem)."""
+    texto = q.get("enunciado_texto")
+    imagem = q.get("enunciado_imagem_path")
+    if not texto and not imagem:
+        return
+    with st.expander("📄 Enunciado"):
+        if texto:
+            st.write(texto)
+        if imagem and Path(imagem).exists():
+            st.image(imagem)
+
+
+def _renderizar_editor_enunciado(questoes: list[dict], sufixo: str) -> None:
+    """Adicionar enunciado (texto e/ou imagem) fica FORA do st.form da
+    grade de propósito -- st.form só permite um botão de envio (o
+    'Corrigir'), então salvar enunciado por questão precisa do próprio
+    botão, independente. Só aparece a questão de cada vez, escolhida
+    num seletor, pra não virar 44 uploaders na tela ao mesmo tempo."""
+    sem_enunciado = [q for q in questoes if not q.get("enunciado_texto") and not q.get("enunciado_imagem_path")]
+    if not sem_enunciado:
+        return
+
+    with st.expander(f"📄 Adicionar enunciado ({len(sem_enunciado)} questão(ões) ainda sem)"):
+        opcoes = {f"Q{q['numero_questao']} — {q['id_questao']}": q["id_questao"] for q in sem_enunciado}
+        escolha = st.selectbox("Questão", list(opcoes.keys()), key=f"enun_sel_{sufixo}")
+        id_q = opcoes[escolha]
+
+        texto = st.text_area(
+            "Texto do enunciado (pode deixar em branco se for só imagem)",
+            key=f"enun_texto_{sufixo}_{id_q}", height=120,
+        )
+        imagem = st.file_uploader(
+            "Imagem do enunciado (opcional)", type=["png", "jpg", "jpeg"],
+            key=f"enun_imagem_{sufixo}_{id_q}",
+        )
+
+        if st.button("Salvar enunciado", key=f"enun_salvar_{sufixo}_{id_q}"):
+            caminho_imagem = None
+            if imagem is not None:
+                PASTA_ENUNCIADOS.mkdir(exist_ok=True)
+                extensao = Path(imagem.name).suffix or ".png"
+                caminho_imagem = str(PASTA_ENUNCIADOS / f"{id_q}{extensao}")
+                with open(caminho_imagem, "wb") as f:
+                    f.write(imagem.getbuffer())
+
+            if not texto.strip() and not caminho_imagem:
+                st.warning("Cole um texto ou uma imagem antes de salvar.")
+            else:
+                db.atualizar_enunciado(id_q, texto=texto.strip() or None, imagem_path=caminho_imagem)
+                st.success(f"Enunciado salvo pra {id_q}.")
+                st.rerun()
 
 
 def render_analise() -> None:
