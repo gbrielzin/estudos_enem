@@ -18,6 +18,7 @@ nova aba dentro do app.py existente, junto das outras abas.
 
 import os
 import tempfile
+from datetime import date, datetime
 from pathlib import Path
 
 import streamlit as st
@@ -81,7 +82,7 @@ def render_cartao_resposta() -> None:
     )
 
     if modo == "Simulado completo (Matemática + Ciências)":
-        _render_simulado_completo(provas)
+        _render_simulado_completo()
         return
 
     if modo == "Revisão de hoje":
@@ -111,41 +112,33 @@ def render_cartao_resposta() -> None:
     _renderizar_bloco_prova(ano_sel, caderno_sel, area_sel)
 
 
-def _render_simulado_completo(provas: list[tuple[int, str, str]]) -> None:
-    """Faz Matemática e Ciências da Natureza do mesmo ano+caderno em
-    sequência, cada uma na sua aba. Corrige, guarda e mostra o
-    resultado de cada área separadamente — nunca mistura as duas na
-    mesma grade nem no mesmo cálculo, mesma regra do resto do
-    sistema."""
-    por_ano_caderno: dict[tuple[int, str], set[str]] = {}
-    for ano, caderno, area in provas:
-        por_ano_caderno.setdefault((ano, caderno), set()).add(area)
-
-    combinacoes = sorted(
-        [
-            (ano, caderno)
-            for (ano, caderno), areas in por_ano_caderno.items()
-            if {"matematica", "ciencias_natureza"} <= areas
-        ],
-        reverse=True,
-    )
+def _render_simulado_completo() -> None:
+    """Faz Matemática e Ciências da Natureza do mesmo ano em sequência,
+    cada uma na sua aba. Corrige, guarda e mostra o resultado de cada
+    área separadamente — nunca mistura as duas na mesma grade nem no
+    mesmo cálculo, mesma regra do resto do sistema. Cada área usa o
+    PRÓPRIO caderno (ver db.simulados_completos_disponiveis) -- 2023
+    é matemática/Azul + ciências/Cinza, cadernos diferentes no mesmo
+    ano, um padrão real do INEP que a versão antiga desta função
+    (agrupava por ano+caderno igual pras duas áreas) deixava invisível."""
+    combinacoes = db.simulados_completos_disponiveis()
     if not combinacoes:
         st.info(
-            "Nenhum ano/caderno tem as duas áreas cadastradas ainda — "
+            "Nenhum ano tem as duas áreas cadastradas ainda — "
             "o simulado completo só aparece quando Matemática e Ciências "
             "da mesma prova já foram carregadas."
         )
         return
 
-    opcoes = {f"{ano} — {caderno}": (ano, caderno) for ano, caderno in combinacoes}
+    opcoes = {f"{c['ano']}": c for c in combinacoes}
     escolha = st.selectbox("Simulado", list(opcoes.keys()))
-    ano_sel, caderno_sel = opcoes[escolha]
+    combo = opcoes[escolha]
 
     aba_mat, aba_ciencias = st.tabs(["📐 Matemática", "🔬 Ciências da Natureza"])
     with aba_mat:
-        _renderizar_bloco_prova(ano_sel, caderno_sel, "matematica")
+        _renderizar_bloco_prova(combo["ano"], combo["caderno_matematica"], "matematica")
     with aba_ciencias:
-        _renderizar_bloco_prova(ano_sel, caderno_sel, "ciencias_natureza")
+        _renderizar_bloco_prova(combo["ano"], combo["caderno_ciencias"], "ciencias_natureza")
 
 
 def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> None:
@@ -485,6 +478,223 @@ def render_analise() -> None:
     st.dataframe(linhas, hide_index=True, use_container_width=True)
 
 
+_FASE_DESCRICAO = {
+    "diagnostico": "Retomar o ritmo e mapear onde você está de verdade — não pra confirmar o que já sabe, pra achar exatamente onde dói.",
+    "ataque_fraquezas": "A fase mais longa e mais importante: repetição deliberada nas matérias que mais caem E mais você erra, até o erro parar de se repetir.",
+    "simulados_intensivos": "Menos conteúdo novo, mais prova inteira cronometrada — treinar o corpo e a cabeça pras horas de prova, não só o conteúdo.",
+    "taper": "Reduzir, não aumentar. O ganho de conteúdo já foi feito — o que resta agora é chegar descansado, não mais cansado.",
+}
+
+_FASE_RITMO_TEMPO = {
+    "diagnostico": (
+        "Essa semana: 1 simulado completo, de um ano que você ainda não tocou (veja o checklist abaixo) — "
+        "sem estudar pra ele antes, é diagnóstico, não prova. Nos outros dias, classifique o motivo de cada "
+        "erro que já está em aberto na correção (ver checklist).",
+        "Reserve um bloco livre pro simulado — é longo de propósito. Se não tiver isso essa semana, "
+        "um dia só de Matemática OU só Ciências já serve pra começar.",
+    ),
+    "ataque_fraquezas": (
+        "Segunda a sexta: sessões curtas em \"Praticar por matéria\" (Cartão-resposta), nas matérias do "
+        "topo da lista abaixo. Um dia do fim de semana: 1 simulado completo, priorizando o ano com menor "
+        "cobertura no checklist. Classifique os erros no MESMO dia — a lembrança de por que errou some rápido.",
+        "Uma rotina diária curta e sustentável por 6 semanas rende mais que sessões maratona esporádicas "
+        "que você abandona na 2ª semana. Se um dia não der, não compense dobrando no outro — só continue.",
+    ),
+    "simulados_intensivos": (
+        "Pouca matéria nova. Foco: simulados completos cronometrados, o mais parecido possível com o dia "
+        "real (mesmo horário do dia, sem pausa, celular longe). Entre um e outro, revise só o que errou.",
+        "Reserve o tempo real de prova pro simulado — confirme a duração exata no seu cartão de confirmação "
+        "de inscrição (historicamente girou perto de 5h pro dia de Matemática + Ciências, mas isso pode mudar ano a ano).",
+    ),
+    "taper": (
+        "Sem matéria nova agora. Reveja só o que você já errou antes (\"Por que você erra\", em Minha "
+        "análise). Separe documento e o que for levar hoje, não na véspera.",
+        "Revisão leve, pouco tempo. O resto é descanso de verdade — ansiedade de última hora custa mais "
+        "ponto do que qualquer conteúdo novo aprendido nesses últimos dias.",
+    ),
+}
+
+
+def render_calendario() -> None:
+    plano = db.plano_periodizacao()
+
+    if plano["fase"] == "pos_prova":
+        st.success("A prova já passou. Se ainda quiser treinar, o resto do app continua aqui.")
+        return
+    if plano["fase"] == "prova":
+        st.success("🍀 Hoje é o dia. O trabalho já foi feito — agora é confiar nele.")
+        return
+
+    data_prova_fmt = f"{plano['data_prova'][8:10]}/{plano['data_prova'][5:7]}/{plano['data_prova'][:4]}"
+    st.subheader(f"🗓️ {plano['dias_restantes']} dias até {data_prova_fmt}")
+    st.caption(f"Fase atual: **{plano['fase_label']}** — dia {plano['dias_decorridos']} de um plano de {plano['dias_totais_plano']} dias.")
+    st.progress(min(1.0, plano["dias_decorridos"] / plano["dias_totais_plano"]))
+    st.info(_FASE_DESCRICAO[plano["fase"]])
+
+    st.divider()
+    st.subheader("🎯 Ataque às fraquezas — o que atacar agora")
+    st.caption(
+        "Não é uma lista fixa por semana — é sempre a matéria que mais cai E você mais erra, recalculada "
+        "a cada tentativa nova. Conforme melhora numa matéria, ela sai do topo sozinha."
+    )
+    for area in ("matematica", "ciencias_natureza"):
+        prioridade = db.prioridade_de_estudo(area)
+        top = prioridade["ranking"][:3]
+        st.write(f"**{RÓTULO_AREA[area]}**")
+        if not top:
+            st.caption("Ainda sem dado suficiente pra priorizar — responda mais questões dessa área primeiro.")
+            continue
+        for r in top:
+            aviso = " ⚠️ *(amostra pequena, pode mudar)*" if r["amostra_pequena"] else ""
+            st.write(f"- `{r['materia']}` — cai em {r['percentual_recorrencia']}% das provas, você acerta {r['taxa_acerto_pct']}%{aviso}")
+    st.caption("→ Treine cada uma isolada em \"Praticar por matéria\", no Cartão-resposta.")
+
+    st.divider()
+    st.subheader("📋 Checklist de simulados e correção")
+    st.caption(
+        "\"Feito\" = 80%+ da prova respondida. \"Corrigido\" = toda questão errada já tem motivo classificado "
+        "(Cartão-resposta → questão errada → \"Por que errou?\") — é aí que a engenharia reversa acontece de "
+        "verdade: sem isso você só sabe QUE errou, não POR QUÊ."
+    )
+    progresso = sorted(db.progresso_simulados(), key=lambda x: x["cobertura_pct"])
+    if not progresso:
+        st.info("Nenhum ano com Matemática + Ciências completos ainda.")
+    for p in progresso:
+        feito = "✅" if p["feito"] else "⬜"
+        if p["erradas_total"] == 0:
+            corrigido = "—"
+        elif p["correcao_completa"]:
+            corrigido = "✅"
+        else:
+            corrigido = f"⬜ {p['erradas_corrigidas']}/{p['erradas_total']}"
+        st.write(f"{feito} **{p['ano']}** — {p['respondidas']}/{p['total_questoes']} respondidas ({p['cobertura_pct']:.0f}%) · correção: {corrigido}")
+
+    st.divider()
+    st.subheader("📆 Ritmo da semana, nesta fase")
+    ritmo, tempo = _FASE_RITMO_TEMPO[plano["fase"]]
+    st.write(ritmo)
+    st.divider()
+    st.subheader("⏱️ Quanto tempo, de verdade")
+    st.write(tempo)
+
+    st.divider()
+    st.caption(
+        "Este plano cobre só Matemática e Ciências da Natureza (o que este app tem dado pra apoiar). "
+        "Linguagens, Humanas e Redação precisam do próprio plano, em outro lugar."
+    )
+
+
+PASTA_VISION_BOARD = Path(__file__).parent / "vision_board"
+
+
+def render_objetivos() -> None:
+    prova = db.dias_ate_prova()
+
+    if prova["ja_passou"]:
+        st.success("A prova já passou.")
+    else:
+        cor_urgencia = "#39FF14" if prova["dias_restantes"] > 14 else "#E0A542" if prova["dias_restantes"] > 4 else "#FF7A6B"
+        st.markdown(
+            f'<div style="text-align:center; padding:0.5rem 0 1.5rem">'
+            f'<div style="font-family:\'JetBrains Mono\',monospace; font-size:4rem; font-weight:700; '
+            f'color:{cor_urgencia}; text-shadow:0 0 28px {cor_urgencia}66; line-height:1">{prova["dias_restantes"]}</div>'
+            f'<div style="color:#8FE39A; letter-spacing:0.08em; margin-top:0.3rem">DIAS ATÉ O ENEM</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.divider()
+
+    st.subheader("Por que eu quero passar")
+    motivo_atual = db.obter_configuracao("motivo_pessoal", "")
+    motivo = st.text_area(
+        "Escreva pra você mesmo — o que muda quando você passar. Releia nos dias ruins.",
+        value=motivo_atual, height=140, key="motivo_pessoal_input",
+    )
+    if st.button("Salvar", key="salvar_motivo") and motivo != motivo_atual:
+        db.definir_configuracao("motivo_pessoal", motivo)
+        st.success("Salvo.")
+
+    st.divider()
+
+    st.subheader("Metas de nota")
+    st.caption(
+        "Meta é aspiracional, não previsão — nota TRI não é a mesma coisa que % de acerto no treino. "
+        "As duas métricas abaixo medem coisas diferentes de propósito."
+    )
+    col1, col2 = st.columns(2)
+    with col1:
+        meta_mat = st.number_input(
+            "Meta Matemática (0-1000)", min_value=0, max_value=1000,
+            value=int(float(db.obter_configuracao("meta_nota_matematica", "700"))), key="meta_nota_mat",
+        )
+    with col2:
+        meta_nat = st.number_input(
+            "Meta Ciências da Natureza (0-1000)", min_value=0, max_value=1000,
+            value=int(float(db.obter_configuracao("meta_nota_natureza", "600"))), key="meta_nota_nat",
+        )
+    if st.button("Salvar metas", key="salvar_metas_nota"):
+        db.definir_configuracao("meta_nota_matematica", str(int(meta_mat)))
+        db.definir_configuracao("meta_nota_natureza", str(int(meta_nat)))
+        st.success("Metas salvas.")
+
+    def _media_geral(grande_area: str):
+        desempenho = db.taxa_acerto_por_materia(grande_area)
+        total = sum(d["total_tentativas"] for d in desempenho)
+        acertos = sum(d["acertos"] for d in desempenho)
+        return round(acertos / total * 100, 1) if total else None
+
+    media_mat, media_nat = _media_geral("matematica"), _media_geral("ciencias_natureza")
+    col1, col2 = st.columns(2)
+    col1.metric("Sua taxa de acerto no treino — Matemática", f"{media_mat}%" if media_mat is not None else "sem dado ainda")
+    col2.metric("Sua taxa de acerto no treino — Ciências", f"{media_nat}%" if media_nat is not None else "sem dado ainda")
+
+    st.divider()
+
+    st.subheader("🖼️ Quadro de motivação")
+    st.caption("Fotos suas, de amigos, de quem te inspira — o que fizer você lembrar por que está fazendo isso.")
+    PASTA_VISION_BOARD.mkdir(exist_ok=True)
+
+    if "vision_upload_geracao" not in st.session_state:
+        st.session_state["vision_upload_geracao"] = 0
+
+    novas_imagens = st.file_uploader(
+        "Adicionar imagem(ns)", type=["png", "jpg", "jpeg"], accept_multiple_files=True,
+        key=f"vision_upload_{st.session_state['vision_upload_geracao']}",
+    )
+    # O upload salva só quando este botão é clicado -- nunca sozinho no
+    # rerun. st.file_uploader mantém o valor entre reruns até a key
+    # mudar; sem esse botão como porta de entrada, o st.rerun() logo
+    # abaixo reprocessaria o MESMO arquivo pra sempre (empilhando cópia
+    # atrás de cópia a cada rerun -- foi exatamente isso que aconteceu
+    # testando: 1 upload virou ~500 arquivos em segundos). Trocar a key
+    # depois de salvar reseta o widget visualmente também.
+    if novas_imagens and st.button("Adicionar ao quadro", key="vision_upload_confirmar"):
+        for img in novas_imagens:
+            extensao = Path(img.name).suffix or ".jpg"
+            destino = PASTA_VISION_BOARD / f"{int(datetime.now().timestamp() * 1000)}{extensao}"
+            with open(destino, "wb") as f:
+                f.write(img.getbuffer())
+        st.session_state["vision_upload_geracao"] += 1
+        st.success(f"{len(novas_imagens)} imagem(ns) adicionada(s).")
+        st.rerun()
+
+    imagens = sorted(
+        (p for p in PASTA_VISION_BOARD.glob("*") if p.suffix.lower() in (".png", ".jpg", ".jpeg")),
+        reverse=True,
+    )
+    if not imagens:
+        st.info("Nenhuma imagem ainda.")
+    else:
+        cols = st.columns(3)
+        for i, caminho in enumerate(imagens):
+            with cols[i % 3]:
+                st.image(str(caminho), use_container_width=True)
+                if st.button("Remover", key=f"remover_vision_{caminho.name}"):
+                    caminho.unlink()
+                    st.rerun()
+
+
 def render_admin() -> None:
     st.subheader("💾 Backup do banco")
     st.caption(
@@ -536,6 +746,18 @@ def render_admin() -> None:
     if st.button("Salvar meta", key="admin_salvar_meta"):
         db.definir_configuracao("meta_diaria", str(int(nova_meta)))
         st.success(f"Meta diária atualizada pra {int(nova_meta)} questões.")
+        st.rerun()
+
+    st.divider()
+
+    st.subheader("🗓️ Data da prova")
+    st.caption("Alimenta a contagem regressiva e as fases do Calendário. Mudar isso reancora o início do plano.")
+    data_atual = date.fromisoformat(db.obter_configuracao("data_prova", db.DATA_PROVA_PADRAO))
+    nova_data = st.date_input("Data do ENEM (o dia que este app cobre: Matemática + Ciências)", value=data_atual, key="admin_data_prova")
+    if st.button("Salvar data", key="admin_salvar_data_prova"):
+        db.definir_configuracao("data_prova", nova_data.isoformat())
+        db.definir_configuracao("data_inicio_plano", date.today().isoformat())
+        st.success(f"Data da prova atualizada pra {nova_data.isoformat()}. Plano reancorado a partir de hoje.")
         st.rerun()
 
     st.divider()
@@ -646,20 +868,35 @@ def render_guia_estudante() -> None:
         st.warning(f"{nome_arquivo} não encontrado em core/. Salve o arquivo lá primeiro.")
 
 
+def _tagline_contagem_regressiva() -> str:
+    prova = db.dias_ate_prova()
+    if prova["ja_passou"]:
+        return "treino com prova real, corrigido na hora"
+    if prova["dias_restantes"] == 0:
+        return "é hoje. boa prova 🍀"
+    return f"treino com prova real, corrigido na hora · 🗓️ {prova['dias_restantes']} dias até o ENEM"
+
+
 if __name__ == "__main__":
     st.set_page_config(page_title="Cartão-resposta", page_icon="📝", layout="wide")
+    db.inicializar_banco()
     ui_theme.injetar_tema()
-    ui_theme.hero("📝 Cartão-resposta digital", "treino com prova real, corrigido na hora")
+    ui_theme.hero("📝 Cartão-resposta digital", _tagline_contagem_regressiva())
 
     pagina = st.sidebar.radio(
         "Menu",
-        ["📝 Cartão-resposta", "📊 Minha análise", "🔗 Coletar vídeos", "🏷️ Triagem", "🔐 Admin", "📚 Guia do Estudante"],
+        ["📝 Cartão-resposta", "📊 Minha análise", "📅 Calendário", "🎯 Objetivos",
+         "🔗 Coletar vídeos", "🏷️ Triagem", "🔐 Admin", "📚 Guia do Estudante"],
     )
 
     if pagina == "📝 Cartão-resposta":
         render_cartao_resposta()
     elif pagina == "📊 Minha análise":
         render_analise()
+    elif pagina == "📅 Calendário":
+        render_calendario()
+    elif pagina == "🎯 Objetivos":
+        render_objetivos()
     elif pagina == "🔗 Coletar vídeos":
         coletar_videos.render_coletar_videos()
     elif pagina == "🏷️ Triagem":
