@@ -64,6 +64,44 @@ MODO DIRETO: se eu disser "modo direto", pule as perguntas e vá direto para o D
    nesse chat e peça a síntese.
 7. **Esse processo não mexe no `core/`.** É estudo paralelo, não é o app.
 
+## Síntese Semanal — fechar a semana antes de abrir a próxima
+
+Complementa o prompt acima: aquele analisa questão por questão, na hora
+em que erro. Este pega a semana inteira de uma vez, olhando pros dados
+que o app já calculou sozinho — é o "cole a lista de novo nesse chat e
+peça a síntese" do passo 6 do ciclo acima, só que com um prompt próprio
+em vez de reaproveitar o de cima na marra.
+
+### O prompt (cole no MESMO chat do tutor socrático, no fim de semana)
+
+```
+Fecha comigo a semana antes de eu abrir a próxima.
+
+Aqui está o que o app calculou agora (abro a aba Calendário e Minha
+análise e colo o que aparece):
+- Matérias no topo de "Ataque às fraquezas" (Calendário), as duas áreas
+- Tabela de "Por que você erra" desta semana (Minha análise)
+- Checklist de simulados: quais respondi essa semana e com que % de acerto
+
+Com base SÓ nisso (não invente dado que eu não colei):
+1. Existe UM fio condutor nos erros da semana, ou são coisas soltas? Se
+   for fio condutor: é sempre o mesmo Nível de erro (Bobeira/Confusão
+   de termo/Falta de base) repetindo em matérias diferentes, ou é a
+   mesma matéria aparecendo em enunciados diferentes?
+2. Das matérias no topo, qual eu ataco primeiro na semana que vem — e
+   por que essa e não as outras (não aceito "todas são importantes",
+   quero UMA prioridade, ranqueada)?
+3. Alguma matéria saiu do topo desde a última síntese? Isso é melhora
+   real ou é só pouca tentativa ainda (o app já marca isso com ⚠️
+   quando a amostra é pequena)?
+4. Uma meta concreta e pequena pra semana que vem — não "estudar mais",
+   um número ou uma ação que dá pra marcar como feita ou não feita no
+   fim da próxima semana.
+
+Seja direto. Se o que eu colei for pouco pra responder com confiança,
+me diga isso em vez de inventar uma resposta genérica.
+```
+
 ## O que fica pra depois do ENEM
 
 - A anotação manual de padrão vira uma tabela (`analise_ia` ligada a `resolucoes`)
