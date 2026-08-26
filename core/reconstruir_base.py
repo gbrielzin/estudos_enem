@@ -6,6 +6,41 @@ Matemática 2019 + correções manuais de triagem já feitas antes.
 
 Roda do zero (apaga enem.db antes). Pensado pra ser reexecutado sempre
 que houver gabarito novo — idempotente graças a sobrescrever=True.
+
+############################################################
+# ⚠️  NÃO RODE ISSO SEM BACKUP — leia antes (rode
+#     `python backup_db.py` primeiro, ou o botão "Fazer backup
+#     agora" na tela Admin do cartão-resposta).
+#
+# Verificado em 2026-08 comparando o enem.db real com o que este
+# script produziria: ele NÃO é capaz de reproduzir o estado atual da
+# base. Três coisas se perdem de verdade, sem aviso, se isso rodar:
+#
+# 1. Resoluções em vídeo ligadas depois do último snapshot de
+#    questoes_enem.csv. coletar_videos.py grava direto em
+#    resolucoes (nunca mais escreveu nesse CSV) — hoje o banco tem
+#    mais resoluções do que esse arquivo conhece. Rebuild = essas
+#    resoluções extras desaparecem, sem nenhum jeito de recuperar
+#    o link do vídeo depois.
+# 2. Tentativas de qualquer prova além do bloco hardcoded de
+#    Matemática 2019 (seção 3 abaixo). tentativas_usuario e
+#    estado_revisao (streak, próxima revisão) de TODAS as outras
+#    provas já respondidas são apagados e não voltam — não existe
+#    replay pra elas como existe pra triagem manual.
+# 3. Matéria conseguida via título de vídeo. coletar_videos.py só
+#    atualiza a matéria de uma questão que ainda está
+#    'nao_classificado' (ver processar_playlist() lá) — esse passo
+#    aqui embaixo (seção 2, "Ligando resoluções em vídeo") só chama
+#    inserir_resolucao(), nunca inserir_questao(sobrescrever=True,
+#    materia=...). Ou seja: mesmo a matéria que HOJE está correta
+#    porque veio do título de um vídeo já coletado volta a
+#    'nao_classificado' depois do rebuild, e só se corrige rodando
+#    de novo, na mão, cada playlist já coletada uma vez.
+#
+# Se for mesmo rodar: faça backup antes, e depois confira
+# questoes/resolucoes/tentativas_usuario contra o backup anterior
+# antes de confiar no resultado.
+############################################################
 """
 import csv
 import glob
