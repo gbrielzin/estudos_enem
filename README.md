@@ -17,21 +17,23 @@ coleta de vídeo, triagem e admin, tudo em `core/`. Veja `core/CLAUDE.md`
 para a arquitetura completa.
 
 Há também um coletor legado na raiz (`python -m streamlit run app.py`)
-com três modos que `core/coletar_videos.py` ainda não reimplementou
-(busca por palavra-chave em vários canais, entrada em lote de
-vídeo-resumo, e junção link-real + nível-do-resumo) — mantido só por
-isso. Não é o produto principal.
+com um modo que `core/coletar_videos.py` não reimplementou (busca por
+palavra-chave em vários canais — minerava vídeo cuja descrição citasse
+"nível de dificuldade", conceito que não existe mais no banco atual) —
+mantido só por isso. Os outros dois modos que ele tinha (lote e junção)
+já foram portados pra `core/coletar_videos.py`, gravando direto no
+banco. `app.py` não é o produto principal.
 
 ## ⚠️ Antes de rodar `reconstruir_base.py`
 
-**Faça um backup primeiro:** botão "📦 Fazer backup agora" na tela Admin
-do cartão-resposta, ou `python backup_db.py` de dentro de `core/`.
+**Faça um backup primeiro** (ele já faz isso sozinho, mas uma cópia
+extra sua não faz mal): botão "📦 Fazer backup agora" na tela Admin do
+cartão-resposta, ou `python backup_db.py` de dentro de `core/`.
 
-`reconstruir_base.py` apaga `enem.db` e reconstrói do zero só a partir
-dos CSVs de gabarito — ele **não** sabe recriar vídeo coletado depois do
-último snapshot, tentativa registrada fora do backfill hardcoded de
-2019, nem matéria que só foi preenchida via título de vídeo. Detalhes
-completos no aviso no topo do próprio arquivo.
+`reconstruir_base.py` não apaga mais `enem.db` — atualiza em cima do
+que já existe, sem perder vídeo coletado, tentativa registrada, ou
+matéria preenchida via título de vídeo. Detalhes no aviso no topo do
+próprio arquivo.
 
 ## Configuração
 
@@ -43,15 +45,16 @@ YOUTUBE_API_KEY=sua_chave_aqui
 
 ## Prompt pra IA do YouTube (coleta em lote)
 
-Ao colar um vídeo-resumo de dificuldade no YouTube, peça nesse formato
-exato pra depois colar na aba "Lote" do coletor:
+Ao colar um vídeo-resumo no YouTube, peça nesse formato exato pra
+depois colar na seção "Colar um vídeo-resumo" do coletor (dentro de
+"🔗 Coletar vídeos"):
 
 ```
 Liste todas as questões faladas neste vídeo no formato exato:
-Questão;Matéria;Nível
+Questão;Matéria
 
 Uma linha por questão, sem texto explicativo antes ou depois, sem
 numeração extra, sem timestamps. Exemplo do formato esperado:
-Questão 137;Probabilidade;Difícil
-Questão 138;Estatística;Fácil
+Questão 137;Probabilidade
+Questão 138;Estatística
 ```
