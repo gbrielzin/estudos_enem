@@ -1344,30 +1344,33 @@ def dias_ate_prova() -> dict:
 
 
 _FASES_PLANO = {
-    "diagnostico": "Diagnóstico",
-    "ataque_fraquezas": "Ataque às fraquezas",
-    "simulados_intensivos": "Simulados intensivos",
-    "taper": "Reta final (taper)",
+    "fase1_fundacao": "Fase 1 — Fundação em Natureza + manutenção",
+    "fase2_consolidacao": "Fase 2 — Consolidação, todas as áreas em rotação plena",
+    "fase3_blindagem": "Fase 3 — Blindagem, sem conteúdo novo pesado",
     "prova": "Dia da prova",
     "pos_prova": "Prova já passou",
 }
 
+# Datas de corte das fases 1 e 2 -- vêm do cronograma de 74 dias que o
+# próprio Gabriel escreveu (documento colado em 2026-08-26), não de uma
+# fórmula proporcional. A fase 3 sempre termina na data da prova. Ambas
+# editáveis em configuracoes pra não exigir mexer em código se o plano
+# mudar de novo.
+FASE1_FIM_PADRAO = "2026-09-16"
+FASE2_FIM_PADRAO = "2026-10-11"
+
 
 def plano_periodizacao() -> dict:
-    """Divide o tempo até a prova em fases, ancoradas na DATA da prova
-    (contando de trás pra frente: taper primeiro, depois simulados
-    intensivos) e na data em que o plano começou a ser usado (contando
-    da frente: diagnóstico) -- não em 'dias restantes' sozinho, que
-    mudaria a duração de cada fase every vez que a página fosse aberta.
-    data_inicio_plano é gravada uma vez, na primeira vez que isso roda,
-    e não muda depois -- é o ponto zero do plano.
-
-    Números fixos (TAPER/INTENSIVO/DIAGNOSTICO) são tetos, não pisos:
-    encolhem proporcionalmente se o tempo total for curto, pra nunca
-    devolver uma fase maior que o próprio plano."""
+    """3 fases com datas de corte FIXAS (do plano do usuário, não
+    proporcionais a 'dias restantes') -- fase 1 até FASE1_FIM_PADRAO,
+    fase 2 até FASE2_FIM_PADRAO, fase 3 até a prova. Se as datas de
+    corte forem editadas depois (configuracoes), a duração de cada
+    fase muda de verdade, é intencional -- diferente da versão anterior
+    (proporcional), esta reflete um cronograma escrito à mão."""
     prova = dias_ate_prova()
     data_prova = date.fromisoformat(prova["data_prova"])
     hoje = date.today()
+    dias_restantes = prova["dias_restantes"]
 
     data_inicio_str = obter_configuracao("data_inicio_plano")
     if data_inicio_str is None:
@@ -1375,35 +1378,72 @@ def plano_periodizacao() -> dict:
         definir_configuracao("data_inicio_plano", data_inicio_str)
     data_inicio = date.fromisoformat(data_inicio_str)
 
-    dias_totais = max((data_prova - data_inicio).days, 1)
-    dias_restantes = prova["dias_restantes"]
-    dias_decorridos = (hoje - data_inicio).days
+    fase1_fim = date.fromisoformat(obter_configuracao("fase1_fim", FASE1_FIM_PADRAO))
+    fase2_fim = date.fromisoformat(obter_configuracao("fase2_fim", FASE2_FIM_PADRAO))
 
     if dias_restantes < 0:
         fase = "pos_prova"
     elif dias_restantes == 0:
         fase = "prova"
+    elif hoje <= fase1_fim:
+        fase = "fase1_fundacao"
+    elif hoje <= fase2_fim:
+        fase = "fase2_consolidacao"
     else:
-        taper = max(1, min(4, dias_totais // 10))
-        intensivo = max(1, min(14, dias_totais // 4))
-        diagnostico = max(1, min(10, dias_totais // 6))
-
-        if dias_restantes <= taper:
-            fase = "taper"
-        elif dias_restantes <= taper + intensivo:
-            fase = "simulados_intensivos"
-        elif dias_decorridos < diagnostico:
-            fase = "diagnostico"
-        else:
-            fase = "ataque_fraquezas"
+        fase = "fase3_blindagem"
 
     return {
         "fase": fase,
         "fase_label": _FASES_PLANO[fase],
-        "dias_totais_plano": dias_totais,
-        "dias_decorridos": max(dias_decorridos, 0),
+        "dias_decorridos": max((hoje - data_inicio).days, 0),
         "dias_restantes": dias_restantes,
         "data_prova": prova["data_prova"],
+        "fase1_fim": fase1_fim.isoformat(),
+        "fase2_fim": fase2_fim.isoformat(),
+    }
+
+
+def historico_diario_por_area(grande_area: str, minimo_questoes: int = 15) -> list[dict]:
+    """Dias com pelo menos `minimo_questoes` tentativas numa área -- a
+    aproximação de 'isso foi um simulado' sem precisar de uma tabela de
+    sessão dedicada. Base pra média móvel: o próprio plano do usuário
+    diz pra ler por TENDÊNCIA dos últimos simulados, não pelo resultado
+    isolado de um dia (nota varia por cansaço, tema sorteado etc)."""
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT date(t.data_tentativa) AS dia, COUNT(*) AS total,
+                   SUM(CASE WHEN t.resultado='acertou' THEN 1 ELSE 0 END) AS acertos
+            FROM tentativas_usuario t
+            JOIN questoes q ON q.id_questao = t.id_questao
+            WHERE q.grande_area = ?
+            GROUP BY dia
+            HAVING total >= ?
+            ORDER BY dia
+            """,
+            (grande_area_norm, minimo_questoes),
+        ).fetchall()
+    return [
+        {"dia": d, "total": t, "acertos": a, "taxa_acerto_pct": round(a / t * 100, 1)}
+        for d, t, a in linhas
+    ]
+
+
+def media_movel_simulados(grande_area: str, n: int = 3) -> dict:
+    """Média dos últimos N dias com simulado (ver historico_diario_por_
+    area) -- a métrica que o plano do usuário trata como a que importa
+    de verdade, em vez do resultado de um dia isolado."""
+    historico = historico_diario_por_area(grande_area)
+    ultimos = historico[-n:]
+    if not ultimos:
+        return {"tem_dado": False, "n_simulados": 0}
+    media = sum(h["taxa_acerto_pct"] for h in ultimos) / len(ultimos)
+    return {
+        "tem_dado": True,
+        "n_simulados": len(ultimos),
+        "media_pct": round(media, 1),
+        "detalhe": ultimos,
     }
 
 
@@ -1502,6 +1542,67 @@ def recorrencia_por_materia(grande_area: str) -> list[dict]:
         }
         for materia, provas in linhas
     ]
+
+
+def salvar_redacao(
+    tema: str, data_escrita: str | None = None, texto: str | None = None,
+    arquivo_path: str | None = None, nota: int | None = None,
+    erros_ortograficos: int | None = None, fonte_correcao: str | None = None,
+    observacoes: str | None = None,
+) -> int:
+    """Só guarda -- não corrige. nota/erros_ortograficos vêm de quem
+    corrigiu (própria, externa ou oficial), o sistema não avalia
+    redação. Retorna o id da linha criada."""
+    tema = tema.strip()
+    if not tema:
+        raise ValueError("Tema não pode ser vazio.")
+    if fonte_correcao not in (None, "propria", "externa", "oficial"):
+        raise ValueError(f"fonte_correcao inválida: '{fonte_correcao}'")
+
+    with _conectar() as conn:
+        cursor = conn.execute(
+            """
+            INSERT INTO redacoes
+                (tema, data_escrita, texto, arquivo_path, nota, erros_ortograficos, fonte_correcao, observacoes)
+            VALUES (?,?,?,?,?,?,?,?)
+            """,
+            (
+                tema, data_escrita or date.today().isoformat(), texto or None, arquivo_path,
+                nota, erros_ortograficos, fonte_correcao, observacoes or None,
+            ),
+        )
+        return cursor.lastrowid
+
+
+def listar_redacoes() -> list[dict]:
+    """Mais recente primeiro."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT id, tema, data_escrita, texto, arquivo_path, nota,
+                   erros_ortograficos, fonte_correcao, observacoes
+            FROM redacoes ORDER BY data_escrita DESC, id DESC
+            """
+        ).fetchall()
+    return [
+        {
+            "id": r[0], "tema": r[1], "data_escrita": r[2], "texto": r[3],
+            "arquivo_path": r[4], "nota": r[5], "erros_ortograficos": r[6],
+            "fonte_correcao": r[7], "observacoes": r[8],
+        }
+        for r in linhas
+    ]
+
+
+def temas_redacoes_usados() -> list[str]:
+    with _conectar() as conn:
+        linhas = conn.execute("SELECT DISTINCT tema FROM redacoes ORDER BY tema").fetchall()
+    return [r[0] for r in linhas]
+
+
+def apagar_redacao(id_redacao: int) -> None:
+    with _conectar() as conn:
+        conn.execute("DELETE FROM redacoes WHERE id = ?", (id_redacao,))
 
 
 if __name__ == "__main__":
