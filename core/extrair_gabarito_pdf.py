@@ -10,7 +10,9 @@ rodapé "Questão N Anulada"). Se sobrar alguma sem explicação, o
 script avisa em vez de seguir com dado incompleto.
 
 Uso: python extrair_gabarito_pdf.py <arquivo.pdf> <ano>
-Gera: gabarito_oficial_<ano>_azul.csv (numero,gabarito)
+Gera: gabaritos_reais/gabarito_<ano>_azul_OFICIAL.csv (numero,materia,gabarito;
+materia sai como placeholder 'SEM_VIDEO_PENDENTE' -- o PDF não traz assunto,
+só resposta. Pronto pra reconstruir_base.py pegar na próxima execução.)
 """
 import csv
 import re
@@ -59,11 +61,19 @@ if __name__ == "__main__":
     caminho, ano = sys.argv[1], sys.argv[2]
     gabarito, anuladas = extrair_gabarito_matematica(caminho)
 
-    destino = Path(f"gabarito_oficial_{ano}_azul.csv")
+    # Nome e colunas no formato que carregar_gabarito_csv() exige e que
+    # reconstruir_base.py varre (gabarito_<ano>_<caderno>_OFICIAL.csv,
+    # com numero,materia,gabarito). O PDF do INEP não traz matéria —
+    # cada linha nasce com o mesmo placeholder que o resto do pipeline
+    # já usa pra "ainda não sei a matéria desta questão", pra
+    # reconstruir_base.py (com preservar_materia_classificada=True)
+    # não tratar isso como uma classificação de verdade.
+    destino = Path(__file__).parent / "gabaritos_reais" / f"gabarito_{ano}_azul_OFICIAL.csv"
     with destino.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["numero", "gabarito"])
+        w.writerow(["numero", "materia", "gabarito"])
         for numero in sorted(gabarito):
-            w.writerow([numero, gabarito[numero]])
+            w.writerow([numero, "SEM_VIDEO_PENDENTE", gabarito[numero]])
 
     print(f"{destino}: {len(gabarito)} questões, {len(anuladas)} anulada(s) {sorted(anuladas)}")
+    print("Matéria de cada questão fica pendente até vídeo (coletar_videos.py) ou triagem manual.")

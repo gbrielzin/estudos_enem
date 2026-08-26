@@ -356,16 +356,26 @@ def render_analise() -> None:
 def render_admin() -> None:
     st.subheader("💾 Backup do banco")
     st.caption(
-        "Ninguém reconstrói a base do zero sem um backup na mão primeiro — "
-        "reconstruir_base.py não sabe recriar vídeo coletado nem tentativa respondida "
-        "fora do que já está congelado em CSV. Clique aqui antes de mexer em qualquer coisa arriscada."
+        "reconstruir_base.py já faz backup sozinho antes de atualizar a base. "
+        "Use o botão abaixo pra tirar uma cópia extra antes de qualquer outra coisa arriscada "
+        "(carregar um CSV colado errado, por exemplo)."
     )
+
+    dias = backup_db.dias_desde_ultimo_backup()
+    if dias is None:
+        st.warning("Nenhum backup ainda. Os backups ficam só nesta máquina — sem um, um HD morto leva tudo junto.")
+    elif dias >= 7:
+        st.warning(f"Último backup local foi há {dias} dia(s). Baixe uma cópia recente pra algum lugar fora desta máquina (Drive, e-mail).")
+    else:
+        st.caption(f"Último backup local: há {dias} dia(s). Lembre de baixar uma cópia pra fora da máquina de vez em quando — backups/ não protege contra HD/SSD morto.")
+
     col_backup1, col_backup2 = st.columns([1, 2])
     with col_backup1:
         if st.button("📦 Fazer backup agora", type="primary"):
             caminho = backup_db.fazer_backup()
             st.session_state["ultimo_backup"] = str(caminho)
             st.success(f"Backup criado: {caminho.name}")
+            st.rerun()
 
     backups = backup_db.listar_backups()
     if backups:

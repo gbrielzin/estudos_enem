@@ -1,17 +1,19 @@
 """
 backup_db.py — copia enem.db pra backups/enem_<timestamp>.db.
 
-Existe porque reconstruir_base.py apaga enem.db antes de reconstruir, e
-ele NÃO consegue reproduzir sozinho: resoluções em vídeo ligadas depois
-do último snapshot de questoes_enem.csv, tentativas de anos fora do
-backfill hardcoded de 2019, e classificações de matéria conseguidas via
-título de vídeo (coletar_videos.py) em vez do CSV de gabarito. Rodar
-este script ANTES de qualquer reconstrução é a rede de segurança real
--- ver o aviso no topo de reconstruir_base.py.
+reconstruir_base.py já chama fazer_backup() sozinho antes de atualizar
+a base (ver o topo daquele arquivo), então isso cobre o caso automático.
+Existe como módulo à parte pra também dar um jeito manual e rápido de
+tirar uma cópia (botão "Fazer backup agora" na tela Admin) antes de
+qualquer operação que você não tenha certeza total do resultado --
+carregar um CSV colado errado, por exemplo.
+
+IMPORTANTE: backups/ é local nesta máquina (e está no .gitignore) --
+não protege contra HD/SSD morto. Baixe o arquivo de vez em quando pra
+algum lugar fora daqui (Drive, e-mail, etc.) usando o botão de download
+ao lado de cada backup na tela Admin.
 
 Uso: python backup_db.py
-Também é chamado direto da tela Admin do cartão-resposta (botão
-"Fazer backup agora").
 """
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +43,17 @@ def listar_backups() -> list[Path]:
     if not PASTA_BACKUPS.exists():
         return []
     return sorted(PASTA_BACKUPS.glob("enem_*.db"), reverse=True)
+
+
+def dias_desde_ultimo_backup() -> int | None:
+    """Dias desde o backup mais recente, local nesta máquina. None se
+    nunca houve nenhum. Alimenta o lembrete na tela Admin -- ter um
+    backup local não é o mesmo que ele estar em outro lugar também."""
+    backups = listar_backups()
+    if not backups:
+        return None
+    idade_segundos = datetime.now().timestamp() - backups[0].stat().st_mtime
+    return int(idade_segundos // 86400)
 
 
 if __name__ == "__main__":
