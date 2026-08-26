@@ -512,11 +512,18 @@ def inserir_questao(
     return id_questao, status
 
 
-def inserir_resolucao(id_questao: str, tipo: str, conteudo: str, canal: str | None = None) -> None:
+def inserir_resolucao(id_questao: str, tipo: str, conteudo: str, canal: str | None = None) -> bool:
     """Adiciona uma resolução (vídeo ou texto) a uma questão que já
-    existe. Uma questão pode ter N resoluções — não há chave única
-    aqui de propósito, é o ponto principal que o modelo antigo
-    (1 linha CSV = 1 vídeo = 1 questão) não permitia."""
+    existe. Uma questão pode ter N resoluções DIFERENTES — não há
+    chave única entre questão e tipo aqui de propósito, é o ponto
+    principal que o modelo antigo (1 linha CSV = 1 vídeo = 1 questão)
+    não permitia.
+
+    O que não pode duplicar é o MESMO conteúdo (link/texto) repetido
+    pra mesma questão — sem checar isso, recarregar a mesma playlist
+    duas vezes (ou rodar reconstruir_base.py de novo) empilha o vídeo
+    idêntico de novo a cada execução. Retorna False (no-op) se esse
+    exato (id_questao, tipo, conteudo) já existia; True se inseriu."""
     if tipo not in ("video", "texto"):
         raise ValueError(f"tipo deve ser 'video' ou 'texto', recebi '{tipo}'")
 
@@ -526,10 +533,19 @@ def inserir_resolucao(id_questao: str, tipo: str, conteudo: str, canal: str | No
         ).fetchone()
         if not existe:
             raise ValueError(f"Questão '{id_questao}' não existe — insira a questão antes da resolução.")
+
+        ja_existe = conn.execute(
+            "SELECT 1 FROM resolucoes WHERE id_questao = ? AND tipo = ? AND conteudo = ?",
+            (id_questao, tipo, conteudo),
+        ).fetchone()
+        if ja_existe:
+            return False
+
         conn.execute(
             "INSERT INTO resolucoes (id_questao, tipo, conteudo, canal) VALUES (?,?,?,?)",
             (id_questao, tipo, conteudo, canal),
         )
+        return True
 
 
 # ============================================================
@@ -680,11 +696,25 @@ def analise_por_tipo_erro(grande_area: str) -> list[dict]:
 
 def _carregar_gabarito_de_texto(
     texto_csv: str, ano: int, caderno: str, grande_area_padrao: str, sobrescrever: bool,
+    preservar_materia_classificada: bool = False,
 ) -> dict:
     """Núcleo compartilhado: recebe o CONTEÚDO do CSV já como string
     (não um caminho de arquivo) e faz a carga. carregar_gabarito_csv()
     e carregar_gabarito_texto() só diferem em como conseguem esse
-    texto -- ler de arquivo ou receber já colado."""
+    texto -- ler de arquivo ou receber já colado.
+
+    preservar_materia_classificada=True muda o que "sobrescrever" quer
+    dizer pra matéria especificamente: se a questão já existe e já
+    está status_classificacao='classificado', a matéria do CSV é
+    ignorada e a matéria JÁ GRAVADA é reenviada no lugar (só o
+    gabarito/demais campos do CSV realmente sobrescrevem). Existe pra
+    reconstruir_base.py: os CSVs de gabarito oficial servem de fonte
+    pra RESPOSTA, mas a matéria neles é só um valor inicial/placeholder
+    (ex: 'sem_video_pendente') -- sem isso, recarregar o gabarito
+    oficial derruba classificação melhor já conseguida depois via
+    título de vídeo ou triagem manual. Callers de UI (Admin, Triagem)
+    não usam isso -- lá sobrescrever=True É pra vencer o que já existe,
+    porque é correção humana deliberada."""
     resumo = {"classificadas": 0, "nao_classificadas": [], "erros": []}
 
     leitor = csv.DictReader(io.StringIO(texto_csv))
@@ -703,6 +733,16 @@ def _carregar_gabarito_de_texto(
             if not materia or not gabarito:
                 resumo["erros"].append(f"linha {i}: materia ou gabarito vazio")
                 continue
+
+            if preservar_materia_classificada and sobrescrever:
+                id_provisorio = gerar_id_canonico(ano, caderno, numero)
+                with _conectar() as conn:
+                    atual = conn.execute(
+                        "SELECT materia FROM questoes WHERE id_questao = ? AND status_classificacao = 'classificado'",
+                        (id_provisorio,),
+                    ).fetchone()
+                if atual is not None:
+                    materia = atual[0]
 
             id_q, status = inserir_questao(
                 ano=ano, caderno=caderno, numero=numero,
@@ -723,6 +763,7 @@ def _carregar_gabarito_de_texto(
 def carregar_gabarito_csv(
     caminho: str | Path, ano: int, caderno: str,
     grande_area_padrao: str = "matematica", sobrescrever: bool = False,
+    preservar_materia_classificada: bool = False,
 ) -> dict:
     """Carrega o gabarito de uma prova inteira a partir de um arquivo
     CSV com colunas obrigatórias: numero, materia, gabarito (e uma
@@ -732,10 +773,14 @@ def carregar_gabarito_csv(
     Retorna um resumo (classificadas, nao_classificadas, erros) pra
     você ver de cara, sem abrir o banco, se algo no CSV precisa de
     revisão antes de liberar a prova pro cartão-resposta.
+
+    Ver _carregar_gabarito_de_texto() pro que preservar_materia_classificada faz.
     """
     with open(caminho, encoding="utf-8-sig", newline="") as f:
         texto_csv = f.read()
-    return _carregar_gabarito_de_texto(texto_csv, ano, caderno, grande_area_padrao, sobrescrever)
+    return _carregar_gabarito_de_texto(
+        texto_csv, ano, caderno, grande_area_padrao, sobrescrever, preservar_materia_classificada
+    )
 
 
 def carregar_gabarito_texto(
