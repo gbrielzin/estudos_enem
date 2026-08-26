@@ -54,7 +54,7 @@ def extrair_materia_do_titulo(titulo: str):
     return None
 
 
-_PADRAO_CADERNO_DESCRICAO = re.compile(r"Caderno\s+(\w+)\s*-\s*(\d+)", re.IGNORECASE)
+_PADRAO_CADERNO_DESCRICAO = re.compile(r"Caderno\s+(\w+)\s*[:-]\s*(\d+)", re.IGNORECASE)
 
 
 def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
@@ -62,11 +62,12 @@ def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
     questão em cada caderno de cor -- o conteúdo é idêntico, só a
     ordem/numeração muda por cor -- formato real confirmado direto na
     API (cor primeiro, depois o número -- o oposto do que se imaginaria
-    pelo título 'Questão N - Caderno X'):
-        Caderno Azul - 136
-        Caderno Amarelo - 164
-        Caderno Rosa - 150
-        Caderno Cinza - 166
+    pelo título 'Questão N - Caderno X'). Duas variações já vistas (o
+    separador muda de ano pra ano, e a lista de cores não é fixa --
+    2024 trocou 'Rosa' por 'Verde', por exemplo; o regex não assume
+    nenhum conjunto fixo de cores):
+        Caderno Azul - 136      (2023, hífen)
+        Caderno Amarelo: 163    (2024, dois-pontos)
     Quando existe, isso permite ligar UM vídeo a VÁRIAS provas (uma por
     cor) de uma vez, em vez de só à cor que está sendo coletada no
     momento. Retorna {caderno_normalizado: numero}; vazio se a
@@ -78,6 +79,20 @@ def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
         db.normalizar_texto(cad): int(num)
         for cad, num in _PADRAO_CADERNO_DESCRICAO.findall(descricao)
     }
+
+
+def _materia_atual_se_classificada(id_q: str) -> str | None:
+    """Matéria já salva pra essa questão, só se já está classificada de
+    verdade -- usado como fallback pra propagar entre cadernos quando o
+    título do vídeo não traz matéria nenhuma (alguns vídeos do canal
+    saem com esse campo em branco), mas o caderno âncora já foi
+    classificado antes por outro caminho (triagem manual, por
+    exemplo) -- não adianta propagar 'sem_video_pendente'."""
+    with db._conectar() as conn:
+        row = conn.execute(
+            "SELECT materia, status_classificacao FROM questoes WHERE id_questao=?", (id_q,)
+        ).fetchone()
+    return row[0] if row and row[1] == "classificado" else None
 
 
 def _atualizar_materia_se_pendente(id_q: str, ano: int, caderno: str, numero: int, materia: str) -> str | None:
@@ -155,6 +170,13 @@ def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
                     {"id_questao": id_q, "materia_nova": materia, "status": status}
                 )
 
+        # Pra propagar pros outros cadernos, usa a matéria do título se
+        # deu pra extrair; senão cai pro que já está salvo no caderno
+        # âncora (pode ter vindo de triagem manual, não só do vídeo --
+        # alguns vídeos do canal saem com o campo de matéria em branco
+        # no título mesmo, mas a questão já foi classificada por fora).
+        materia_para_cruzar = materia or _materia_atual_se_classificada(id_q)
+
         caderno_norm = db.normalizar_texto(caderno)
         for caderno_extra, numero_extra in extrair_cadernos_da_descricao(descricao).items():
             if caderno_extra == caderno_norm and numero_extra == numero:
@@ -166,11 +188,13 @@ def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
                 resultado["cruzados_sem_questao"].append({"id_questao": id_extra, "titulo": titulo})
                 continue
             resultado["ligados_cruzados"].append({"id_questao": id_extra, "titulo": titulo})
-            if materia:
-                status_extra = _atualizar_materia_se_pendente(id_extra, ano, caderno_extra, numero_extra, materia)
+            if materia_para_cruzar:
+                status_extra = _atualizar_materia_se_pendente(
+                    id_extra, ano, caderno_extra, numero_extra, materia_para_cruzar
+                )
                 if status_extra:
                     resultado["materia_atualizada"].append(
-                        {"id_questao": id_extra, "materia_nova": materia, "status": status_extra}
+                        {"id_questao": id_extra, "materia_nova": materia_para_cruzar, "status": status_extra}
                     )
 
     return resultado
