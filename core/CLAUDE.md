@@ -73,12 +73,12 @@ A real INEP exam prints the same items in 4 colors (azul/amarelo/rosa/cinza) wit
 
 ### Cross-caderno video linking (`coletar_videos.py`)
 
-Some channels (Xequemat) paste, in the video's YouTube **description** (not title), the same item's number in every color, e.g.:
+The channel (Xequemat) pastes, in the video's YouTube **description** (not title), the same item's number in every color — confirmed against the real API response, and the opposite order from what the title's own "Questão N - Caderno X" format would suggest (color first, then number):
 ```
-Questão 165 - Caderno Azul
-Questão 143 - Caderno Cinza
-Questão 151 - Caderno Amarelo
-Questão 174 - Caderno Rosa
+Caderno Azul - 136
+Caderno Amarelo - 164
+Caderno Rosa - 150
+Caderno Cinza - 166
 ```
 `extrair_cadernos_da_descricao()` parses this block; `processar_playlist()` uses it to link the SAME video (and propagate the SAME materia, if extracted from the title and the target question is still `nao_classificado`) to every color's corresponding `id_questao` — not just the color passed as the `caderno` argument. A color with no gabarito loaded yet just lands in the `cruzados_sem_questao` result bucket (harmless) — re-running the playlist collection later, after loading that color, picks up the missing links retroactively (no need to special-case "already tried this before"; `db.inserir_resolucao()`'s existing dedup makes it idempotent). Older videos without this description block fall back to the original single-caderno-only behavior unchanged.
 

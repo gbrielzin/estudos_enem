@@ -54,17 +54,19 @@ def extrair_materia_do_titulo(titulo: str):
     return None
 
 
-_PADRAO_CADERNO_DESCRICAO = re.compile(r"Quest[ãa]o\s+(\d+)\s*-\s*Caderno\s+(\w+)", re.IGNORECASE)
+_PADRAO_CADERNO_DESCRICAO = re.compile(r"Caderno\s+(\w+)\s*-\s*(\d+)", re.IGNORECASE)
 
 
 def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
-    """Alguns canais (Xequemat) colam, na descrição do vídeo, o número
-    da MESMA questão em cada caderno de cor -- o conteúdo é idêntico,
-    só a ordem/numeração muda por cor -- ex:
-        Questão 165 - Caderno Azul
-        Questão 143 - Caderno Cinza
-        Questão 151 - Caderno Amarelo
-        Questão 174 - Caderno Rosa
+    """O canal (Xequemat) cola, na descrição do vídeo, o número da MESMA
+    questão em cada caderno de cor -- o conteúdo é idêntico, só a
+    ordem/numeração muda por cor -- formato real confirmado direto na
+    API (cor primeiro, depois o número -- o oposto do que se imaginaria
+    pelo título 'Questão N - Caderno X'):
+        Caderno Azul - 136
+        Caderno Amarelo - 164
+        Caderno Rosa - 150
+        Caderno Cinza - 166
     Quando existe, isso permite ligar UM vídeo a VÁRIAS provas (uma por
     cor) de uma vez, em vez de só à cor que está sendo coletada no
     momento. Retorna {caderno_normalizado: numero}; vazio se a
@@ -74,7 +76,7 @@ def extrair_cadernos_da_descricao(descricao: str) -> dict[str, int]:
         return {}
     return {
         db.normalizar_texto(cad): int(num)
-        for num, cad in _PADRAO_CADERNO_DESCRICAO.findall(descricao)
+        for cad, num in _PADRAO_CADERNO_DESCRICAO.findall(descricao)
     }
 
 
@@ -105,10 +107,10 @@ def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
     video['snippet']['resourceId']['videoId'],
     video['snippet'].get('videoOwnerChannelTitle')) e liga cada um à
     questão canônica correspondente, quando existe gabarito pra ela.
-    Quando a descrição traz o bloco 'Questão N - Caderno X' de outras
-    cores (ver extrair_cadernos_da_descricao), o mesmo vídeo também é
-    ligado a essas outras provas -- só funciona pra cor que já tem
-    gabarito carregado, as demais caem em 'cruzados_sem_questao'.
+    Quando a descrição traz o bloco 'Caderno X - N' de outras cores (ver
+    extrair_cadernos_da_descricao), o mesmo vídeo também é ligado a
+    essas outras provas -- só funciona pra cor que já tem gabarito
+    carregado, as demais caem em 'cruzados_sem_questao'.
 
     Retorna um resumo detalhado -- nada é escrito silenciosamente."""
     resultado = {
@@ -165,7 +167,11 @@ def processar_playlist(videos: list, caderno: str = CADERNO_PADRAO) -> dict:
                 continue
             resultado["ligados_cruzados"].append({"id_questao": id_extra, "titulo": titulo})
             if materia:
-                _atualizar_materia_se_pendente(id_extra, ano, caderno_extra, numero_extra, materia)
+                status_extra = _atualizar_materia_se_pendente(id_extra, ano, caderno_extra, numero_extra, materia)
+                if status_extra:
+                    resultado["materia_atualizada"].append(
+                        {"id_questao": id_extra, "materia_nova": materia, "status": status_extra}
+                    )
 
     return resultado
 
@@ -448,7 +454,7 @@ def render_coletar_videos() -> None:
                     st.write(f"`{r['id_questao']}` — {r['titulo']}")
 
         if resultado["ligados_cruzados"]:
-            with st.expander(f"🔀 {len(resultado['ligados_cruzados'])} ligação(ões) extra via 'Questão N - Caderno X' na descrição"):
+            with st.expander(f"🔀 {len(resultado['ligados_cruzados'])} ligação(ões) extra via 'Caderno X - N' na descrição"):
                 for r in resultado["ligados_cruzados"]:
                     st.write(f"`{r['id_questao']}` — {r['titulo']}")
 
