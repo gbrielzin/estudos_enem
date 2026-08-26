@@ -18,10 +18,21 @@ _CSS = """
 <style>
 /* Remove marca d'água padrão do Streamlit (rodapé "Made with
    Streamlit" e o botão "Deploy") -- é o maior "carimbo de template"
-   visual que o framework deixa por padrão. */
+   visual que o framework deixa por padrão.
+
+   IMPORTANTE: esconder [data-testid="stToolbar"] inteiro (como esta
+   regra fazia antes) também esconde stExpandSidebarButton -- ele mora
+   DENTRO do toolbar, não ao lado. Em tela larga isso passava
+   despercebido porque a sidebar já abre expandida por padrão; no
+   celular ela abre FECHADA, e esse botão escondido era a única forma
+   de abrir o menu -- ficava só o cartão-resposta, sem acesso a
+   nenhuma outra página. Por isso a regra abaixo mira só
+   stToolbarActions (Deploy + menu hambúrguer), nunca o stToolbar
+   inteiro. Descoberto porque o usuário reportou o menu sumido no
+   celular depois do deploy -- não foi achado testando local. */
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
-[data-testid="stToolbar"] { visibility: hidden; height: 0; }
+[data-testid="stToolbarActions"] { visibility: hidden; }
 header[data-testid="stHeader"] { background: transparent; }
 
 /* Título principal com leve brilho neon -- só aqui, não em todo H1,
