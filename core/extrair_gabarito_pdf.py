@@ -9,10 +9,13 @@ aparecer OU com uma letra (A-E) OU na lista de anuladas (via nota de
 rodapé "Questão N Anulada"). Se sobrar alguma sem explicação, o
 script avisa em vez de seguir com dado incompleto.
 
-Uso: python extrair_gabarito_pdf.py <arquivo.pdf> <ano>
-Gera: gabaritos_reais/gabarito_<ano>_azul_OFICIAL.csv (numero,materia,gabarito;
+Uso: python extrair_gabarito_pdf.py <arquivo.pdf> <ano> [caderno]
+Gera: gabaritos_reais/gabarito_<ano>_<caderno>_OFICIAL.csv (numero,materia,gabarito;
 materia sai como placeholder 'SEM_VIDEO_PENDENTE' -- o PDF não traz assunto,
 só resposta. Pronto pra reconstruir_base.py pegar na próxima execução.)
+caderno é opcional, default 'azul' -- sempre informar quando o PDF for de
+outra cor (ex: amarela), senão o CSV sai com nome de azul e pode
+sobrescrever um gabarito de outra prova já carregada.
 """
 import csv
 import re
@@ -55,10 +58,11 @@ def extrair_gabarito_matematica(caminho: str, area_inicio: int = 136, area_fim: 
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print("Uso: python extrair_gabarito_pdf.py <arquivo.pdf> <ano>")
+        print("Uso: python extrair_gabarito_pdf.py <arquivo.pdf> <ano> [caderno]")
         sys.exit(1)
 
     caminho, ano = sys.argv[1], sys.argv[2]
+    caderno = sys.argv[3] if len(sys.argv) > 3 else "azul"
     gabarito, anuladas = extrair_gabarito_matematica(caminho)
 
     # Nome e colunas no formato que carregar_gabarito_csv() exige e que
@@ -68,7 +72,15 @@ if __name__ == "__main__":
     # já usa pra "ainda não sei a matéria desta questão", pra
     # reconstruir_base.py (com preservar_materia_classificada=True)
     # não tratar isso como uma classificação de verdade.
-    destino = Path(__file__).parent / "gabaritos_reais" / f"gabarito_{ano}_azul_OFICIAL.csv"
+    destino = Path(__file__).parent / "gabaritos_reais" / f"gabarito_{ano}_{caderno}_OFICIAL.csv"
+    if destino.exists() and "--sobrescrever" not in sys.argv:
+        print(
+            f"{destino} já existe -- não vou sobrescrever sem querer "
+            f"(provavelmente é a prova {caderno} de {ano} já carregada). "
+            "Confere se o caderno passado está certo; se for sobrescrita "
+            "de propósito, rode de novo com --sobrescrever no final."
+        )
+        sys.exit(1)
     with destino.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["numero", "materia", "gabarito"])

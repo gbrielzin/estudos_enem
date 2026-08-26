@@ -15,7 +15,7 @@ There is no test suite, linter, or build step. This is a Streamlit app + a set o
 - Run the app: `streamlit run cartao_resposta.py` (from inside `core/`)
 - Load/update `enem.db` from source-of-truth CSVs: `python reconstruir_base.py` — backs up `enem.db` first (via `backup_db.py`) then updates in place; idempotent, safe to rerun (see the note under Architecture below)
 - Smoke-test `db.py` in isolation: `python db.py` — this writes to `enem_teste.db`, never to `enem.db` (see the `__main__` block); safe to run anytime
-- Extract an official gabarito from an INEP PDF: `python extrair_gabarito_pdf.py <arquivo.pdf> <ano>` — requires the `pdftotext` CLI (poppler-utils) on PATH; writes `gabarito_oficial_<ano>_azul.csv`
+- Extract an official gabarito from an INEP PDF: `python extrair_gabarito_pdf.py <arquivo.pdf> <ano> [caderno]` — requires the `pdftotext` CLI (poppler-utils) on PATH; writes `gabaritos_reais/gabarito_<ano>_<caderno>_OFICIAL.csv` (`caderno` defaults to `azul` — always pass it explicitly for any other booklet color, e.g. `amarelo`, or this silently targets the azul filename; refuses to overwrite an existing file unless `--sobrescrever` is passed)
 - One-off backfill scripts (`classificar_2024.py`, and historically similar ones) are meant to be run once and read top-to-bottom before rerunning — they hardcode question numbers/answers for a specific gap in the data
 
 Dependencies: `streamlit` and `pandas` (see `../requirements.txt`), and, transitively through `coletar_videos.py` → `main.py`, the Google API client libraries used for YouTube auth.
