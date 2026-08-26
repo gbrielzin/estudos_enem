@@ -109,3 +109,12 @@ CREATE TABLE IF NOT EXISTS historico_alteracoes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_historico_questao ON historico_alteracoes(id_questao);
+
+-- Configuração chave-valor de propósito geral (hoje só guarda a meta
+-- diária de questões). Tabela solta em vez de coluna fixa em algum
+-- lugar porque é o único dado do sistema que não é fato sobre uma
+-- questão/tentativa -- é preferência do usuário sobre a própria meta.
+CREATE TABLE IF NOT EXISTS configuracoes (
+    chave  TEXT PRIMARY KEY,
+    valor  TEXT NOT NULL
+);
