@@ -1,45 +1,31 @@
 """
-reconstruir_base.py — reconstrução completa do banco a partir de fontes
+reconstruir_base.py — carrega/atualiza o banco a partir de fontes
 verificadas: gabarito oficial (PDF do INEP) + matéria real dos vídeos
 (questoes_enem.csv) + as respostas reais do usuário na prova de
 Matemática 2019 + correções manuais de triagem já feitas antes.
 
-Roda do zero (apaga enem.db antes). Pensado pra ser reexecutado sempre
-que houver gabarito novo — idempotente graças a sobrescrever=True.
+Pensado pra ser reexecutado sempre que houver gabarito novo —
+idempotente: NÃO apaga enem.db (só faz backup e atualiza em cima do que
+já existe), então rodar de novo não perde vídeo coletado depois, nem
+tentativa de outras provas, nem matéria preenchida via título de vídeo.
 
 ############################################################
-# ⚠️  NÃO RODE ISSO SEM BACKUP — leia antes (rode
-#     `python backup_db.py` primeiro, ou o botão "Fazer backup
-#     agora" na tela Admin do cartão-resposta).
+# Histórico: até 2026-08 este script apagava enem.db e reconstruía do
+# zero. Verificado então que isso destruía de verdade: resoluções
+# ligadas depois do último snapshot de questoes_enem.csv (coletar_
+# videos.py grava direto no banco, nunca mais nesse CSV), tentativas
+# de qualquer prova fora do bloco hardcoded de 2019 abaixo, e matéria
+# só preenchida via título de vídeo (coletar_videos.py só atualiza
+# quando a questão ainda está 'nao_classificado' — o rebuild antigo
+# não repetia esse passo, então tudo voltava a pendente).
 #
-# Verificado em 2026-08 comparando o enem.db real com o que este
-# script produziria: ele NÃO é capaz de reproduzir o estado atual da
-# base. Três coisas se perdem de verdade, sem aviso, se isso rodar:
-#
-# 1. Resoluções em vídeo ligadas depois do último snapshot de
-#    questoes_enem.csv. coletar_videos.py grava direto em
-#    resolucoes (nunca mais escreveu nesse CSV) — hoje o banco tem
-#    mais resoluções do que esse arquivo conhece. Rebuild = essas
-#    resoluções extras desaparecem, sem nenhum jeito de recuperar
-#    o link do vídeo depois.
-# 2. Tentativas de qualquer prova além do bloco hardcoded de
-#    Matemática 2019 (seção 3 abaixo). tentativas_usuario e
-#    estado_revisao (streak, próxima revisão) de TODAS as outras
-#    provas já respondidas são apagados e não voltam — não existe
-#    replay pra elas como existe pra triagem manual.
-# 3. Matéria conseguida via título de vídeo. coletar_videos.py só
-#    atualiza a matéria de uma questão que ainda está
-#    'nao_classificado' (ver processar_playlist() lá) — esse passo
-#    aqui embaixo (seção 2, "Ligando resoluções em vídeo") só chama
-#    inserir_resolucao(), nunca inserir_questao(sobrescrever=True,
-#    materia=...). Ou seja: mesmo a matéria que HOJE está correta
-#    porque veio do título de um vídeo já coletado volta a
-#    'nao_classificado' depois do rebuild, e só se corrige rodando
-#    de novo, na mão, cada playlist já coletada uma vez.
-#
-# Se for mesmo rodar: faça backup antes, e depois confira
-# questoes/resolucoes/tentativas_usuario contra o backup anterior
-# antes de confiar no resultado.
+# A partir daqui: sem DELETE do banco. inicializar_banco() é
+# idempotente por design (só CREATE TABLE IF NOT EXISTS). O passo de
+# resoluções e o de tentativas de 2019 agora conferem o que já existe
+# antes de inserir, pra rodar de novo sem duplicar. Ainda assim faz
+# backup automático no início, porque "idempotente na teoria" não vale
+# tanto quanto ter um arquivo pra voltar caso algo saia diferente do
+# esperado.
 ############################################################
 """
 import csv
@@ -50,11 +36,15 @@ from pathlib import Path
 import pandas as pd
 
 import db
+import backup_db
 
 PASTA = Path(__file__).parent
 db.DB_PATH = PASTA / "enem.db"
+
 if db.DB_PATH.exists():
-    db.DB_PATH.unlink()
+    caminho_backup = backup_db.fazer_backup()
+    print(f"Backup de segurança criado antes de atualizar: {caminho_backup.name}\n")
+
 db.inicializar_banco()
 
 # ============================================================
@@ -71,17 +61,21 @@ for caminho in sorted(glob.glob(str(PASTA / "gabaritos_reais" / "gabarito_*_OFIC
         # ciencias_natureza. Trata à parte pra não confundir "CIENCIAS"
         # com o nome do caderno no regex genérico abaixo.
         m = re.match(r"gabarito_(\d{4})_(\w+)_CIENCIAS_OFICIAL", nome)
-        ano, caderno = int(m.group(1)), m.group(2)
+        ano, caderno, area = int(m.group(1)), m.group(2), "ciencias_natureza"
         resumo = db.carregar_gabarito_csv(
-            caminho, ano=ano, caderno=caderno, grande_area_padrao="ciencias_natureza", sobrescrever=True
+            caminho, ano=ano, caderno=caderno, grande_area_padrao=area, sobrescrever=True,
+            preservar_materia_classificada=True,
         )
     else:
         m = re.match(r"gabarito_(\d{4})_(\w+)_OFICIAL", nome)
-        ano, caderno = int(m.group(1)), m.group(2)
-        resumo = db.carregar_gabarito_csv(caminho, ano=ano, caderno=caderno, sobrescrever=True)
+        ano, caderno, area = int(m.group(1)), m.group(2), "matematica"
+        resumo = db.carregar_gabarito_csv(
+            caminho, ano=ano, caderno=caderno, sobrescrever=True,
+            preservar_materia_classificada=True,
+        )
     resumo_total["classificadas"] += resumo["classificadas"]
     resumo_total["nao_classificadas"] += len(resumo["nao_classificadas"])
-    print(f"  {ano} ({caderno}): {resumo['classificadas']} classificadas, "
+    print(f"  {ano} ({caderno}, {area}): {resumo['classificadas']} classificadas, "
           f"{len(resumo['nao_classificadas'])} em triagem, {len(resumo['erros'])} erro(s)")
 
 print(f"TOTAL: {resumo_total['classificadas']} classificadas, {resumo_total['nao_classificadas']} em triagem")
@@ -150,18 +144,21 @@ videos_df["digital"] = videos_df["titulo"].apply(eh_digital)
 # caderno="Azul". 2023 (Cinza) nunca vai bater aqui, de propósito.
 candidatos = videos_df[(~videos_df["digital"]) & (videos_df["numero"].between(136, 180))]
 
-ligadas, sem_questao, digital_ignorados = 0, 0, 0
+ligadas, ja_existentes, sem_questao, digital_ignorados = 0, 0, 0, 0
 for _, linha in candidatos.iterrows():
     id_q = db.gerar_id_canonico(int(linha["ano_extraido"]), "Azul", int(linha["numero"]))
     try:
-        db.inserir_resolucao(id_q, "video", linha["link"], canal=linha["canal"])
-        ligadas += 1
+        if db.inserir_resolucao(id_q, "video", linha["link"], canal=linha["canal"]):
+            ligadas += 1
+        else:
+            ja_existentes += 1
     except ValueError:
         sem_questao += 1
 
 digital_ignorados = int(videos_df["digital"].sum())
 
-print(f"  Resoluções ligadas: {ligadas}")
+print(f"  Resoluções novas ligadas: {ligadas}")
+print(f"  Já existentes (idempotente, não duplicou): {ja_existentes}")
 print(f"  Sem questão correspondente (anuladas, ou fora de cobertura): {sem_questao}")
 print(f"  Vídeos DIGITAL ignorados de propósito (sem gabarito da aplicação digital ainda): {digital_ignorados}")
 
@@ -187,30 +184,44 @@ errou = {
 # 157, 178 -- sem alternativa registrada. 177, 179 -- resposta "2"/"5"
 # não é uma alternativa A-E válida, não vou adivinhar qual letra era.
 
-registradas, falharam = 0, []
-for numero in acertou:
-    id_q = db.gerar_id_canonico(2019, "Azul", numero)
-    with db._conectar() as conn:
-        gabarito = conn.execute(
-            "SELECT alternativa_correta FROM questoes WHERE id_questao=?", (id_q,)
-        ).fetchone()
-    if not gabarito:
-        falharam.append(numero)
-        continue
-    db.registrar_tentativa(id_q, gabarito[0])
-    registradas += 1
+# tentativas_usuario é append-only (sem chave única) -- sem essa checagem,
+# rodar este script de novo empilharia as mesmas 37 tentativas a cada
+# execução. Marcador: se QUALQUER uma das questões do bloco "acertou"
+# já tem tentativa registrada, assume que esse backfill já rodou antes
+# e pula o bloco inteiro (idempotente por "já rodou", não por linha).
+id_marcador = db.gerar_id_canonico(2019, "Azul", acertou[0])
+with db._conectar() as conn:
+    ja_rodou = conn.execute(
+        "SELECT 1 FROM tentativas_usuario WHERE id_questao = ? LIMIT 1", (id_marcador,)
+    ).fetchone()
 
-for numero, resposta in errou.items():
-    id_q = db.gerar_id_canonico(2019, "Azul", numero)
-    try:
-        db.registrar_tentativa(id_q, resposta)
+if ja_rodou:
+    print("  Backfill de 2019 já tinha rodado antes (tentativas já existem) -- pulando pra não duplicar.")
+else:
+    registradas, falharam = 0, []
+    for numero in acertou:
+        id_q = db.gerar_id_canonico(2019, "Azul", numero)
+        with db._conectar() as conn:
+            gabarito = conn.execute(
+                "SELECT alternativa_correta FROM questoes WHERE id_questao=?", (id_q,)
+            ).fetchone()
+        if not gabarito:
+            falharam.append(numero)
+            continue
+        db.registrar_tentativa(id_q, gabarito[0])
         registradas += 1
-    except ValueError:
-        falharam.append(numero)
 
-print(f"  Tentativas registradas: {registradas} (esperado: 37)")
-print(f"  Falharam (questão não encontrada): {falharam}")
-print(f"  Fora do escopo, sem resposta confiável: 136, 137, 146, 154, 157, 178, 177(?), 179(?) -- 8 questões")
+    for numero, resposta in errou.items():
+        id_q = db.gerar_id_canonico(2019, "Azul", numero)
+        try:
+            db.registrar_tentativa(id_q, resposta)
+            registradas += 1
+        except ValueError:
+            falharam.append(numero)
+
+    print(f"  Tentativas registradas: {registradas} (esperado: 37)")
+    print(f"  Falharam (questão não encontrada): {falharam}")
+    print(f"  Fora do escopo, sem resposta confiável: 136, 137, 146, 154, 157, 178, 177(?), 179(?) -- 8 questões")
 
 # ============================================================
 # 4. VERIFICAÇÃO FINAL
