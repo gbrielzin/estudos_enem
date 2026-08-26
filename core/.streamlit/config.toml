@@ -1,0 +1,28 @@
+# Tema "verde fluorescente" do cartão-resposta. Ver core/ui_theme.py pro
+# CSS complementar (esconde o rodapé "Made with Streamlit", estiliza
+# botões/cards/bolhas de resposta) que o config sozinho não alcança.
+
+[theme]
+base = "dark"
+
+primaryColor = "#39FF14"
+backgroundColor = "#0A0F0A"
+secondaryBackgroundColor = "#131C13"
+textColor = "#E7FFEA"
+borderColor = "#245C2E"
+greenColor = "#39FF14"
+
+showWidgetBorder = true
+showSidebarBorder = true
+
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+headingFont = "Space Grotesk:https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap"
+codeFont = "JetBrains Mono:https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
+
+baseFontWeight = 400
+headingFontWeights = 700
+metricValueFontSize = "2.25rem"
+metricValueFontWeight = 700
+
+baseRadius = "0.6rem"
+buttonRadius = "0.5rem"
