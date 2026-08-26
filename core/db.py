@@ -1232,6 +1232,43 @@ def calcular_ofensiva() -> dict:
     return {"atual": atual, "melhor": melhor, "calendario_30_dias": calendario_30_dias}
 
 
+def obter_configuracao(chave: str, padrao: str | None = None) -> str | None:
+    with _conectar() as conn:
+        linha = conn.execute("SELECT valor FROM configuracoes WHERE chave = ?", (chave,)).fetchone()
+    return linha[0] if linha else padrao
+
+
+def definir_configuracao(chave: str, valor: str) -> None:
+    with _conectar() as conn:
+        conn.execute(
+            "INSERT INTO configuracoes (chave, valor) VALUES (?, ?) "
+            "ON CONFLICT(chave) DO UPDATE SET valor = excluded.valor",
+            (chave, valor),
+        )
+
+
+META_DIARIA_PADRAO = 20
+
+
+def progresso_meta_diaria() -> dict:
+    """Quantas tentativas de hoje contra a meta diária configurada
+    (padrão 20, editável na tela Admin). Conta TENTATIVA, não questão
+    distinta -- responder a mesma questão de novo ainda é prática,
+    mesma lógica de calcular_ofensiva() pra 'teve atividade hoje'."""
+    meta = int(obter_configuracao("meta_diaria", str(META_DIARIA_PADRAO)))
+    hoje = date.today().isoformat()
+    with _conectar() as conn:
+        feitas_hoje = conn.execute(
+            "SELECT COUNT(*) FROM tentativas_usuario WHERE date(data_tentativa) = ?", (hoje,)
+        ).fetchone()[0]
+    return {
+        "meta": meta,
+        "feitas_hoje": feitas_hoje,
+        "restantes": max(0, meta - feitas_hoje),
+        "atingida": feitas_hoje >= meta,
+    }
+
+
 _RANKS = [
     (0, "E-Rank"), (100, "D-Rank"), (300, "C-Rank"),
     (600, "B-Rank"), (1000, "A-Rank"), (1500, "S-Rank"),

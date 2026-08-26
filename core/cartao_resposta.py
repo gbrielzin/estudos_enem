@@ -381,6 +381,14 @@ def render_analise() -> None:
     if nivel["proximo_rank"]:
         st.caption(f"Faltam {nivel['xp_para_proximo']} XP pro {nivel['proximo_rank']}.")
 
+    meta = db.progresso_meta_diaria()
+    fracao = min(1.0, meta["feitas_hoje"] / meta["meta"]) if meta["meta"] else 0.0
+    st.progress(fracao)
+    if meta["atingida"]:
+        st.caption(f"✅ Meta de hoje batida: {meta['feitas_hoje']}/{meta['meta']} questões.")
+    else:
+        st.caption(f"Meta de hoje: {meta['feitas_hoje']}/{meta['meta']} questões — faltam {meta['restantes']}.")
+
     st.caption("Últimos 30 dias:")
     dias = ofensiva["calendario_30_dias"]
     quadrados = "".join(
@@ -517,6 +525,18 @@ def render_admin() -> None:
                         )
     else:
         st.info("Nenhum backup ainda — vale fazer um agora, principalmente antes de carregar gabarito novo em lote.")
+
+    st.divider()
+
+    st.subheader("🎯 Meta diária")
+    meta_atual = db.progresso_meta_diaria()["meta"]
+    nova_meta = st.number_input(
+        "Questões por dia", min_value=1, max_value=200, value=meta_atual, key="admin_meta_diaria",
+    )
+    if st.button("Salvar meta", key="admin_salvar_meta"):
+        db.definir_configuracao("meta_diaria", str(int(nova_meta)))
+        st.success(f"Meta diária atualizada pra {int(nova_meta)} questões.")
+        st.rerun()
 
     st.divider()
 
