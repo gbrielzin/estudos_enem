@@ -24,6 +24,7 @@ import streamlit as st
 import db
 import coletar_videos
 import triagem
+import backup_db
 
 
 def render_carregar_gabarito() -> None:
@@ -348,6 +349,38 @@ def render_analise() -> None:
 
 
 def render_admin() -> None:
+    st.subheader("💾 Backup do banco")
+    st.caption(
+        "Ninguém reconstrói a base do zero sem um backup na mão primeiro — "
+        "reconstruir_base.py não sabe recriar vídeo coletado nem tentativa respondida "
+        "fora do que já está congelado em CSV. Clique aqui antes de mexer em qualquer coisa arriscada."
+    )
+    col_backup1, col_backup2 = st.columns([1, 2])
+    with col_backup1:
+        if st.button("📦 Fazer backup agora", type="primary"):
+            caminho = backup_db.fazer_backup()
+            st.session_state["ultimo_backup"] = str(caminho)
+            st.success(f"Backup criado: {caminho.name}")
+
+    backups = backup_db.listar_backups()
+    if backups:
+        with st.expander(f"Backups existentes ({len(backups)})"):
+            for caminho in backups:
+                tamanho_mb = caminho.stat().st_size / 1_000_000
+                c1, c2 = st.columns([3, 1])
+                with c1:
+                    st.write(f"`{caminho.name}` — {tamanho_mb:.2f} MB")
+                with c2:
+                    with open(caminho, "rb") as f:
+                        st.download_button(
+                            "⬇️ Baixar", data=f.read(), file_name=caminho.name,
+                            mime="application/octet-stream", key=f"baixar_{caminho.name}",
+                        )
+    else:
+        st.info("Nenhum backup ainda — vale fazer um agora, principalmente antes de carregar gabarito novo em lote.")
+
+    st.divider()
+
     st.subheader("Colar gabarito direto (sem arquivo)")
     st.caption(
         "Cola um CSV com colunas numero,materia,gabarito (a primeira linha tem que ser esse cabeçalho). "
