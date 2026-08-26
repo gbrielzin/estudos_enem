@@ -1031,33 +1031,56 @@ def _tagline_contagem_regressiva() -> str:
     return f"treino com prova real, corrigido na hora · 🗓️ {prova['dias_restantes']} dias até o ENEM"
 
 
+_PAGINAS = [
+    ("cartao", "📝", "Cartão-resposta"),
+    ("analise", "📊", "Minha análise"),
+    ("calendario", "📅", "Calendário"),
+    ("objetivos", "🎯", "Objetivos"),
+    ("redacao", "✍️", "Redação"),
+    ("coletar", "🔗", "Coletar vídeos"),
+    ("triagem", "🏷️", "Triagem"),
+    ("admin", "🔐", "Admin"),
+    ("guia", "📚", "Guia do Estudante"),
+]
+
+
 if __name__ == "__main__":
     st.set_page_config(page_title="Cartão-resposta", page_icon="📝", layout="wide")
     db.inicializar_banco()
     ui_theme.injetar_tema()
+
+    # Navegação por query param (?pagina=...) em vez de st.sidebar.radio()
+    # de propósito -- a sidebar nativa do Streamlit abre FECHADA por
+    # padrão em tela estreita, e o botão pra abrir ficou inacessível no
+    # celular do Gabriel mesmo depois de ajustar o CSS (reportado em
+    # produção 2x). Um menu implementado do zero com <a href="?pagina=..">
+    # simples não depende de nenhum comportamento responsivo interno do
+    # Streamlit que eu não consigo testar de verdade nesta sessão --
+    # funciona igual em qualquer largura de tela, verificável via DOM
+    # sem precisar simular celular.
+    valores_validos = {chave for chave, _, _ in _PAGINAS}
+    pagina_atual = st.query_params.get("pagina", "cartao")
+    if pagina_atual not in valores_validos:
+        pagina_atual = "cartao"
+
+    ui_theme.navegacao_lateral(_PAGINAS, pagina_atual)
     ui_theme.hero("📝 Cartão-resposta digital", _tagline_contagem_regressiva())
 
-    pagina = st.sidebar.radio(
-        "Menu",
-        ["📝 Cartão-resposta", "📊 Minha análise", "📅 Calendário", "🎯 Objetivos", "✍️ Redação",
-         "🔗 Coletar vídeos", "🏷️ Triagem", "🔐 Admin", "📚 Guia do Estudante"],
-    )
-
-    if pagina == "📝 Cartão-resposta":
+    if pagina_atual == "cartao":
         render_cartao_resposta()
-    elif pagina == "📊 Minha análise":
+    elif pagina_atual == "analise":
         render_analise()
-    elif pagina == "📅 Calendário":
+    elif pagina_atual == "calendario":
         render_calendario()
-    elif pagina == "🎯 Objetivos":
+    elif pagina_atual == "objetivos":
         render_objetivos()
-    elif pagina == "✍️ Redação":
+    elif pagina_atual == "redacao":
         render_redacao()
-    elif pagina == "🔗 Coletar vídeos":
+    elif pagina_atual == "coletar":
         coletar_videos.render_coletar_videos()
-    elif pagina == "🏷️ Triagem":
+    elif pagina_atual == "triagem":
         triagem.render_triagem()
-    elif pagina == "🔐 Admin":
+    elif pagina_atual == "admin":
         render_admin()
-    elif pagina == "📚 Guia do Estudante":
+    elif pagina_atual == "guia":
         render_guia_estudante()

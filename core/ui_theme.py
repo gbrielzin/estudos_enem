@@ -13,6 +13,7 @@ interação, então isso roda de novo a cada rerun — é barato (só injeta
 uma tag <style>), não precisa de cache.
 """
 import streamlit as st
+import streamlit.components.v1 as components
 
 _CSS = """
 <style>
@@ -35,6 +36,114 @@ footer { visibility: hidden; }
 [data-testid="stToolbarActions"] { visibility: hidden; }
 header[data-testid="stHeader"] { background: transparent; }
 
+/* Menu próprio (hamburguer + gaveta), substitui st.sidebar. Abrir/
+   fechar é via onclick + classList.toggle (JS mínimo, inline, sem
+   depender de nenhum script externo carregar) -- não o truque de
+   checkbox+label puro-CSS. Motivo: o seletor de irmão geral
+   (`:checked ~ .nav-drawer`) batia estruturalmente (element.matches()
+   confirmava) mas o valor do CSS não era aplicado de forma confiável
+   nesta sessão de teste, mesmo com !important -- um comportamento de
+   invalidação de estilo que não consegui explicar nem confiar. Toggle
+   direto de classe via onclick, verificado instantâneo e 100%
+   reproduzível, não tem essa ambiguidade: é só "o elemento tem a
+   classe ou não tem". */
+/* z-index alto de propósito: [data-testid="stHeader"]/stToolbar (a
+   barra do Streamlit que sobra no topo, área do Deploy que já
+   escondemos) usa z-index: 999990 -- descoberto inspecionando
+   elementFromPoint() no botão hambúrguer, que visualmente aparecia por
+   cima mas não recebia o clique (o header, mesmo transparente, ainda
+   captura o evento por estar num contexto de empilhamento mais alto).
+   999999+ garante que hambúrguer/gaveta/overlay ficam acima dessa
+   barra em qualquer estado. */
+.nav-hamburger {
+    position: fixed;
+    top: 0.7rem;
+    left: 0.7rem;
+    z-index: 1000001;
+    background: #131C13;
+    border: 1px solid #245C2E;
+    border-radius: 0.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #E7FFEA;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    user-select: none;
+}
+
+.nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 8, 5, 0.6);
+    z-index: 999999;
+    cursor: pointer;
+}
+.nav-overlay.ativo { display: block !important; }
+
+.nav-drawer {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 280px;
+    max-width: 80vw;
+    height: 100vh;
+    background: #0A0F0A;
+    border-right: 1px solid #245C2E;
+    z-index: 1000000;
+    /* Sem transition de propósito: com "transition: left" o toggle
+       ficava impossível de verificar nesta ferramenta de teste --
+       getComputedStyle().left continuava preso no valor antigo
+       indefinidamente após o toggle (mesmo com a classe .aberto
+       correta e a regra !important correta, confirmado via
+       document.styleSheets), mesmo em elemento isolado de teste sem
+       nenhuma ligação com o Streamlit -- reproduzido mesmo esperando
+       vários segundos reais entre checagens. Tudo indica que é a aba
+       automatizada não rodando frames de composição de verdade (sem
+       foco visual), não um bug de CSS -- mas como não dá pra confirmar
+       isso com certeza aqui, abrir/fechar direto (sem slide) troca um
+       polimento visual por um comportamento 100% verificável. */
+    display: flex;
+    flex-direction: column;
+    padding: 4.5rem 0 1.5rem;
+    overflow-y: auto;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+}
+.nav-drawer.aberto { left: 0 !important; }
+
+.nav-drawer .nav-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #E7FFEA;
+    padding: 0 1.3rem 1rem;
+    letter-spacing: 0.02em;
+}
+
+.nav-drawer a.nav-item {
+    display: block;
+    padding: 0.75rem 1.3rem;
+    color: #C9E8CE;
+    text-decoration: none;
+    font-size: 0.96rem;
+    border-left: 3px solid transparent;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.nav-drawer a.nav-item:hover {
+    background: rgba(57, 255, 20, 0.08);
+}
+.nav-drawer a.nav-item.ativo {
+    color: #39FF14;
+    border-left-color: #39FF14;
+    background: rgba(57, 255, 20, 0.1);
+    font-weight: 600;
+}
+
 /* Título principal com leve brilho neon -- só aqui, não em todo H1,
    pra não cansar a vista em telas com várias seções. */
 .app-hero {
@@ -43,6 +152,7 @@ header[data-testid="stHeader"] { background: transparent; }
     gap: 0.75rem;
     flex-wrap: wrap;
     margin-bottom: 0.25rem;
+    margin-top: 2.5rem;
 }
 .app-hero h1 {
     margin: 0;
@@ -150,6 +260,85 @@ div.app-streak-calendar {
 
 def injetar_tema() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
+
+
+def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) -> None:
+    """Menu próprio (hamburguer + gaveta deslizante), substitui
+    st.sidebar.radio(). A sidebar nativa do Streamlit abre FECHADA por
+    padrão em tela estreita, e o botão pra reabrir ficou inacessível
+    no celular do usuário mesmo depois de eu corrigir o CSS que
+    escondia ele por engano -- reportado em produção 2 vezes. Em vez
+    de continuar caçando comportamento responsivo interno do Streamlit
+    que eu não consigo testar de verdade nesta sessão (sem jeito de
+    simular celular aqui), a navegação virou links puros
+    (?pagina=chave, lidos via st.query_params em cartao_resposta.py) +
+    gaveta CSS -- funciona igual em qualquer largura de tela, e dá pra
+    verificar via DOM sem precisar de viewport estreito de verdade.
+
+    `paginas`: lista de (chave, emoji, rótulo). `pagina_atual`: chave
+    da página selecionada agora, só pra destacar no menu."""
+    itens_html = "".join(
+        f'<a href="?pagina={chave}" target="_self" '
+        f'class="nav-item{" ativo" if chave == pagina_atual else ""}">{emoji} {rotulo}</a>'
+        for chave, emoji, rotulo in paginas
+    )
+    # Tudo dentro de UM <div class="nav-root"> só por organização -- a
+    # relação de irmão não importa mais pro toggle (isso era só
+    # problema da versão checkbox+CSS puro, abandonada).
+    st.markdown(
+        '<div class="nav-root">'
+        '<div class="nav-hamburger" role="button" tabindex="0" '
+        'aria-label="Abrir menu">☰</div>'
+        '<div class="nav-overlay"></div>'
+        '<nav class="nav-drawer">'
+        '<div class="nav-title">📝 Menu</div>'
+        f"{itens_html}"
+        "</nav>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    # st.markdown(unsafe_allow_html=True) SANITIZA atributos on* (onclick
+    # some do DOM renderizado, confirmado inspecionando o elemento real --
+    # não é bloqueado por CSS/especificidade, o próprio atributo não
+    # existe). Por isso o clique é ligado à parte via components.html:
+    # esse caminho renderiza dentro de um <iframe srcdoc>, que o
+    # Streamlit não sanitiza (é a via oficial pra JS de verdade). O
+    # iframe srcdoc herda o mesmo origin da página, então
+    # window.parent.document alcança os elementos de verdade -- viram
+    # os MESMOS nós que o <div class="nav-root"> acima criou, só que
+    # com onclick ligado via propriedade (não atributo), o que também
+    # evita empilhar handlers duplicados a cada rerun do Streamlit
+    # (atribuir .onclick substitui o anterior, addEventListener não).
+    components.html(
+        """
+        <script>
+        (function () {
+            var doc = window.parent.document;
+            var ham = doc.querySelector('.nav-hamburger');
+            var ov = doc.querySelector('.nav-overlay');
+            var dr = doc.querySelector('.nav-drawer');
+            if (!ham || !ov || !dr) { return; }
+            function alternar() {
+                dr.classList.toggle('aberto');
+                ov.classList.toggle('ativo');
+            }
+            function fechar() {
+                dr.classList.remove('aberto');
+                ov.classList.remove('ativo');
+            }
+            ham.onclick = alternar;
+            ham.onkeydown = function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    alternar();
+                }
+            };
+            ov.onclick = fechar;
+        })();
+        </script>
+        """,
+        height=0,
+    )
 
 
 def hero(titulo: str, tagline: str = "") -> None:
