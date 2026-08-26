@@ -807,6 +807,66 @@ def listar_provas() -> list[tuple[int, str, str]]:
     return linhas
 
 
+def simulados_completos_disponiveis() -> list[dict]:
+    """Anos com AS DUAS grandes áreas carregadas -- o que 'Simulado
+    completo' precisa pra existir. Cada área guarda o PRÓPRIO caderno
+    (não assume que os dois usam o mesmo): 2023 é matemática/Azul +
+    ciências/Cinza, cadernos de cor diferente no mesmo ano, um padrão
+    real do INEP naquele ano -- sem isso esse ano ficava invisível pro
+    simulado completo mesmo tendo as duas áreas certinhas no banco."""
+    por_ano: dict[int, dict[str, str]] = {}
+    for ano, caderno, area in listar_provas():
+        por_ano.setdefault(ano, {})[area] = caderno
+
+    return [
+        {"ano": ano, "caderno_matematica": areas["matematica"], "caderno_ciencias": areas["ciencias_natureza"]}
+        for ano, areas in sorted(por_ano.items(), reverse=True)
+        if "matematica" in areas and "ciencias_natureza" in areas
+    ]
+
+
+def progresso_simulados() -> list[dict]:
+    """Pra cada ano com simulado completo disponível: quanto já foi
+    respondido (cobertura) e quanto das erradas já tem tipo_erro
+    classificado -- a 'correção' de verdade, refletir sobre o motivo,
+    não só bater contra o gabarito. Base pro checklist do Calendário."""
+    resultado = []
+    for combo in simulados_completos_disponiveis():
+        ano = combo["ano"]
+        with _conectar() as conn:
+            total = conn.execute(
+                "SELECT COUNT(*) FROM questoes WHERE ano = ? AND "
+                "((grande_area='matematica' AND caderno=?) OR (grande_area='ciencias_natureza' AND caderno=?))",
+                (ano, combo["caderno_matematica"], combo["caderno_ciencias"]),
+            ).fetchone()[0]
+            respondidas = conn.execute(
+                "SELECT COUNT(DISTINCT t.id_questao) FROM tentativas_usuario t "
+                "JOIN questoes q ON q.id_questao = t.id_questao "
+                "WHERE q.ano = ? AND "
+                "((q.grande_area='matematica' AND q.caderno=?) OR (q.grande_area='ciencias_natureza' AND q.caderno=?))",
+                (ano, combo["caderno_matematica"], combo["caderno_ciencias"]),
+            ).fetchone()[0]
+            erradas = conn.execute(
+                "SELECT COUNT(*), SUM(CASE WHEN t.tipo_erro IS NOT NULL THEN 1 ELSE 0 END) "
+                "FROM tentativas_usuario t JOIN questoes q ON q.id_questao = t.id_questao "
+                "WHERE t.resultado='errou' AND q.ano = ? AND "
+                "((q.grande_area='matematica' AND q.caderno=?) OR (q.grande_area='ciencias_natureza' AND q.caderno=?))",
+                (ano, combo["caderno_matematica"], combo["caderno_ciencias"]),
+            ).fetchone()
+        total_erradas, erradas_com_motivo = erradas[0] or 0, erradas[1] or 0
+        resultado.append({
+            "ano": ano,
+            "total_questoes": total,
+            "respondidas": respondidas,
+            "cobertura_pct": round(respondidas / total * 100, 1) if total else 0.0,
+            "feito": respondidas >= total * 0.8 if total else False,
+            "erradas_total": total_erradas,
+            "erradas_corrigidas": erradas_com_motivo,
+            "correcao_completa": (erradas_com_motivo >= total_erradas) if total_erradas else True,
+        })
+    return resultado
+
+
 _COLUNAS_QUESTAO_GRADE = (
     "id_questao, numero_questao, materia, status_classificacao, "
     "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path"
@@ -1266,6 +1326,84 @@ def progresso_meta_diaria() -> dict:
         "feitas_hoje": feitas_hoje,
         "restantes": max(0, meta - feitas_hoje),
         "atingida": feitas_hoje >= meta,
+    }
+
+
+DATA_PROVA_PADRAO = "2026-11-08"
+
+
+def dias_ate_prova() -> dict:
+    """Contagem regressiva. data_prova vem de configuracoes (editável
+    na tela Admin) -- não hardcoded direto no código, porque a data
+    muda a cada edição/ano e não é algo pra depender de deploy pra
+    corrigir."""
+    data_prova = date.fromisoformat(obter_configuracao("data_prova", DATA_PROVA_PADRAO))
+    hoje = date.today()
+    dias = (data_prova - hoje).days
+    return {"data_prova": data_prova.isoformat(), "dias_restantes": dias, "ja_passou": dias < 0}
+
+
+_FASES_PLANO = {
+    "diagnostico": "Diagnóstico",
+    "ataque_fraquezas": "Ataque às fraquezas",
+    "simulados_intensivos": "Simulados intensivos",
+    "taper": "Reta final (taper)",
+    "prova": "Dia da prova",
+    "pos_prova": "Prova já passou",
+}
+
+
+def plano_periodizacao() -> dict:
+    """Divide o tempo até a prova em fases, ancoradas na DATA da prova
+    (contando de trás pra frente: taper primeiro, depois simulados
+    intensivos) e na data em que o plano começou a ser usado (contando
+    da frente: diagnóstico) -- não em 'dias restantes' sozinho, que
+    mudaria a duração de cada fase every vez que a página fosse aberta.
+    data_inicio_plano é gravada uma vez, na primeira vez que isso roda,
+    e não muda depois -- é o ponto zero do plano.
+
+    Números fixos (TAPER/INTENSIVO/DIAGNOSTICO) são tetos, não pisos:
+    encolhem proporcionalmente se o tempo total for curto, pra nunca
+    devolver uma fase maior que o próprio plano."""
+    prova = dias_ate_prova()
+    data_prova = date.fromisoformat(prova["data_prova"])
+    hoje = date.today()
+
+    data_inicio_str = obter_configuracao("data_inicio_plano")
+    if data_inicio_str is None:
+        data_inicio_str = hoje.isoformat()
+        definir_configuracao("data_inicio_plano", data_inicio_str)
+    data_inicio = date.fromisoformat(data_inicio_str)
+
+    dias_totais = max((data_prova - data_inicio).days, 1)
+    dias_restantes = prova["dias_restantes"]
+    dias_decorridos = (hoje - data_inicio).days
+
+    if dias_restantes < 0:
+        fase = "pos_prova"
+    elif dias_restantes == 0:
+        fase = "prova"
+    else:
+        taper = max(1, min(4, dias_totais // 10))
+        intensivo = max(1, min(14, dias_totais // 4))
+        diagnostico = max(1, min(10, dias_totais // 6))
+
+        if dias_restantes <= taper:
+            fase = "taper"
+        elif dias_restantes <= taper + intensivo:
+            fase = "simulados_intensivos"
+        elif dias_decorridos < diagnostico:
+            fase = "diagnostico"
+        else:
+            fase = "ataque_fraquezas"
+
+    return {
+        "fase": fase,
+        "fase_label": _FASES_PLANO[fase],
+        "dias_totais_plano": dias_totais,
+        "dias_decorridos": max(dias_decorridos, 0),
+        "dias_restantes": dias_restantes,
+        "data_prova": prova["data_prova"],
     }
 
 

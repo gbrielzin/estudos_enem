@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 core/enem_teste.db
 core/backups/
+core/vision_board/
