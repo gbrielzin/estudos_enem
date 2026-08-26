@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A personal ENEM study system (Portuguese-language codebase/comments) for one user (Gabriel) preparing to retake the exam. `core/` is a from-scratch rewrite of a legacy prototype that lives one directory up (`enem_gi/main.py`, `enem_gi/app.py`) — the legacy system stored everything in a single CSV and had real bugs (schema collisions between scripts writing the same file, string-fragmented taxonomy like "Matemática Básica" vs "matemática básica", one video = one question with no room for a second resolution). `core/` replaces the CSV with a SQLite database (`enem.db`) plus a relational schema specifically to make those bug classes impossible by construction. This directory is not currently a git repository.
+A personal ENEM study system (Portuguese-language codebase/comments) for one user (Gabriel) preparing to retake the exam. `core/` is a from-scratch rewrite of a legacy prototype that lives one directory up (`enem_gi/main.py`, `enem_gi/app.py`) — the legacy system stored everything in a single CSV and had real bugs (schema collisions between scripts writing the same file, string-fragmented taxonomy like "Matemática Básica" vs "matemática básica", one video = one question with no room for a second resolution). `core/` replaces the CSV with a SQLite database (`enem.db`) plus a relational schema specifically to make those bug classes impossible by construction. The project root has a local git repository (initialized 2026-08, nothing pushed anywhere) — commit before risky changes, same as any other repo.
 
 Do not "fix" the legacy files in the parent directory as part of work here — `core/` intentionally does not import from them except for one deliberate exception (see Cross-directory dependency below).
 
@@ -13,12 +13,14 @@ Do not "fix" the legacy files in the parent directory as part of work here — `
 There is no test suite, linter, or build step. This is a Streamlit app + a set of one-off/maintenance scripts.
 
 - Run the app: `streamlit run cartao_resposta.py` (from inside `core/`)
-- Rebuild `enem.db` from scratch from source-of-truth CSVs: `python reconstruir_base.py` — **deletes and recreates `enem.db`**, run only when you mean it
+- Load/update `enem.db` from source-of-truth CSVs: `python reconstruir_base.py` — backs up `enem.db` first (via `backup_db.py`) then updates in place; idempotent, safe to rerun (see the note under Architecture below)
 - Smoke-test `db.py` in isolation: `python db.py` — this writes to `enem_teste.db`, never to `enem.db` (see the `__main__` block); safe to run anytime
 - Extract an official gabarito from an INEP PDF: `python extrair_gabarito_pdf.py <arquivo.pdf> <ano>` — requires the `pdftotext` CLI (poppler-utils) on PATH; writes `gabarito_oficial_<ano>_azul.csv`
 - One-off backfill scripts (`classificar_2024.py`, and historically similar ones) are meant to be run once and read top-to-bottom before rerunning — they hardcode question numbers/answers for a specific gap in the data
 
-Dependencies: `streamlit` (see `../requirements.txt`), plus `pandas` (used by `reconstruir_base.py` but not currently listed in requirements.txt) and, transitively through `coletar_videos.py` → `main.py`, the Google API client libraries used for YouTube auth.
+Dependencies: `streamlit` and `pandas` (see `../requirements.txt`), and, transitively through `coletar_videos.py` → `main.py`, the Google API client libraries used for YouTube auth.
+
+`reconstruir_base.py` no longer deletes `enem.db` — it backs it up (via `backup_db.py`) and updates in place, idempotently. `db.carregar_gabarito_csv(..., preservar_materia_classificada=True)` is what makes that safe: an already-`classificado` question keeps its current `materia` even under `sobrescrever=True`, so bulk-loading a gabarito CSV (whose `materia` column is often just a placeholder like `sem_video_pendente`) can't regress a classification gained later via video-title scraping or manual triage. UI callers (Admin paste, Triagem) don't pass that flag — there, `sobrescrever=True` is deliberate human correction and should win.
 
 ## Architecture
 
