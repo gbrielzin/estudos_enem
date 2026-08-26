@@ -2,8 +2,9 @@
 
 Ferramenta pessoal do Gabriel pra treinar questões reais do ENEM (2019–2025,
 Matemática e Ciências da Natureza), com correção automática, repetição
-espaçada (Leitner), vídeo-resolução ligado a cada questão errada e
-análise de prioridade de estudo por matéria.
+espaçada (Leitner), vídeo-resolução ligado a cada questão errada,
+análise de prioridade de estudo por matéria, calendário de reta final e
+quadro de objetivos. Prova em 08/11/2026.
 
 ## Rodar o app
 
@@ -34,6 +35,13 @@ cartão-resposta, ou `python backup_db.py` de dentro de `core/`.
 que já existe, sem perder vídeo coletado, tentativa registrada, ou
 matéria preenchida via título de vídeo. Detalhes no aviso no topo do
 próprio arquivo.
+
+## Rodar de qualquer lugar (celular, sem notebook ligado)
+
+Ver `DEPLOY.md` — tem uma opção que já funciona agora (mesma wifi, zero
+configuração) e uma de deploy de verdade, de graça (Streamlit Community
+Cloud), com os passos que só você pode fazer (login em conta) separados
+do que já está pronto no código.
 
 ## Configuração
 

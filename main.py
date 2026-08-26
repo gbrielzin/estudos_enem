@@ -23,13 +23,24 @@ PADRAO_NIVEL = re.compile(
 # ============================================================
 
 def autenticar_youtube():
-    """Carrega a API Key do .env (com prioridade sobre variáveis do sistema)
-    e retorna um cliente autenticado do YouTube."""
-    load_dotenv(override=True)  # garante que o .env do projeto sempre vence
-    api_key = os.getenv("YOUTUBE_API_KEY")
+    """Carrega a API Key do Streamlit secrets primeiro (é onde ela mora
+    num deploy na nuvem, tipo Streamlit Community Cloud -- lá não existe
+    .env), com fallback pro .env local. Mesmo código funciona rodando
+    na sua máquina ou deployado, sem precisar de dois caminhos
+    diferentes no resto do projeto."""
+    api_key = None
+    try:
+        import streamlit as st
+        api_key = st.secrets.get("YOUTUBE_API_KEY")
+    except Exception:
+        pass  # sem secrets.toml (normal rodando local) -- cai pro .env
 
     if not api_key:
-        raise ValueError("API Key não encontrada. Verifique seu arquivo .env")
+        load_dotenv(override=True)  # garante que o .env do projeto sempre vence
+        api_key = os.getenv("YOUTUBE_API_KEY")
+
+    if not api_key:
+        raise ValueError("API Key não encontrada. Verifique seu .env (local) ou os Secrets do app (nuvem).")
 
     return build("youtube", "v3", developerKey=api_key)
 
