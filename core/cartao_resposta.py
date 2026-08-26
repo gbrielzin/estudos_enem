@@ -478,41 +478,52 @@ def render_analise() -> None:
     st.dataframe(linhas, hide_index=True, use_container_width=True)
 
 
-_FASE_DESCRICAO = {
-    "diagnostico": "Retomar o ritmo e mapear onde você está de verdade — não pra confirmar o que já sabe, pra achar exatamente onde dói.",
-    "ataque_fraquezas": "A fase mais longa e mais importante: repetição deliberada nas matérias que mais caem E mais você erra, até o erro parar de se repetir.",
-    "simulados_intensivos": "Menos conteúdo novo, mais prova inteira cronometrada — treinar o corpo e a cabeça pras horas de prova, não só o conteúdo.",
-    "taper": "Reduzir, não aumentar. O ganho de conteúdo já foi feito — o que resta agora é chegar descansado, não mais cansado.",
+_FASE_PRINCIPIO = {
+    "fase1_fundacao": "Ainda não sabemos o ponto de partida real em Natureza. Meta numérica sem linha de base é chute — a ação desta fase é estabelecer essa linha de base (corrigir 2019 + 1 prova nova, categorizando cada erro), não bater um número.",
+    "fase2_consolidacao": "500 em Natureza não é número arbitrário — é o corte mínimo eliminatório que você levantou pros seus alvos (IME e Politécnica-USP). Ficar abaixo elimina essas opções, independente da média final.",
+    "fase3_blindagem": "Tempo aprendendo algo do zero agora compete com consolidar o que já foi estudado. Nas últimas semanas, retenção do que já é familiar rende mais que abrir tópico novo — por isso zero conteúdo pesado novo, só revisão dirigida e simulado.",
 }
 
-_FASE_RITMO_TEMPO = {
-    "diagnostico": (
-        "Essa semana: 1 simulado completo, de um ano que você ainda não tocou (veja o checklist abaixo) — "
-        "sem estudar pra ele antes, é diagnóstico, não prova. Nos outros dias, classifique o motivo de cada "
-        "erro que já está em aberto na correção (ver checklist).",
-        "Reserve um bloco livre pro simulado — é longo de propósito. Se não tiver isso essa semana, "
-        "um dia só de Matemática OU só Ciências já serve pra começar.",
-    ),
-    "ataque_fraquezas": (
-        "Segunda a sexta: sessões curtas em \"Praticar por matéria\" (Cartão-resposta), nas matérias do "
-        "topo da lista abaixo. Um dia do fim de semana: 1 simulado completo, priorizando o ano com menor "
-        "cobertura no checklist. Classifique os erros no MESMO dia — a lembrança de por que errou some rápido.",
-        "Uma rotina diária curta e sustentável por 6 semanas rende mais que sessões maratona esporádicas "
-        "que você abandona na 2ª semana. Se um dia não der, não compense dobrando no outro — só continue.",
-    ),
-    "simulados_intensivos": (
-        "Pouca matéria nova. Foco: simulados completos cronometrados, o mais parecido possível com o dia "
-        "real (mesmo horário do dia, sem pausa, celular longe). Entre um e outro, revise só o que errou.",
-        "Reserve o tempo real de prova pro simulado — confirme a duração exata no seu cartão de confirmação "
-        "de inscrição (historicamente girou perto de 5h pro dia de Matemática + Ciências, mas isso pode mudar ano a ano).",
-    ),
-    "taper": (
-        "Sem matéria nova agora. Reveja só o que você já errou antes (\"Por que você erra\", em Minha "
-        "análise). Separe documento e o que for levar hoje, não na véspera.",
-        "Revisão leve, pouco tempo. O resto é descanso de verdade — ansiedade de última hora custa mais "
-        "ponto do que qualquer conteúdo novo aprendido nesses últimos dias.",
-    ),
+_FASE_METAS = {
+    "fase1_fundacao": {
+        "Matemática": "24-26/45 (53-58%)", "Ciências da Natureza": "estabelecer linha de base",
+        "Redação": "manter 700 (confirmado)", "Humanas/Linguagens": "1 simulado completo cada, linha de base",
+    },
+    "fase2_consolidacao": {
+        "Matemática": "28-32/45 (62-71%)", "Ciências da Natureza": "acima do corte de 500",
+        "Redação": "manter 700+, erro ortográfico perto de zero", "Humanas/Linguagens": "65%+",
+    },
+    "fase3_blindagem": {
+        "Matemática": "32-36/45 (71-80%)", "Ciências da Natureza": "500-550+",
+        "Redação": "750+", "Humanas/Linguagens": "70%+",
+    },
 }
+
+_FASE_ROTINA = {
+    "fase1_fundacao": [
+        "3 dias — Natureza: corrige prova antiga (2019, depois 2020) + pra cada questão \"não sabia o conteúdo\", disseca ela por completo em voz alta até dominar o tema (seu método já validado) + 10 questões do mesmo tema em outras provas.",
+        "1 dia — Matemática: ciclo já validado (prova → corrige → foca fácil/médio), priorizando Geometria, Funções e Financeira.",
+        "1 dia — Humanas + Linguagens: 1 simulado parcial (bloco de 45) + correção rápida.",
+        "1 dia — Simulado completo (sábado), alternando Matemática/Natureza como foco principal.",
+        "Redação: 1x/semana cronometrada + 10-15min/dia de repertório + revisão ortográfica logo depois de escrever.",
+    ],
+    "fase2_consolidacao": [
+        "Repete o ciclo 2019-2025 em Natureza e Matemática, agora com 2 simulados completos por semana (sábado + 1 dia de meio de semana).",
+        "Todas as áreas entram no ciclo de correção com categorização de erro.",
+        "Redação mantém 1x/semana.",
+    ],
+    "fase3_blindagem": [
+        "3 simulados completos por semana, crescente até a prova.",
+        "Revisão dirigida só nos temas que ainda aparecerem como erro recorrente.",
+        "Redação 1x/semana, mantendo estrutura — sem mudar repertório essa perto da prova.",
+    ],
+}
+
+_METRICAS_ALERTA = [
+    "Se Natureza não subir pelo menos 15-20 pontos (TRI estimado) até o fim da Fase 1 → o volume de conteúdo novo (vídeo/dissecação) precisa aumentar, não só volume de questão.",
+    "Se um simulado completo cair mais de 15% abaixo da sua média móvel → cheque cansaço/ansiedade antes de assumir que é lacuna de conteúdo.",
+    "Se erro ortográfico na redação não cair depois de 3 semanas de revisão pós-escrita → considere buscar correção externa focada nisso.",
+]
 
 
 def render_calendario() -> None:
@@ -526,10 +537,41 @@ def render_calendario() -> None:
         return
 
     data_prova_fmt = f"{plano['data_prova'][8:10]}/{plano['data_prova'][5:7]}/{plano['data_prova'][:4]}"
+    fase1_fmt = f"{plano['fase1_fim'][8:10]}/{plano['fase1_fim'][5:7]}"
+    fase2_fmt = f"{plano['fase2_fim'][8:10]}/{plano['fase2_fim'][5:7]}"
+
     st.subheader(f"🗓️ {plano['dias_restantes']} dias até {data_prova_fmt}")
-    st.caption(f"Fase atual: **{plano['fase_label']}** — dia {plano['dias_decorridos']} de um plano de {plano['dias_totais_plano']} dias.")
-    st.progress(min(1.0, plano["dias_decorridos"] / plano["dias_totais_plano"]))
-    st.info(_FASE_DESCRICAO[plano["fase"]])
+    st.caption(f"**{plano['fase_label']}** · Fase 1 até {fase1_fmt} · Fase 2 até {fase2_fmt} · Fase 3 até a prova")
+    st.info(_FASE_PRINCIPIO[plano["fase"]])
+
+    st.divider()
+    st.subheader("📊 Sua média móvel (últimos simulados) vs. meta desta fase")
+    st.caption(
+        "Nota varia por prova, cansaço, tema sorteado — o que importa é a TENDÊNCIA da média móvel, não o "
+        "resultado de um simulado isolado. \"Simulado\" aqui = qualquer dia com 15+ questões respondidas na área; "
+        "se você fizer mais de um no mesmo dia, contam como um só."
+    )
+    metas_fase = _FASE_METAS[plano["fase"]]
+    for area, chave_area in (("Matemática", "matematica"), ("Ciências da Natureza", "ciencias_natureza")):
+        mm = db.media_movel_simulados(chave_area)
+        col1, col2 = st.columns([1, 2])
+        with col1:
+            if mm["tem_dado"]:
+                st.metric(area, f"{mm['media_pct']}%", help=f"média dos últimos {mm['n_simulados']} simulado(s)")
+            else:
+                st.metric(area, "sem dado")
+        with col2:
+            st.caption(f"Meta desta fase: **{metas_fase[area]}**")
+            if area == "Ciências da Natureza":
+                st.caption("(meta em escala TRI/nota — % de acerto é uma medida diferente, sirva de tendência, não comparação direta.)")
+
+    ultima_redacao = next(iter(db.listar_redacoes()), None)
+    col1, col2 = st.columns([1, 2])
+    with col1:
+        st.metric("Redação", f"{ultima_redacao['nota']}" if ultima_redacao and ultima_redacao["nota"] is not None else "sem nota", help="última redação com nota registrada")
+    with col2:
+        st.caption(f"Meta desta fase: **{metas_fase['Redação']}**")
+        st.caption("Humanas/Linguagens: meta desta fase é **" + metas_fase["Humanas/Linguagens"] + "** — este app não tem banco de questões dessas áreas, registre seu resultado por fora.")
 
     st.divider()
     st.subheader("🎯 Ataque às fraquezas — o que atacar agora")
@@ -553,8 +595,8 @@ def render_calendario() -> None:
     st.subheader("📋 Checklist de simulados e correção")
     st.caption(
         "\"Feito\" = 80%+ da prova respondida. \"Corrigido\" = toda questão errada já tem motivo classificado "
-        "(Cartão-resposta → questão errada → \"Por que errou?\") — é aí que a engenharia reversa acontece de "
-        "verdade: sem isso você só sabe QUE errou, não POR QUÊ."
+        "(Cartão-resposta → questão errada → \"Por que errou?\") — sabemos que sua correção de Natureza é mais "
+        "profunda e demora mais que a de Matemática, então é normal \"Feito\" chegar bem antes de \"Corrigido\"."
     )
     progresso = sorted(db.progresso_simulados(), key=lambda x: x["cobertura_pct"])
     if not progresso:
@@ -570,17 +612,20 @@ def render_calendario() -> None:
         st.write(f"{feito} **{p['ano']}** — {p['respondidas']}/{p['total_questoes']} respondidas ({p['cobertura_pct']:.0f}%) · correção: {corrigido}")
 
     st.divider()
-    st.subheader("📆 Ritmo da semana, nesta fase")
-    ritmo, tempo = _FASE_RITMO_TEMPO[plano["fase"]]
-    st.write(ritmo)
+    st.subheader("📆 Rotina desta fase")
+    for linha in _FASE_ROTINA[plano["fase"]]:
+        st.write(f"- {linha}")
+
     st.divider()
-    st.subheader("⏱️ Quanto tempo, de verdade")
-    st.write(tempo)
+    st.subheader("⚠️ Quando revisar o plano")
+    for linha in _METRICAS_ALERTA:
+        st.write(f"- {linha}")
 
     st.divider()
     st.caption(
-        "Este plano cobre só Matemática e Ciências da Natureza (o que este app tem dado pra apoiar). "
-        "Linguagens, Humanas e Redação precisam do próprio plano, em outro lugar."
+        "Matemática e Ciências da Natureza são medidas com dado real deste app. Redação é registrada (não "
+        "corrigida por aqui). Humanas e Linguagens precisam do próprio controle — este app não tem banco de "
+        "questões dessas áreas. Isto não é previsão de aprovação — nota de corte real só existe depois da prova."
     )
 
 
@@ -693,6 +738,115 @@ def render_objetivos() -> None:
                 if st.button("Remover", key=f"remover_vision_{caminho.name}"):
                     caminho.unlink()
                     st.rerun()
+
+
+PASTA_REDACOES = Path(__file__).parent / "redacoes_arquivos"
+
+
+def render_redacao() -> None:
+    """Só guarda redação -- não corrige (o sistema não tem como avaliar
+    redação de verdade). Nota e erro ortográfico vêm de correção
+    própria, externa ou oficial, digitados aqui depois."""
+    st.subheader("✍️ Nova redação")
+
+    temas_usados = db.temas_redacoes_usados()
+    if temas_usados:
+        modo_tema = st.radio("Tema", ["Novo tema", "Reusar tema já usado"], horizontal=True, key="redacao_modo_tema")
+    else:
+        modo_tema = "Novo tema"
+    if modo_tema == "Reusar tema já usado":
+        tema = st.selectbox("Escolha o tema", temas_usados, key="redacao_tema_existente")
+    else:
+        tema = st.text_input("Tema (cole o enunciado ou um resumo curto)", key="redacao_tema_novo")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        data_escrita = st.date_input("Data", value=date.today(), key="redacao_data")
+    with col2:
+        fonte = st.selectbox("Correção", ["ainda sem correção", "própria", "externa", "oficial"], key="redacao_fonte")
+
+    texto = st.text_area("Texto (se digitou)", height=200, key="redacao_texto")
+
+    if "redacao_upload_geracao" not in st.session_state:
+        st.session_state["redacao_upload_geracao"] = 0
+    arquivo = st.file_uploader(
+        "Foto ou PDF da redação escrita à mão (opcional)", type=["png", "jpg", "jpeg", "pdf"],
+        key=f"redacao_arquivo_{st.session_state['redacao_upload_geracao']}",
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        nota = st.number_input("Nota (0-1000, se já corrigida)", min_value=0, max_value=1000, value=0, key="redacao_nota")
+    with col2:
+        erros_ortograficos = st.number_input("Erros ortográficos", min_value=0, max_value=100, value=0, key="redacao_erros")
+
+    observacoes = st.text_area("Observações (opcional)", height=80, key="redacao_obs")
+
+    if st.button("Salvar redação", type="primary", key="redacao_salvar"):
+        if not tema or not tema.strip():
+            st.warning("Preencha o tema antes de salvar.")
+        elif not texto.strip() and arquivo is None:
+            st.warning("Cole o texto ou anexe uma foto/PDF antes de salvar.")
+        else:
+            caminho_arquivo = None
+            if arquivo is not None:
+                PASTA_REDACOES.mkdir(exist_ok=True)
+                extensao = Path(arquivo.name).suffix or ".pdf"
+                caminho_arquivo = str(PASTA_REDACOES / f"{int(datetime.now().timestamp() * 1000)}{extensao}")
+                with open(caminho_arquivo, "wb") as f:
+                    f.write(arquivo.getbuffer())
+
+            db.salvar_redacao(
+                tema=tema, data_escrita=data_escrita.isoformat(), texto=texto.strip() or None,
+                arquivo_path=caminho_arquivo, nota=int(nota) or None,
+                erros_ortograficos=int(erros_ortograficos) if erros_ortograficos else None,
+                fonte_correcao=None if fonte == "ainda sem correção" else fonte,
+                observacoes=observacoes.strip() or None,
+            )
+            st.session_state["redacao_upload_geracao"] += 1
+            st.success("Redação salva.")
+            st.rerun()
+
+    st.divider()
+    st.subheader("📚 Suas redações")
+    redacoes = db.listar_redacoes()
+    if not redacoes:
+        st.info("Nenhuma redação guardada ainda.")
+        return
+
+    notas_validas = [r["nota"] for r in redacoes if r["nota"] is not None]
+    if notas_validas:
+        st.caption(f"{len(redacoes)} redação(ões) guardada(s) · última nota registrada: {notas_validas[0]} · melhor: {max(notas_validas)}")
+    else:
+        st.caption(f"{len(redacoes)} redação(ões) guardada(s), nenhuma com nota ainda.")
+
+    for r in redacoes:
+        tema_curto = r["tema"] if len(r["tema"]) <= 60 else r["tema"][:60] + "…"
+        rotulo = f"{r['data_escrita']} — {tema_curto}"
+        if r["nota"] is not None:
+            rotulo += f" — nota {r['nota']}"
+        with st.expander(rotulo):
+            detalhes = []
+            if r["fonte_correcao"]:
+                detalhes.append(f"correção {r['fonte_correcao']}")
+            if r["erros_ortograficos"] is not None:
+                detalhes.append(f"{r['erros_ortograficos']} erro(s) ortográfico(s)")
+            if detalhes:
+                st.caption(" · ".join(detalhes))
+            if r["texto"]:
+                st.write(r["texto"])
+            if r["arquivo_path"] and Path(r["arquivo_path"]).exists():
+                if r["arquivo_path"].lower().endswith(".pdf"):
+                    st.caption(f"📎 Arquivo: `{Path(r['arquivo_path']).name}` (PDF — abra pelo Explorador de Arquivos, o app só mostra imagem inline)")
+                else:
+                    st.image(r["arquivo_path"], use_container_width=True)
+            if r["observacoes"]:
+                st.caption(r["observacoes"])
+            if st.button("🗑️ Apagar", key=f"apagar_redacao_{r['id']}"):
+                if r["arquivo_path"] and Path(r["arquivo_path"]).exists():
+                    Path(r["arquivo_path"]).unlink()
+                db.apagar_redacao(r["id"])
+                st.rerun()
 
 
 def render_admin() -> None:
@@ -885,7 +1039,7 @@ if __name__ == "__main__":
 
     pagina = st.sidebar.radio(
         "Menu",
-        ["📝 Cartão-resposta", "📊 Minha análise", "📅 Calendário", "🎯 Objetivos",
+        ["📝 Cartão-resposta", "📊 Minha análise", "📅 Calendário", "🎯 Objetivos", "✍️ Redação",
          "🔗 Coletar vídeos", "🏷️ Triagem", "🔐 Admin", "📚 Guia do Estudante"],
     )
 
@@ -897,6 +1051,8 @@ if __name__ == "__main__":
         render_calendario()
     elif pagina == "🎯 Objetivos":
         render_objetivos()
+    elif pagina == "✍️ Redação":
+        render_redacao()
     elif pagina == "🔗 Coletar vídeos":
         coletar_videos.render_coletar_videos()
     elif pagina == "🏷️ Triagem":

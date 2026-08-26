@@ -118,3 +118,22 @@ CREATE TABLE IF NOT EXISTS configuracoes (
     chave  TEXT PRIMARY KEY,
     valor  TEXT NOT NULL
 );
+
+-- Redações: guarda, não corrige. A nota e a contagem de erro
+-- ortográfico vêm de correção externa/própria (cursinho, redator, o
+-- próprio usuário) -- o sistema não tem como avaliar redação de
+-- verdade, só registrar o resultado de quem avaliou.
+CREATE TABLE IF NOT EXISTS redacoes (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    tema                TEXT NOT NULL,
+    data_escrita        TEXT NOT NULL DEFAULT (date('now')),
+    texto               TEXT,
+    arquivo_path        TEXT,
+    nota                INTEGER,
+    erros_ortograficos  INTEGER,
+    fonte_correcao      TEXT CHECK(fonte_correcao IN ('propria', 'externa', 'oficial') OR fonte_correcao IS NULL),
+    observacoes         TEXT,
+    criado_em           TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_redacoes_data ON redacoes(data_escrita);
