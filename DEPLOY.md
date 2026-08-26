@@ -52,9 +52,29 @@ O que só você pode fazer (login/conta):
 
 - share.streamlit.io → entrar com a conta do GitHub (mesma conta do
   passo 1).
+- **Na tela de autorização do GitHub, antes de confirmar**: procure a
+  opção de escolher quais repositórios liberar (geralmente "All
+  repositories" ou "Only select repositories"). Se ficar em "Only
+  select repositories" e não adicionar o `enem_gi` na lista, o
+  Streamlit Cloud nunca vai enxergar ele depois — esse é quase certeza
+  o que aconteceu. Escolha "All repositories" (mais simples) ou adicione
+  `enem_gi` explicitamente na lista.
 - "New app" → escolhe o repositório `enem_gi` → branch `master` →
   **main file path**: `core/cartao_resposta.py`.
 - Deploy.
+
+**Se o repositório não aparecer na lista pra escolher** (mesmo depois
+de logar de novo): o acesso ficou só nos públicos. Corrija direto no
+GitHub, sem precisar desconectar de novo:
+- github.com → seu avatar (canto superior direito) → **Settings**
+- **Applications** (ou **Integrations** → **Applications**, o nome muda
+  um pouco de vez em quando) → aba **Authorized OAuth Apps** *ou*
+  **Installed GitHub Apps** (o Streamlit pode aparecer em qualquer um
+  dos dois, dependendo de quando sua conta foi criada)
+- Ache "Streamlit" na lista → clique nele/em "Configure" → em
+  "Repository access", mude pra **All repositories** ou adicione
+  `enem_gi` na lista de repositórios selecionados → Save.
+- Volta pro share.streamlit.io e tenta "New app" de novo.
 
 ### 3. Configurar a API key
 
