@@ -15,7 +15,7 @@ There is no test suite, linter, or build step. This is a Streamlit app + a set o
 - Run the app: `streamlit run cartao_resposta.py` (from inside `core/`)
 - Load/update `enem.db` from source-of-truth CSVs: `python reconstruir_base.py` — backs up `enem.db` first (via `backup_db.py`) then updates in place; idempotent, safe to rerun (see the note under Architecture below)
 - Smoke-test `db.py` in isolation: `python db.py` — this writes to `enem_teste.db`, never to `enem.db` (see the `__main__` block); safe to run anytime
-- Extract an official gabarito from an INEP PDF: `python extrair_gabarito_pdf.py <arquivo.pdf> <ano> [caderno]` — requires the `pdftotext` CLI (poppler-utils) on PATH; writes `gabaritos_reais/gabarito_<ano>_<caderno>_OFICIAL.csv` (`caderno` defaults to `azul` — always pass it explicitly for any other booklet color, e.g. `amarelo`, or this silently targets the azul filename; refuses to overwrite an existing file unless `--sobrescrever` is passed)
+- Extract an official gabarito from an INEP PDF: `python extrair_gabarito_pdf.py <arquivo.pdf> <ano> [caderno] [--ciencias]` — requires the `pdftotext` CLI (poppler-utils) on PATH; writes `gabaritos_reais/gabarito_<ano>_<caderno>_OFICIAL.csv` (Matemática, itens 136-180) or `..._CIENCIAS_OFICIAL.csv` (`--ciencias`, itens 91-135) — same PDF covers both areas, run it twice (with/without `--ciencias`) when both are missing for a caderno. `caderno` defaults to `azul` — always pass it explicitly for any other booklet color, e.g. `amarelo`/`cinza`/`rosa`, or this silently targets the azul filename; refuses to overwrite an existing file unless `--sobrescrever` is passed
 - One-off backfill scripts (`classificar_2024.py`, and historically similar ones) are meant to be run once and read top-to-bottom before rerunning — they hardcode question numbers/answers for a specific gap in the data
 
 Dependencies: `streamlit` and `pandas` (see `../requirements.txt`), and, transitively through `coletar_videos.py` → `main.py`, the Google API client libraries used for YouTube auth.
@@ -66,6 +66,21 @@ Source-of-truth CSVs consumed by `reconstruir_base.py`, matched by filename rege
 - `gabarito_<ANO>_<CADERNO>_CIENCIAS_OFICIAL.csv` → Ciências da Natureza (same exam day/caderno, different `grande_area`)
 
 Required CSV columns: `numero,materia,gabarito` (optional per-row `grande_area` override). Math and Ciências for the same year/caderno are stored as **separate** "provas" throughout the system (never merged into one 45+44-question grid), since they're graded and studied independently.
+
+### Multiple cadernos (booklet colors) of the same year
+
+A real INEP exam prints the same items in 4 colors (azul/amarelo/rosa/cinza) with different item ORDER per color — same content, different `numero`. Each `(ano, caderno, grande_area)` combo is stored as its own fully independent set of `questoes` rows (own `id_questao`, own `materia` classification, own attempts) — confirmed, deliberate design (Gabriel wants each color he practices to count as its own separate simulado attempt for média móvel/priority stats, not merged into one). Loading a new color for a year already partially loaded is just running `extrair_gabarito_pdf.py`/`reconstruir_base.py` again with that `caderno` — no special-casing needed, this is exactly the same code path as loading a brand-new year.
+
+### Cross-caderno video linking (`coletar_videos.py`)
+
+Some channels (Xequemat) paste, in the video's YouTube **description** (not title), the same item's number in every color, e.g.:
+```
+Questão 165 - Caderno Azul
+Questão 143 - Caderno Cinza
+Questão 151 - Caderno Amarelo
+Questão 174 - Caderno Rosa
+```
+`extrair_cadernos_da_descricao()` parses this block; `processar_playlist()` uses it to link the SAME video (and propagate the SAME materia, if extracted from the title and the target question is still `nao_classificado`) to every color's corresponding `id_questao` — not just the color passed as the `caderno` argument. A color with no gabarito loaded yet just lands in the `cruzados_sem_questao` result bucket (harmless) — re-running the playlist collection later, after loading that color, picks up the missing links retroactively (no need to special-case "already tried this before"; `db.inserir_resolucao()`'s existing dedup makes it idempotent). Older videos without this description block fall back to the original single-caderno-only behavior unchanged.
 
 ### App structure (`cartao_resposta.py`)
 
