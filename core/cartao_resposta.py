@@ -1452,9 +1452,6 @@ if __name__ == "__main__":
     if pagina_atual not in valores_validos:
         pagina_atual = "cartao"
 
-    if pagina_atual == "prova_beta":
-        ui_theme.injetar_tema_exame_claro()
-
     ui_theme.navegacao_lateral(_PAGINAS, pagina_atual)
     ui_theme.hero("📝 Cartão-resposta digital", _tagline_contagem_regressiva())
 
