@@ -586,6 +586,43 @@ def calcular_proxima_revisao(id_questao: str, resultado: str, conn: sqlite3.Conn
     return proxima, novo_intervalo, novo_streak
 
 
+def _recomputar_estado_revisao(id_questao: str, conn: sqlite3.Connection) -> None:
+    """Reconstrói estado_revisao de UMA questão do zero, reproduzindo
+    TODO o histórico restante em tentativas_usuario (ordem cronológica)
+    pelo Leitner -- streak/intervalo são cumulativos, então editar ou
+    apagar uma tentativa no meio da história pode mudar o que toda
+    tentativa seguinte teria calculado; só um replay completo garante
+    o streak final certo. Sem nenhuma tentativa restando, apaga
+    estado_revisao (questão volta a 'nunca tentada'). Assume que quem
+    chama já fez a mutação em tentativas_usuario antes (INSERT/UPDATE/
+    DELETE) dentro da MESMA conexão/transação."""
+    restantes = conn.execute(
+        "SELECT data_tentativa, resultado FROM tentativas_usuario "
+        "WHERE id_questao = ? ORDER BY data_tentativa",
+        (id_questao,),
+    ).fetchall()
+    if not restantes:
+        conn.execute("DELETE FROM estado_revisao WHERE id_questao = ?", (id_questao,))
+        return
+    streak, intervalo = 0, 1
+    for _, resultado in restantes:
+        streak, intervalo = _calcular_leitner(streak, resultado)
+    ultima_data = restantes[-1][0]
+    proxima = (date.fromisoformat(ultima_data[:10]) + timedelta(days=intervalo)).isoformat()
+    conn.execute(
+        """
+        INSERT INTO estado_revisao (id_questao, intervalo_dias, streak_acertos, proxima_revisao, ultima_tentativa)
+        VALUES (?,?,?,?,?)
+        ON CONFLICT(id_questao) DO UPDATE SET
+            intervalo_dias = excluded.intervalo_dias,
+            streak_acertos = excluded.streak_acertos,
+            proxima_revisao = excluded.proxima_revisao,
+            ultima_tentativa = excluded.ultima_tentativa
+        """,
+        (id_questao, intervalo, streak, proxima, ultima_data[:10]),
+    )
+
+
 # ============================================================
 # REGISTRO DE TENTATIVA
 # ============================================================
@@ -680,9 +717,81 @@ def desfazer_tentativas(ids_tentativa: list[int]) -> dict:
                 puladas.append(id_q)
                 continue
             conn.execute("DELETE FROM tentativas_usuario WHERE id_tentativa = ?", (id_t,))
-            conn.execute("DELETE FROM estado_revisao WHERE id_questao = ?", (id_q,))
+            _recomputar_estado_revisao(id_q, conn)
             desfeitas.append(id_t)
     return {"desfeitas": desfeitas, "puladas_com_historico": puladas}
+
+
+def apagar_rodada_tentativa(ano: int, caderno: str, grande_area: str, numero_tentativa: int) -> dict:
+    """Apaga uma rodada INTEIRA (a tentativa de número numero_tentativa
+    de cada questão dessa prova que chegou a essa rodada -- mesma
+    numeração que resumo_por_tentativa()/simulados_feitos() já
+    mostram) e recalcula estado_revisao de cada questão afetada
+    reproduzindo o que sobra (ver _recomputar_estado_revisao).
+
+    Diferente de desfazer_tentativas() (só desfaz a ÚLTIMA rodada de
+    uma questão sem histórico nenhum antes, pensada pra corrigir um
+    misclique agora mesmo): esta função apaga de propósito mesmo
+    havendo histórico -- pra quando uma rodada inteira foi reenviada
+    sem querer (ex: duplicada) e precisa sumir, uso deliberado da aba
+    'Simulados já feitos', não uma correção instantânea."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT id_tentativa, id_questao FROM (
+                SELECT t.id_tentativa, t.id_questao,
+                       ROW_NUMBER() OVER (PARTITION BY t.id_questao ORDER BY t.data_tentativa) AS numero_tentativa
+                FROM tentativas_usuario t JOIN questoes q ON q.id_questao = t.id_questao
+                WHERE q.ano = ? AND q.caderno = ? AND q.grande_area = ?
+            )
+            WHERE numero_tentativa = ?
+            """,
+            (ano, caderno_norm, grande_area_norm, numero_tentativa),
+        ).fetchall()
+        ids_tentativa = [r[0] for r in linhas]
+        ids_questao = [r[1] for r in linhas]
+        if ids_tentativa:
+            placeholders = ",".join("?" * len(ids_tentativa))
+            conn.execute(f"DELETE FROM tentativas_usuario WHERE id_tentativa IN ({placeholders})", ids_tentativa)
+        for id_q in ids_questao:
+            _recomputar_estado_revisao(id_q, conn)
+        conn.execute(
+            "DELETE FROM nomes_tentativas WHERE ano=? AND caderno=? AND grande_area=? AND numero_tentativa=?",
+            (ano, caderno_norm, grande_area_norm, numero_tentativa),
+        )
+    return {"tentativas_apagadas": len(ids_tentativa), "questoes_recalculadas": len(set(ids_questao))}
+
+
+def editar_resposta_tentativa(id_tentativa: int, nova_resposta: str) -> dict:
+    """Corrige a letra marcada numa tentativa JÁ REGISTRADA, de
+    qualquer rodada (não precisa ser a mais recente) -- recalcula
+    resultado contra o gabarito atual e reconstrói estado_revisao da
+    questão inteira via replay (ver _recomputar_estado_revisao), já
+    que mudar uma tentativa no meio do histórico pode mudar o streak
+    que toda tentativa seguinte teria calculado na hora. Zera
+    tipo_erro dessa tentativa -- uma classificação de erro presa a uma
+    letra que não é mais a registrada não faz sentido manter."""
+    nova_resposta = nova_resposta.strip().upper()
+    if nova_resposta not in {"A", "B", "C", "D", "E"}:
+        raise ValueError(f"resposta_escolhida inválida: '{nova_resposta}'")
+    with _conectar() as conn:
+        linha = conn.execute(
+            "SELECT t.id_questao, q.alternativa_correta FROM tentativas_usuario t "
+            "JOIN questoes q ON q.id_questao = t.id_questao WHERE t.id_tentativa = ?",
+            (id_tentativa,),
+        ).fetchone()
+        if linha is None:
+            raise ValueError(f"Tentativa '{id_tentativa}' não existe.")
+        id_questao, gabarito = linha
+        resultado = "acertou" if nova_resposta == gabarito else "errou"
+        conn.execute(
+            "UPDATE tentativas_usuario SET resposta_escolhida=?, resultado=?, tipo_erro=NULL WHERE id_tentativa=?",
+            (nova_resposta, resultado, id_tentativa),
+        )
+        _recomputar_estado_revisao(id_questao, conn)
+    return {"id_tentativa": id_tentativa, "id_questao": id_questao, "resposta_escolhida": nova_resposta, "resultado": resultado}
 
 
 TIPOS_ERRO = {
@@ -1339,6 +1448,39 @@ def nomes_tentativas(ano: int, caderno: str, grande_area: str) -> dict[int, str]
             (ano, caderno_norm, grande_area_norm),
         ).fetchall()
     return dict(linhas)
+
+
+def detalhe_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: int) -> list[dict]:
+    """Uma linha por questão respondida numa rodada específica --
+    id_tentativa, número, o que foi marcado e o gabarito. Base pra
+    editar respostas de uma rodada já registrada (a UI mostra isso
+    numa grade editável e chama editar_resposta_tentativa por
+    questão alterada)."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT id_tentativa, numero_questao, resposta_escolhida, resultado, alternativa_correta
+            FROM (
+                SELECT t.id_tentativa, q.numero_questao, t.resposta_escolhida, t.resultado,
+                       q.alternativa_correta,
+                       ROW_NUMBER() OVER (PARTITION BY t.id_questao ORDER BY t.data_tentativa) AS numero_tentativa
+                FROM tentativas_usuario t JOIN questoes q ON q.id_questao = t.id_questao
+                WHERE q.ano = ? AND q.caderno = ? AND q.grande_area = ?
+            )
+            WHERE numero_tentativa = ?
+            ORDER BY numero_questao
+            """,
+            (ano, caderno_norm, grande_area_norm, numero_tentativa),
+        ).fetchall()
+    return [
+        {
+            "id_tentativa": r[0], "numero_questao": r[1], "resposta_escolhida": r[2],
+            "resultado": r[3], "alternativa_correta": r[4],
+        }
+        for r in linhas
+    ]
 
 
 def simulados_feitos() -> list[dict]:
