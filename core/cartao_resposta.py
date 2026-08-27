@@ -448,10 +448,16 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
                 if not resolucoes:
                     st.caption("Sem vídeo de resolução ligado a essa questão ainda.")
                 for res in resolucoes:
-                    if res["tipo"] == "video":
-                        st.video(res["conteudo"])
-                    else:
-                        st.caption(f"Resolução em texto ({res['canal'] or 'sem canal'}): {res['conteudo']}")
+                    col_res, col_del = st.columns([5, 1])
+                    with col_res:
+                        if res["tipo"] == "video":
+                            st.video(res["conteudo"])
+                        else:
+                            st.caption(f"Resolução em texto ({res['canal'] or 'sem canal'}): {res['conteudo']}")
+                    with col_del:
+                        if st.button("🗑️", key=f"apagar_res_{res['id_resolucao']}", help="Remover essa resolução (link errado/quebrado)"):
+                            db.apagar_resolucao(res["id_resolucao"])
+                            st.rerun()
 
     if len(resultados) < total:
         st.caption(
@@ -1003,11 +1009,48 @@ def render_redacao() -> None:
                     st.image(r["arquivo_path"], use_container_width=True)
             if r["observacoes"]:
                 st.caption(r["observacoes"])
-            if st.button("🗑️ Apagar", key=f"apagar_redacao_{r['id']}"):
-                if r["arquivo_path"] and Path(r["arquivo_path"]).exists():
-                    Path(r["arquivo_path"]).unlink()
-                db.apagar_redacao(r["id"])
-                st.rerun()
+
+            col_editar, col_apagar = st.columns(2)
+            with col_editar:
+                with st.popover("✏️ Editar", key=f"popover_editar_redacao_{r['id']}"):
+                    st.caption("Pra quando a correção sai depois de já ter salvo a redação sem nota.")
+                    novo_tema = st.text_input("Tema", value=r["tema"], key=f"editar_tema_{r['id']}")
+                    nova_data = st.date_input(
+                        "Data", value=date.fromisoformat(r["data_escrita"]), key=f"editar_data_{r['id']}"
+                    )
+                    novo_texto = st.text_area("Texto", value=r["texto"] or "", height=150, key=f"editar_texto_{r['id']}")
+                    col_a, col_b = st.columns(2)
+                    with col_a:
+                        nova_nota = st.number_input(
+                            "Nota (0-1000)", min_value=0, max_value=1000,
+                            value=r["nota"] or 0, key=f"editar_nota_{r['id']}",
+                        )
+                    with col_b:
+                        novos_erros = st.number_input(
+                            "Erros ortográficos", min_value=0, max_value=100,
+                            value=r["erros_ortograficos"] or 0, key=f"editar_erros_{r['id']}",
+                        )
+                    opcoes_fonte = ["ainda sem correção", "própria", "externa", "oficial"]
+                    fonte_atual = r["fonte_correcao"] or "ainda sem correção"
+                    nova_fonte = st.selectbox(
+                        "Correção", opcoes_fonte, index=opcoes_fonte.index(fonte_atual), key=f"editar_fonte_{r['id']}"
+                    )
+                    novas_obs = st.text_area("Observações", value=r["observacoes"] or "", height=80, key=f"editar_obs_{r['id']}")
+                    if st.button("Salvar edição", type="primary", key=f"salvar_editar_redacao_{r['id']}"):
+                        db.atualizar_redacao(
+                            r["id"], tema=novo_tema, data_escrita=nova_data.isoformat(),
+                            texto=novo_texto or None, nota=int(nova_nota) or None,
+                            erros_ortograficos=int(novos_erros) or None,
+                            fonte_correcao=None if nova_fonte == "ainda sem correção" else nova_fonte,
+                            observacoes=novas_obs or None,
+                        )
+                        st.rerun()
+            with col_apagar:
+                if st.button("🗑️ Apagar", key=f"apagar_redacao_{r['id']}"):
+                    if r["arquivo_path"] and Path(r["arquivo_path"]).exists():
+                        Path(r["arquivo_path"]).unlink()
+                    db.apagar_redacao(r["id"])
+                    st.rerun()
 
 
 def render_admin() -> None:
@@ -1143,6 +1186,76 @@ def render_admin() -> None:
                 f"{resultado['resolucoes_perdidas']} resolução(ões) perdidas junto."
             )
             st.rerun()
+
+    st.divider()
+
+    st.subheader("✏️ Editar ou apagar uma questão específica")
+    st.caption(
+        "Pra corrigir/remover UMA questão sem mexer na prova inteira -- ex: linha extra ou "
+        "número digitado errado num CSV colado. A Triagem só cobre questão ainda pendente; "
+        "aqui dá pra corrigir mesmo uma já classificada."
+    )
+    provas_para_questao = db.listar_provas()
+    if not provas_para_questao:
+        st.info("Nenhuma prova cadastrada.")
+    else:
+        RÓTULO_AREA_ADMIN2 = {"matematica": "Matemática", "ciencias_natureza": "Ciências da Natureza"}
+        opcoes_prova_q = {
+            f"{ano} — {caderno} — {RÓTULO_AREA_ADMIN2.get(area, area)}": (ano, caderno, area)
+            for ano, caderno, area in provas_para_questao
+        }
+        escolha_prova_q = st.selectbox("Prova", list(opcoes_prova_q.keys()), key="admin_questao_prova")
+        ano_q, caderno_q, area_q = opcoes_prova_q[escolha_prova_q]
+
+        numero_q = st.number_input("Número da questão", min_value=1, max_value=200, value=1, key="admin_questao_numero")
+        id_questao_sel = db.gerar_id_canonico(int(ano_q), caderno_q, int(numero_q))
+        detalhe = db.detalhe_questao(id_questao_sel)
+
+        if detalhe is None:
+            st.warning(f"`{id_questao_sel}` não existe nessa prova.")
+        else:
+            st.caption(f"`{id_questao_sel}` — status atual: {detalhe['status_classificacao']}")
+            materias_area = db.materias_validas(area_q)
+            col_mat, col_gab = st.columns(2)
+            with col_mat:
+                materia_atual = detalhe["materia"] if detalhe["materia"] in materias_area else None
+                nova_materia = st.selectbox(
+                    "Matéria", materias_area,
+                    index=materias_area.index(materia_atual) if materia_atual else None,
+                    placeholder=f"atual (fora da taxonomia): {detalhe['materia']}",
+                    key=f"admin_questao_materia_{id_questao_sel}",
+                )
+            with col_gab:
+                opcoes_letra_q = ["A", "B", "C", "D", "E"]
+                novo_gabarito = st.selectbox(
+                    "Gabarito", opcoes_letra_q,
+                    index=opcoes_letra_q.index(detalhe["alternativa_correta"]),
+                    key=f"admin_questao_gabarito_{id_questao_sel}",
+                )
+            if st.button("Salvar questão", type="primary", key=f"admin_questao_salvar_{id_questao_sel}"):
+                if not nova_materia:
+                    st.warning("Selecione uma matéria antes de salvar.")
+                else:
+                    db.inserir_questao(
+                        ano=int(ano_q), caderno=caderno_q, numero=int(numero_q),
+                        grande_area=area_q, materia=nova_materia,
+                        alternativa_correta=novo_gabarito, sobrescrever=True,
+                    )
+                    st.success(f"`{id_questao_sel}` atualizada.")
+                    st.rerun()
+
+            with st.popover("🗑️ Apagar esta questão"):
+                st.caption("Remove só essa questão (e tentativas/resoluções ligadas a ela), não a prova inteira.")
+                confirmar_q = st.checkbox(
+                    f"Confirmo apagar {id_questao_sel} permanentemente", key=f"admin_questao_confirmar_{id_questao_sel}"
+                )
+                if st.button("Apagar questão", type="primary", disabled=not confirmar_q, key=f"admin_questao_apagar_{id_questao_sel}"):
+                    resultado_q = db.apagar_questao(id_questao_sel)
+                    st.success(
+                        f"`{id_questao_sel}` apagada. {resultado_q['tentativas_perdidas']} tentativa(s) e "
+                        f"{resultado_q['resolucoes_perdidas']} resolução(ões) perdidas junto."
+                    )
+                    st.rerun()
 
     st.divider()
 

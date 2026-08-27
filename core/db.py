@@ -1274,10 +1274,39 @@ def resolucoes_da_questao(id_questao: str) -> list[dict]:
     cartão-resposta, sem precisar procurar em outro lugar."""
     with _conectar() as conn:
         linhas = conn.execute(
-            "SELECT tipo, conteudo, canal FROM resolucoes WHERE id_questao = ? ORDER BY criado_em",
+            "SELECT id_resolucao, tipo, conteudo, canal FROM resolucoes WHERE id_questao = ? ORDER BY criado_em",
             (id_questao,),
         ).fetchall()
-    return [{"tipo": r[0], "conteudo": r[1], "canal": r[2]} for r in linhas]
+    return [{"id_resolucao": r[0], "tipo": r[1], "conteudo": r[2], "canal": r[3]} for r in linhas]
+
+
+def apagar_resolucao(id_resolucao: int) -> None:
+    """Remove UMA resolução (vídeo ou texto) -- pra tirar um link
+    errado/quebrado (ex: o cruzamento automático entre cadernos de
+    coletar_videos.py ligou o vídeo certo na cor errada) sem precisar
+    apagar a questão inteira."""
+    with _conectar() as conn:
+        conn.execute("DELETE FROM resolucoes WHERE id_resolucao = ?", (id_resolucao,))
+
+
+def editar_resolucao(id_resolucao: int, conteudo: str, canal: str | None = None) -> None:
+    """Corrige o link/texto (e opcionalmente o canal) de uma resolução
+    já ligada, mantendo o mesmo id_resolucao -- pra quando o link
+    certo aparece depois ou foi digitado errado, sem apagar e
+    recriar."""
+    conteudo = conteudo.strip()
+    if not conteudo:
+        raise ValueError("conteudo não pode ser vazio.")
+    with _conectar() as conn:
+        existe = conn.execute(
+            "SELECT 1 FROM resolucoes WHERE id_resolucao = ?", (id_resolucao,)
+        ).fetchone()
+        if not existe:
+            raise ValueError(f"Resolução '{id_resolucao}' não existe.")
+        conn.execute(
+            "UPDATE resolucoes SET conteudo=?, canal=? WHERE id_resolucao=?",
+            (conteudo, canal or None, id_resolucao),
+        )
 
 
 def reclassificar_pendentes() -> dict:
@@ -1381,6 +1410,56 @@ def apagar_prova(ano: int, caderno: str, grande_area: str) -> dict:
         "tentativas_perdidas": n_tentativas,
         "resolucoes_perdidas": n_resolucoes,
     }
+
+
+def detalhe_questao(id_questao: str) -> dict | None:
+    """Ficha completa de UMA questão (ano, caderno, número, área,
+    matéria, gabarito, status) -- base pra editar/apagar uma questão
+    específica no Admin, fora do fluxo de Triagem (que só cobre
+    questão ainda nao_classificado)."""
+    with _conectar() as conn:
+        linha = conn.execute(
+            "SELECT ano, caderno, numero_questao, grande_area, materia, "
+            "alternativa_correta, status_classificacao FROM questoes WHERE id_questao = ?",
+            (id_questao,),
+        ).fetchone()
+    if linha is None:
+        return None
+    return {
+        "id_questao": id_questao, "ano": linha[0], "caderno": linha[1],
+        "numero_questao": linha[2], "grande_area": linha[3], "materia": linha[4],
+        "alternativa_correta": linha[5], "status_classificacao": linha[6],
+    }
+
+
+def apagar_questao(id_questao: str) -> dict:
+    """Remove UMA questão só (não a prova inteira) e tudo que depende
+    dela -- mesma lógica de apagar_prova(), só que filtrando por um
+    único id_questao. Pensada pra corrigir um CSV colado com uma linha
+    extra/errada (numero digitado errado, por exemplo) sem precisar
+    apagar as outras 44 questões certas da mesma prova junto."""
+    with _conectar() as conn:
+        linha = conn.execute(
+            "SELECT materia, alternativa_correta FROM questoes WHERE id_questao = ?", (id_questao,)
+        ).fetchone()
+        if linha is None:
+            return {"apagada": False, "tentativas_perdidas": 0, "resolucoes_perdidas": 0}
+
+        materia, gabarito = linha
+        conn.execute(
+            "INSERT INTO historico_alteracoes (id_questao, campo, valor_antigo, valor_novo) VALUES (?,?,?,?)",
+            (id_questao, "questao_apagada", f"{materia}/{gabarito}", "DELETADO"),
+        )
+        n_tentativas = conn.execute(
+            "DELETE FROM tentativas_usuario WHERE id_questao = ?", (id_questao,)
+        ).rowcount
+        conn.execute("DELETE FROM estado_revisao WHERE id_questao = ?", (id_questao,))
+        n_resolucoes = conn.execute(
+            "DELETE FROM resolucoes WHERE id_questao = ?", (id_questao,)
+        ).rowcount
+        conn.execute("DELETE FROM questoes WHERE id_questao = ?", (id_questao,))
+
+    return {"apagada": True, "tentativas_perdidas": n_tentativas, "resolucoes_perdidas": n_resolucoes}
 
 
 def resumo_por_tentativa(ano: int, caderno: str, grande_area: str) -> list[dict]:
@@ -1883,6 +1962,38 @@ def temas_redacoes_usados() -> list[str]:
 def apagar_redacao(id_redacao: int) -> None:
     with _conectar() as conn:
         conn.execute("DELETE FROM redacoes WHERE id = ?", (id_redacao,))
+
+
+def atualizar_redacao(
+    id_redacao: int, tema: str, data_escrita: str, texto: str | None,
+    nota: int | None, erros_ortograficos: int | None,
+    fonte_correcao: str | None, observacoes: str | None,
+) -> None:
+    """Corrige uma redação já salva -- pensada pro fluxo real (salva
+    sem nota assim que escreve, corrige quando o resultado sai dias
+    depois). UPDATE completo, não COALESCE parcial como
+    atualizar_enunciado(): a UI já manda o valor atual de cada campo
+    (editado ou não), então não tem ambiguidade de 'None significa o
+    quê' -- inclusive permite limpar nota/observações de propósito.
+    Não mexe em arquivo_path nem criado_em."""
+    tema = tema.strip()
+    if not tema:
+        raise ValueError("Tema não pode ser vazio.")
+    if fonte_correcao not in (None, "propria", "externa", "oficial"):
+        raise ValueError(f"fonte_correcao inválida: '{fonte_correcao}'")
+    with _conectar() as conn:
+        existe = conn.execute("SELECT 1 FROM redacoes WHERE id = ?", (id_redacao,)).fetchone()
+        if not existe:
+            raise ValueError(f"Redação '{id_redacao}' não existe.")
+        conn.execute(
+            """
+            UPDATE redacoes SET tema=?, data_escrita=?, texto=?, nota=?,
+                erros_ortograficos=?, fonte_correcao=?, observacoes=?
+            WHERE id=?
+            """,
+            (tema, data_escrita, texto or None, nota, erros_ortograficos,
+             fonte_correcao, observacoes or None, id_redacao),
+        )
 
 
 if __name__ == "__main__":
