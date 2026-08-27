@@ -4,3 +4,4 @@ __pycache__/
 core/enem_teste.db
 core/backups/
 core/vision_board/
+core/scratch_enunciados_*.txt

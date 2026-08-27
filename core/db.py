@@ -1006,6 +1006,27 @@ def listar_provas() -> list[tuple[int, str, str]]:
     return linhas
 
 
+def provas_com_enunciado() -> list[tuple[int, str, str, int, int]]:
+    """Provas (ano, caderno, grande_area) que têm AO MENOS UMA questão
+    com enunciado_texto preenchido, com a cobertura (quantas de quantas)
+    -- alimenta a página beta de fazer a prova inteira lendo o
+    enunciado no site, que só faz sentido oferecer pra prova que já
+    passou por extrair_enunciados_pdf.py (ou pelo editor manual)."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT ano, caderno, grande_area,
+                   SUM(CASE WHEN enunciado_texto IS NOT NULL THEN 1 ELSE 0 END),
+                   COUNT(*)
+            FROM questoes
+            GROUP BY ano, caderno, grande_area
+            HAVING SUM(CASE WHEN enunciado_texto IS NOT NULL THEN 1 ELSE 0 END) > 0
+            ORDER BY ano DESC, caderno, grande_area
+            """
+        ).fetchall()
+    return linhas
+
+
 def simulados_completos_disponiveis() -> list[dict]:
     """Combinações (ano, caderno) com AS DUAS grandes áreas carregadas
     -- o que 'Simulado completo' precisa pra existir. Um mesmo ano pode
@@ -1465,13 +1486,15 @@ def apagar_prova(ano: int, caderno: str, grande_area: str) -> dict:
 
 def detalhe_questao(id_questao: str) -> dict | None:
     """Ficha completa de UMA questão (ano, caderno, número, área,
-    matéria, gabarito, status) -- base pra editar/apagar uma questão
-    específica no Admin, fora do fluxo de Triagem (que só cobre
-    questão ainda nao_classificado)."""
+    matéria, gabarito, status, enunciado) -- base pra editar/apagar uma
+    questão específica no Admin, fora do fluxo de Triagem (que só cobre
+    questão ainda nao_classificado), e pra scripts de extração de
+    enunciado saberem se já existe algo gravado antes de sobrescrever."""
     with _conectar() as conn:
         linha = conn.execute(
             "SELECT ano, caderno, numero_questao, grande_area, materia, "
-            "alternativa_correta, status_classificacao FROM questoes WHERE id_questao = ?",
+            "alternativa_correta, status_classificacao, enunciado_texto, "
+            "enunciado_imagem_path FROM questoes WHERE id_questao = ?",
             (id_questao,),
         ).fetchone()
     if linha is None:
@@ -1480,6 +1503,7 @@ def detalhe_questao(id_questao: str) -> dict | None:
         "id_questao": id_questao, "ano": linha[0], "caderno": linha[1],
         "numero_questao": linha[2], "grande_area": linha[3], "materia": linha[4],
         "alternativa_correta": linha[5], "status_classificacao": linha[6],
+        "enunciado_texto": linha[7], "enunciado_imagem_path": linha[8],
     }
 
 
