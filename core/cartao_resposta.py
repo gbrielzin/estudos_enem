@@ -253,18 +253,57 @@ def render_simulados_feitos() -> None:
             for r in s["rodadas"]:
                 pct = f"{r['taxa_acerto']*100:.0f}%" if r["taxa_acerto"] is not None else "—"
                 rotulo = f"Tentativa {r['tentativa']}" + (f" — {r['nome']}" if r["nome"] else "")
+                sufixo_rodada = f"{s['ano']}_{s['caderno']}_{s['grande_area']}_{r['tentativa']}"
+
                 col_txt, col_nome = st.columns([3, 2])
                 with col_txt:
                     st.write(f"**{rotulo}**: {r['acertos']}/{r['total']} ({pct}) — {r['inicio'][:10]}")
                 with col_nome:
-                    chave = f"nome_simulados_feitos_{s['ano']}_{s['caderno']}_{s['grande_area']}_{r['tentativa']}"
                     novo_nome = st.text_input(
                         "Nome", value=r["nome"], placeholder="ex: fiz cansado à noite",
-                        key=chave, label_visibility="collapsed",
+                        key=f"nome_simulados_feitos_{sufixo_rodada}", label_visibility="collapsed",
                     )
                     if novo_nome != r["nome"] and novo_nome.strip():
                         db.nomear_tentativa(s["ano"], s["caderno"], s["grande_area"], r["tentativa"], novo_nome)
                         st.rerun()
+
+                col_editar, col_excluir = st.columns(2)
+                with col_editar:
+                    with st.popover("✏️ Editar respostas", key=f"popover_editar_{sufixo_rodada}"):
+                        detalhe = db.detalhe_rodada(s["ano"], s["caderno"], s["grande_area"], r["tentativa"])
+                        opcoes_letra = ["A", "B", "C", "D", "E"]
+                        alteracoes = {}
+                        for item in detalhe:
+                            nova = st.selectbox(
+                                f"Q{item['numero_questao']} (gabarito {item['alternativa_correta']})",
+                                opcoes_letra,
+                                index=opcoes_letra.index(item["resposta_escolhida"]),
+                                key=f"editar_{sufixo_rodada}_{item['id_tentativa']}",
+                            )
+                            if nova != item["resposta_escolhida"]:
+                                alteracoes[item["id_tentativa"]] = nova
+                        if st.button(
+                            f"Salvar {len(alteracoes)} alteração(ões)" if alteracoes else "Nenhuma alteração",
+                            disabled=not alteracoes, key=f"salvar_editar_{sufixo_rodada}",
+                        ):
+                            for id_tentativa, nova_resposta in alteracoes.items():
+                                db.editar_resposta_tentativa(id_tentativa, nova_resposta)
+                            st.rerun()
+                with col_excluir:
+                    with st.popover("🗑️ Excluir esta rodada", key=f"popover_excluir_{sufixo_rodada}"):
+                        st.caption(
+                            "Apaga essa rodada inteira (todas as respostas dela) e recalcula a revisão "
+                            "espaçada de cada questão como se essa rodada nunca tivesse acontecido. "
+                            "Não desfaz -- pra reenvio duplicado ou rodada errada, não pra 'não gostei do resultado'."
+                        )
+                        confirmar = st.checkbox(
+                            f"Confirmo apagar a Tentativa {r['tentativa']} de {titulo}",
+                            key=f"confirmar_excluir_{sufixo_rodada}",
+                        )
+                        if st.button("Apagar rodada", type="primary", disabled=not confirmar, key=f"excluir_{sufixo_rodada}"):
+                            db.apagar_rodada_tentativa(s["ano"], s["caderno"], s["grande_area"], r["tentativa"])
+                            st.rerun()
+                st.divider()
             if ultima["total"] < s["total_questoes"]:
                 st.caption(f"{s['total_questoes'] - ultima['total']} questão(ões) dessa prova ainda sem tentativa nenhuma.")
 
