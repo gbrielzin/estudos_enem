@@ -137,3 +137,16 @@ CREATE TABLE IF NOT EXISTS redacoes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_redacoes_data ON redacoes(data_escrita);
+
+-- Nome opcional por tentativa de uma prova (ex: "fiz cansado de noite").
+-- numero_tentativa é o mesmo número derivado por resumo_por_tentativa()
+-- (ROW_NUMBER por data_tentativa) -- essa tabela só guarda um rótulo
+-- pra ele, nunca cria nem controla a numeração em si.
+CREATE TABLE IF NOT EXISTS nomes_tentativas (
+    ano               INTEGER NOT NULL,
+    caderno           TEXT NOT NULL,
+    grande_area       TEXT NOT NULL,
+    numero_tentativa  INTEGER NOT NULL,
+    nome              TEXT NOT NULL,
+    PRIMARY KEY (ano, caderno, grande_area, numero_tentativa)
+);

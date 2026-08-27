@@ -167,10 +167,23 @@ def _renderizar_bloco_prova(ano_sel: int, caderno_sel: str, area_sel: str) -> No
 
     historico = db.resumo_por_tentativa(ano_sel, caderno_sel, area_sel)
     if historico:
+        nomes = db.nomes_tentativas(ano_sel, caderno_sel, area_sel)
         with st.expander(f"📈 Histórico de tentativas dessa prova ({len(historico)})", expanded=True):
             for h in historico:
                 pct = f"{h['taxa_acerto']*100:.0f}%" if h["taxa_acerto"] is not None else "—"
-                st.write(f"**Tentativa {h['tentativa']}**: {h['acertos']}/{h['total']} ({pct}) — {h['inicio'][:10]}")
+                nome_atual = nomes.get(h["tentativa"], "")
+                rotulo = f"Tentativa {h['tentativa']}" + (f" — {nome_atual}" if nome_atual else "")
+                col_txt, col_nome = st.columns([3, 2])
+                with col_txt:
+                    st.write(f"**{rotulo}**: {h['acertos']}/{h['total']} ({pct}) — {h['inicio'][:10]}")
+                with col_nome:
+                    novo_nome = st.text_input(
+                        "Nome", value=nome_atual, placeholder="ex: fiz cansado à noite",
+                        key=f"nome_tentativa_{sufixo}_{h['tentativa']}", label_visibility="collapsed",
+                    )
+                    if novo_nome != nome_atual and novo_nome.strip():
+                        db.nomear_tentativa(ano_sel, caderno_sel, area_sel, h["tentativa"], novo_nome)
+                        st.rerun()
 
     _renderizar_grade_questoes(questoes, sufixo)
 
@@ -279,6 +292,28 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
     total = len(resultados)
 
     st.success(f"{acertos}/{total} acertos ({acertos / total * 100:.0f}%)")
+
+    with st.popover("↩️ Desfazer essa correção"):
+        st.caption(
+            "Pra quando você marcou errado por engano agora e quer corrigir de novo -- "
+            "só desfaz questão que ainda não tinha nenhuma tentativa antes desta."
+        )
+        if st.button("Confirmar desfazer", key=f"desfazer_confirmar_{sufixo}"):
+            resultado_desfazer = db.desfazer_tentativas([r["id_tentativa"] for r in resultados])
+            del st.session_state[chave_resultado]
+            n_ok = len(resultado_desfazer["desfeitas"])
+            n_puladas = len(resultado_desfazer["puladas_com_historico"])
+            if n_puladas:
+                st.session_state[f"desfazer_aviso_{sufixo}"] = (
+                    f"{n_ok} tentativa(s) desfeita(s). {n_puladas} não foram desfeitas "
+                    "porque já tinham tentativa anterior a esta (desfazer exigiria mexer "
+                    "no histórico de revisão dela, não fiz isso automaticamente)."
+                )
+            st.rerun()
+
+    aviso_desfazer = st.session_state.pop(f"desfazer_aviso_{sufixo}", None)
+    if aviso_desfazer:
+        st.warning(aviso_desfazer)
 
     numero_por_id = {q["id_questao"]: q["numero_questao"] for q in questoes}
 
