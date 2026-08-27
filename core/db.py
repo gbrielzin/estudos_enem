@@ -1341,6 +1341,51 @@ def nomes_tentativas(ano: int, caderno: str, grande_area: str) -> dict[int, str]
     return dict(linhas)
 
 
+def simulados_feitos() -> list[dict]:
+    """Toda prova (ano, caderno, grande_area) com AO MENOS uma
+    tentativa registrada -- alimenta a aba 'Simulados já feitos'.
+    Cada rodada de resumo_por_tentativa() já conta como uma tentativa
+    distinta (responder a prova de novo depois de já ter respondido
+    vira 'tentativa 2' automaticamente, sem precisar de tabela de
+    sessão) -- aqui só agrupamos isso por prova e aplicamos o nome
+    customizado quando existe."""
+    with _conectar() as conn:
+        provas = conn.execute(
+            "SELECT DISTINCT q.ano, q.caderno, q.grande_area "
+            "FROM questoes q JOIN tentativas_usuario t ON t.id_questao = q.id_questao "
+            "ORDER BY q.ano DESC, q.caderno, q.grande_area"
+        ).fetchall()
+
+    resultado = []
+    for ano, caderno, area in provas:
+        rodadas = resumo_por_tentativa(ano, caderno, area)
+        nomes = nomes_tentativas(ano, caderno, area)
+        for r in rodadas:
+            r["nome"] = nomes.get(r["tentativa"], "")
+        resultado.append({
+            "ano": ano, "caderno": caderno, "grande_area": area,
+            "total_questoes": questoes_totais_da_prova(ano, caderno, area),
+            "rodadas": rodadas,
+            "primeira_tentativa": rodadas[0]["inicio"] if rodadas else None,
+            "ultima_tentativa": rodadas[-1]["fim"] if rodadas else None,
+        })
+    return resultado
+
+
+def questoes_totais_da_prova(ano: int, caderno: str, grande_area: str) -> int:
+    """Tamanho real da prova (todas as questões cadastradas, respondidas
+    ou não) -- usado por simulados_feitos() pra mostrar cobertura
+    (ex: '43/44 respondidas') sem depender de nenhuma resposta já ter
+    sido dada."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        return conn.execute(
+            "SELECT COUNT(*) FROM questoes WHERE ano=? AND caderno=? AND grande_area=?",
+            (ano, caderno_norm, grande_area_norm),
+        ).fetchone()[0]
+
+
 def calcular_ofensiva() -> dict:
     """Ofensiva (streak) estilo Duolingo: dias seguidos com pelo menos
     uma tentativa registrada. 'Seguido' conta a partir de hoje ou
