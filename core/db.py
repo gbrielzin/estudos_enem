@@ -808,21 +808,43 @@ def listar_provas() -> list[tuple[int, str, str]]:
 
 
 def simulados_completos_disponiveis() -> list[dict]:
-    """Anos com AS DUAS grandes áreas carregadas -- o que 'Simulado
-    completo' precisa pra existir. Cada área guarda o PRÓPRIO caderno
-    (não assume que os dois usam o mesmo): 2023 é matemática/Azul +
-    ciências/Cinza, cadernos de cor diferente no mesmo ano, um padrão
-    real do INEP naquele ano -- sem isso esse ano ficava invisível pro
-    simulado completo mesmo tendo as duas áreas certinhas no banco."""
-    por_ano: dict[int, dict[str, str]] = {}
-    for ano, caderno, area in listar_provas():
-        por_ano.setdefault(ano, {})[area] = caderno
+    """Combinações (ano, caderno) com AS DUAS grandes áreas carregadas
+    -- o que 'Simulado completo' precisa pra existir. Um mesmo ano pode
+    ter MAIS DE UM caderno completo (ex: 2024 tem azul completo E
+    amarelo completo) -- cada um vira sua PRÓPRIA opção, nunca só uma
+    por ano (uma versão anterior desta função guardava só um caderno
+    por (ano, área) e um sobrescrevia o outro em silêncio assim que um
+    segundo caderno apareceu pra mesma área/ano).
 
-    return [
-        {"ano": ano, "caderno_matematica": areas["matematica"], "caderno_ciencias": areas["ciencias_natureza"]}
-        for ano, areas in sorted(por_ano.items(), reverse=True)
-        if "matematica" in areas and "ciencias_natureza" in areas
-    ]
+    Quando um ano não tem NENHUM caderno com as duas áreas ao mesmo
+    tempo, mas cada área tem exatamente UM caderno carregado (podem ser
+    cores diferentes -- 2023 é matemática/Azul + ciências/Cinza, um
+    padrão real do INEP naquele ano), cai num modo de reserva que cruza
+    os dois mesmo assim. Quando as duas áreas têm MAIS de um caderno
+    cada e nenhum coincide, não há como adivinhar qual par faz sentido
+    -- esse ano fica de fora do simulado completo (mas continua
+    disponível em 'Uma prova por vez')."""
+    por_ano: dict[int, dict[str, set[str]]] = {}
+    for ano, caderno, area in listar_provas():
+        por_ano.setdefault(ano, {}).setdefault(area, set()).add(caderno)
+
+    combos = []
+    for ano, areas in sorted(por_ano.items(), reverse=True):
+        cadernos_mat = areas.get("matematica", set())
+        cadernos_cie = areas.get("ciencias_natureza", set())
+        if not cadernos_mat or not cadernos_cie:
+            continue
+        comuns = cadernos_mat & cadernos_cie
+        if comuns:
+            for caderno in sorted(comuns):
+                combos.append({"ano": ano, "caderno_matematica": caderno, "caderno_ciencias": caderno})
+        elif len(cadernos_mat) == 1 and len(cadernos_cie) == 1:
+            combos.append({
+                "ano": ano,
+                "caderno_matematica": next(iter(cadernos_mat)),
+                "caderno_ciencias": next(iter(cadernos_cie)),
+            })
+    return combos
 
 
 def progresso_simulados() -> list[dict]:
@@ -856,6 +878,8 @@ def progresso_simulados() -> list[dict]:
         total_erradas, erradas_com_motivo = erradas[0] or 0, erradas[1] or 0
         resultado.append({
             "ano": ano,
+            "caderno_matematica": combo["caderno_matematica"],
+            "caderno_ciencias": combo["caderno_ciencias"],
             "total_questoes": total,
             "respondidas": respondidas,
             "cobertura_pct": round(respondidas / total * 100, 1) if total else 0.0,

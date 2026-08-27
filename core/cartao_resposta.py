@@ -116,11 +116,10 @@ def _render_simulado_completo() -> None:
     """Faz Matemática e Ciências da Natureza do mesmo ano em sequência,
     cada uma na sua aba. Corrige, guarda e mostra o resultado de cada
     área separadamente — nunca mistura as duas na mesma grade nem no
-    mesmo cálculo, mesma regra do resto do sistema. Cada área usa o
-    PRÓPRIO caderno (ver db.simulados_completos_disponiveis) -- 2023
-    é matemática/Azul + ciências/Cinza, cadernos diferentes no mesmo
-    ano, um padrão real do INEP que a versão antiga desta função
-    (agrupava por ano+caderno igual pras duas áreas) deixava invisível."""
+    mesmo cálculo, mesma regra do resto do sistema. Um ano pode ter
+    mais de um caderno completo (ex: 2024 azul E amarelo) -- cada
+    combinação vira sua própria opção no seletor, rotulada por cor pra
+    não colidir (ver db.simulados_completos_disponiveis)."""
     combinacoes = db.simulados_completos_disponiveis()
     if not combinacoes:
         st.info(
@@ -130,7 +129,12 @@ def _render_simulado_completo() -> None:
         )
         return
 
-    opcoes = {f"{c['ano']}": c for c in combinacoes}
+    def _rotulo(c: dict) -> str:
+        if c["caderno_matematica"] == c["caderno_ciencias"]:
+            return f"{c['ano']} — {c['caderno_matematica']}"
+        return f"{c['ano']} — Mat. {c['caderno_matematica']} / Ciê. {c['caderno_ciencias']}"
+
+    opcoes = {_rotulo(c): c for c in combinacoes}
     escolha = st.selectbox("Simulado", list(opcoes.keys()))
     combo = opcoes[escolha]
 
@@ -609,7 +613,11 @@ def render_calendario() -> None:
             corrigido = "✅"
         else:
             corrigido = f"⬜ {p['erradas_corrigidas']}/{p['erradas_total']}"
-        st.write(f"{feito} **{p['ano']}** — {p['respondidas']}/{p['total_questoes']} respondidas ({p['cobertura_pct']:.0f}%) · correção: {corrigido}")
+        rotulo_caderno = (
+            p["caderno_matematica"] if p["caderno_matematica"] == p["caderno_ciencias"]
+            else f"Mat. {p['caderno_matematica']} / Ciê. {p['caderno_ciencias']}"
+        )
+        st.write(f"{feito} **{p['ano']} — {rotulo_caderno}** — {p['respondidas']}/{p['total_questoes']} respondidas ({p['cobertura_pct']:.0f}%) · correção: {corrigido}")
 
     st.divider()
     st.subheader("📆 Rotina desta fase")
