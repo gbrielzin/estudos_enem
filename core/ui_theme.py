@@ -16,6 +16,25 @@ import streamlit as st
 
 _CSS = """
 <style>
+/* Paleta do tema claro, centralizada aqui pra não espalhar hex solto
+   pelas regras abaixo. #15803D (não o #39FF14 neon original) é o
+   verde de TEXTO/BORDA/preenchimento sólido -- neon sobre fundo
+   branco falha contraste de leitura (WCAG AA pede 4.5:1 pra texto;
+   #39FF14 sobre branco fica bem abaixo disso). O neon original
+   continua vivo em --tema-neon, usado só onde cor não precisa ser
+   lida (glow de hover, calendário de ofensiva) -- mesma lógica que
+   já existia no tema escuro (borda em #245C2E, glow em rgba do neon),
+   só invertendo qual dos dois vira a cor "segura" com o fundo claro. */
+:root {
+    --tema-bg-secundario: #FAFAFA;
+    --tema-texto-suave: #555555;
+    --tema-borda: #DDDDDD;
+    --tema-borda-forte: #999999;
+    --tema-accent: #15803D;
+    --tema-accent-forte: #0F5C28;
+    --tema-neon: #39FF14;
+}
+
 /* Remove marca d'água padrão do Streamlit (rodapé "Made with
    Streamlit" e o botão "Deploy") -- é o maior "carimbo de template"
    visual que o framework deixa por padrão.
@@ -168,8 +187,11 @@ header[data-testid="stHeader"] { background: transparent; }
     font-weight: 600;
 }
 
-/* Título principal com leve brilho neon -- só aqui, não em todo H1,
-   pra não cansar a vista em telas com várias seções. */
+/* Título principal com uma régua verde embaixo -- glow de neon (efeito
+   antigo do tema escuro) some sobre fundo claro: texto escuro com halo
+   colorido ao redor lê como borrão/aberração cromática, não "brilho";
+   uma borda sólida fina é o jeito de manter a assinatura verde sem
+   esse artefato. */
 .app-hero {
     display: flex;
     align-items: baseline;
@@ -177,25 +199,30 @@ header[data-testid="stHeader"] { background: transparent; }
     flex-wrap: wrap;
     margin-bottom: 0.25rem;
     margin-top: 2.5rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 2px solid var(--tema-accent);
 }
 .app-hero h1 {
     margin: 0;
-    text-shadow: 0 0 18px rgba(57, 255, 20, 0.45);
 }
 .app-hero span.tagline {
-    color: #8FE39A;
+    color: var(--tema-accent);
     font-size: 0.95rem;
     opacity: 0.85;
 }
 
-/* Cards de métrica (Rank / XP / Ofensiva) com borda e brilho sutil,
-   em vez do bloco chapado padrão do st.metric. */
+/* Cards de métrica (Rank / XP / Ofensiva) com borda e leve textura
+   verde, em vez do bloco chapado padrão do st.metric. Sombra neutra
+   (não colorida) de propósito: um glow verde só faz sentido como "luz
+   vazando" sobre fundo escuro -- sobre branco, sombra de cor lê como
+   mancha, então a elevação do card vem de uma sombra cinza discreta,
+   e o verde fica só na textura de fundo/borda. */
 div[data-testid="stMetric"] {
-    background: linear-gradient(180deg, rgba(57,255,20,0.07), rgba(57,255,20,0.02));
-    border: 1px solid #245C2E;
+    background: linear-gradient(180deg, rgba(21,128,61,0.06), rgba(21,128,61,0.015));
+    border: 1px solid var(--tema-borda);
     border-radius: 0.75rem;
     padding: 1rem 1.1rem;
-    box-shadow: 0 0 24px rgba(57, 255, 20, 0.06);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 div[data-testid="stMetricLabel"] {
     letter-spacing: 0.04em;
@@ -211,19 +238,22 @@ button[kind="primary"], button[kind="primaryFormSubmit"] {
     transition: box-shadow 0.15s ease, transform 0.05s ease;
 }
 button[kind="primary"]:hover, button[kind="primaryFormSubmit"]:hover {
-    box-shadow: 0 0 20px rgba(57, 255, 20, 0.55);
+    box-shadow: 0 0 16px rgba(21, 128, 61, 0.4);
 }
 button[kind="primary"]:active, button[kind="primaryFormSubmit"]:active {
     transform: scale(0.98);
 }
 
 /* Formulários (o cartão-resposta inteiro é um st.form) com cara de
-   cartão -- sem isso, a grade de questões fica "boiando" no fundo. */
+   cartão -- sem isso, a grade de questões fica "boiando" no fundo.
+   Fundo quase-branco (não branco puro, igual ao stMain) só pra dar
+   uma sombra de profundidade sutil ao card, validado antes na página
+   beta "Prova com enunciado". */
 div[data-testid="stForm"] {
-    border: 1px solid #245C2E;
+    border: 1px solid var(--tema-borda);
     border-radius: 0.9rem;
     padding: 1.25rem 1.25rem 0.5rem;
-    background: rgba(19, 28, 19, 0.4);
+    background: var(--tema-bg-secundario);
 }
 
 /* Grade de resposta (A-B-C-D-E por questão): opções horizontais viram
@@ -234,21 +264,21 @@ div[data-testid="stRadio"] > div[role="radiogroup"] {
     gap: 0.3rem;
 }
 div[data-testid="stRadio"] label {
-    border: 1px solid #245C2E;
+    border: 1px solid var(--tema-borda-forte);
     border-radius: 999px;
     padding: 0.15rem 0.6rem;
     margin: 0 !important;
     transition: border-color 0.15s ease, background 0.15s ease;
 }
 div[data-testid="stRadio"] label:has(input:checked) {
-    border-color: #39FF14;
-    background: rgba(57, 255, 20, 0.12);
+    border-color: var(--tema-accent);
+    background: rgba(21, 128, 61, 0.10);
 }
 
-/* Separadores e expanders com a mesma linguagem de borda verde-escura,
+/* Separadores e expanders com a mesma linguagem de borda cinza clara,
    pra tudo parecer parte do mesmo sistema visual. */
 div[data-testid="stExpander"] {
-    border: 1px solid #245C2E;
+    border: 1px solid var(--tema-borda);
     border-radius: 0.75rem;
 }
 
@@ -271,60 +301,22 @@ div.app-streak-calendar {
     display: inline-block !important;
 }
 .app-streak-calendar .dia-inativo {
-    background: rgba(231, 255, 234, 0.06) !important;
-    border: 1px solid #245C2E !important;
+    background: var(--tema-bg-secundario) !important;
+    border: 1px solid var(--tema-borda) !important;
 }
 .app-streak-calendar .dia-ativo {
-    background: #39FF14 !important;
-    box-shadow: 0 0 8px rgba(57, 255, 20, 0.8) !important;
+    background: var(--tema-neon) !important;
+    border: 1px solid var(--tema-accent-forte) !important;
 }
-</style>
-"""
 
-# Tema claro só pra página "Prova com enunciado (beta)" -- pedido
-# explícito do usuário pra parecer com o PDF do ENEM (folha branca,
-# texto escuro) em vez do tema escuro verde do resto do app, enquanto
-# ele lê e responde. Mira só [data-testid="stMain"] (a área de
-# conteúdo principal) e o que tem DENTRO dela via herança de `color`
-# (que se propaga pra filho sem cor própria, mas nunca vence uma regra
-# mais específica -- ex: os links do menu (.nav-drawer a.nav-item) têm
-# cor própria declarada, então não mudam) -- a gaveta/hambúrguer de
-# navegação, com z-index acima de tudo e cor própria em cada regra,
-# fica com o visual de sempre de propósito, é navegação, não é "a
-# folha de prova". Não troca o tema inteiro do Streamlit (teria que
-# mudar .streamlit/config.toml, que vale pro app inteiro, não só uma
-# página) -- por isso st.success/st.warning depois de corrigir ainda
-# usam o estilo pensado pro tema escuro; only a parte de LER a questão
-# (o que importava pro pedido) foi ajustada.
-_CSS_TEMA_CLARO_EXAME = """
-<style>
-[data-testid="stMain"] {
-    background: #FFFFFF !important;
-    color: #1A1A1A !important;
-}
-[data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3,
-[data-testid="stMain"] h4, [data-testid="stMain"] h5, [data-testid="stMain"] p,
-[data-testid="stMain"] li, [data-testid="stMain"] span, [data-testid="stMain"] label {
-    color: #1A1A1A !important;
-}
-[data-testid="stMain"] [data-testid="stForm"] {
-    background: #FFFFFF !important;
-    border: 1px solid #CCCCCC !important;
-}
-[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"] {
-    background: #FAFAFA !important;
-    border: 1px solid #DDDDDD !important;
-}
-[data-testid="stMain"] div[data-testid="stRadio"] label {
-    border: 1px solid #999999 !important;
-    background: #FFFFFF !important;
-}
-[data-testid="stMain"] div[data-testid="stRadio"] label:has(input:checked) {
-    border-color: #1A1A1A !important;
-    background: #EAEAEA !important;
-}
-[data-testid="stMain"] .app-hero span.tagline {
-    color: #555555 !important;
+/* Blocos que o Streamlit monta com st.container(border=True) (ex: a
+   folha do enunciado na página "Prova com enunciado (beta)") --
+   mesmo card quase-branco dos formulários, pra tudo (form, container,
+   expander) parecer a mesma família de "papel" sobre o fundo branco
+   do stMain. */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: var(--tema-bg-secundario);
+    border: 1px solid var(--tema-borda);
 }
 </style>
 """
@@ -332,12 +324,6 @@ _CSS_TEMA_CLARO_EXAME = """
 
 def injetar_tema() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
-
-
-def injetar_tema_exame_claro() -> None:
-    """Chamar SÓ na página beta de prova com enunciado, depois de
-    injetar_tema() -- ver comentário de _CSS_TEMA_CLARO_EXAME."""
-    st.markdown(_CSS_TEMA_CLARO_EXAME, unsafe_allow_html=True)
 
 
 def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) -> None:
@@ -385,7 +371,7 @@ def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) ->
 
 
 def hero(titulo: str, tagline: str = "") -> None:
-    """Título de página com o leve brilho neon do tema, opcionalmente
+    """Título de página com a régua verde do tema embaixo, opcionalmente
     com uma legenda ao lado (ex: contagem regressiva pro ENEM)."""
     st.markdown(
         f'<div class="app-hero"><h1>{titulo}</h1>'

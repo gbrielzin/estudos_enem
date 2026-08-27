@@ -1,16 +1,25 @@
-# Tema "verde fluorescente" do cartão-resposta. Ver core/ui_theme.py pro
-# CSS complementar (esconde o rodapé "Made with Streamlit", estiliza
-# botões/cards/bolhas de resposta) que o config sozinho não alcança.
+# Tema claro "folha + verde" do cartão-resposta -- fundo branco/cinza
+# claro com texto quase preto (validado antes só na página beta "Prova
+# com enunciado", promovido pro app inteiro a pedido do usuário: "a
+# fonte assim de cor deixa padronizada branco... que nem você fez na
+# prova"). primaryColor/greenColor usam um verde mais escuro que o
+# neon original (#39FF14) de propósito -- neon sobre branco falha
+# contraste de texto (WCAG); #39FF14 continua vivo em glow/destaque
+# pontual via core/ui_theme.py, só não como cor de texto/borda sólida.
+# Ver core/ui_theme.py pro CSS complementar (esconde o rodapé "Made
+# with Streamlit", estiliza botões/cards/bolhas de resposta, mantém a
+# gaveta de navegação no visual escuro original) que o config sozinho
+# não alcança.
 
 [theme]
-base = "dark"
+base = "light"
 
-primaryColor = "#39FF14"
-backgroundColor = "#0A0F0A"
-secondaryBackgroundColor = "#131C13"
-textColor = "#E7FFEA"
-borderColor = "#245C2E"
-greenColor = "#39FF14"
+primaryColor = "#15803D"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#FAFAFA"
+textColor = "#1A1A1A"
+borderColor = "#DDDDDD"
+greenColor = "#15803D"
 
 showWidgetBorder = true
 showSidebarBorder = true
