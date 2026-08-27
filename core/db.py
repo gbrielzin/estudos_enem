@@ -640,6 +640,8 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str) -> dict:
         "id_tentativa": id_tentativa,
         "id_questao": id_questao,
         "resultado": resultado,
+        "resposta_escolhida": resposta,
+        "alternativa_correta": linha[0],
         "intervalo_dias": intervalo_dias,
         "streak_acertos": streak,
         "proxima_revisao": proxima_revisao.isoformat(),

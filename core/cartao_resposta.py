@@ -280,11 +280,26 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
 
     st.success(f"{acertos}/{total} acertos ({acertos / total * 100:.0f}%)")
 
+    numero_por_id = {q["id_questao"]: q["numero_questao"] for q in questoes}
+
+    with st.expander(f"📋 Ver o que você marcou (todas as {total} respostas)"):
+        for r in resultados:
+            marca = "✅" if r["resultado"] == "acertou" else "❌"
+            numero = numero_por_id.get(r["id_questao"], r["id_questao"])
+            st.write(
+                f"{marca} **Q{numero}** — você marcou **{r['resposta_escolhida']}**, "
+                f"gabarito é **{r['alternativa_correta']}**"
+            )
+
     erros = [r for r in resultados if r["resultado"] == "errou"]
     if erros:
         with st.expander(f"⚠️ {len(erros)} questão(ões) errada(s) — já agendadas pra revisão", expanded=True):
             for r in erros:
-                st.write(f"**{r['id_questao']}** — próxima revisão: {r['proxima_revisao']}")
+                numero = numero_por_id.get(r["id_questao"], r["id_questao"])
+                st.write(
+                    f"**Q{numero}** — você marcou **{r['resposta_escolhida']}**, "
+                    f"gabarito é **{r['alternativa_correta']}** — próxima revisão: {r['proxima_revisao']}"
+                )
 
                 opcoes_erro = ["—"] + list(db.TIPOS_ERRO.values())
                 escolha_erro = st.selectbox(
