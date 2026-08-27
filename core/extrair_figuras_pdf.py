@@ -14,7 +14,15 @@ da página), a esmagadora maioria era mesmo diagrama/gráfico/tabela de
 verdade (conferido abrindo os PNGs um por um) -- o único falso
 positivo era o logo "enem2020" da contracapa, uma página sem nenhum
 "Questão N" e com pouquíssimo texto (código de barras + cabeçalho),
-o que a checagem de MIN_TEXTO_PAGINA abaixo já descarta.
+o que a checagem de MIN_TEXTO_PAGINA abaixo já descarta. Mesmo assim,
+uma rodada real pegou um caso mais sério que a checagem PNG-por-PNG
+não capturou de primeira -- ver _duas_colunas_de_verdade abaixo -- que
+não era "figura faltando" (inofensivo, já tem o aviso ⚠️ de
+extrair_enunciados_pdf.py) e sim "figura da questão ERRADA" (silencioso
+e enganoso); qualquer prova nova rodada por este script vale uma
+segunda conferida pontual antes de confiar de olhos fechados,
+principalmente em questão com alternativa em forma de diagrama (física
+com circuito, química com estrutura molecular).
 
 ## Como associa recorte -> questão
 
@@ -34,6 +42,23 @@ anterior) -- necessário porque uma figura grande às vezes desliza pro
 topo da página seguinte -- mas só em página com conteúdo real
 (ver MIN_TEXTO_PAGINA); página de capa/divisória não herda nada, pra
 não grudar o cluster errado na última questão da página anterior.
+
+EXCEÇÃO descoberta numa questão real (93 do 2020 azul, física de
+circuito elétrico): quando as 5 alternativas são desenho (não texto),
+o INEP às vezes imprime a questão INTEIRA usando a largura da página
+toda em vez de respeitar a coluna esquerda/direita do texto corrido --
+2 das 5 imagens ficavam no lado "direito" mesmo a questão sendo só
+coluna esquerda. Como a chave (coluna, y0) trata qualquer coisa da
+coluna 1 como "depois de tudo" da coluna 0, essas 2 imagens grudavam
+na QUESTÃO SEGUINTE (cujo marcador também é coluna esquerda, só que
+mais abaixo) em vez de ficar na 93 -- um recorte incompleto numa
+questão e um recorte com a figura ERRADA na outra, sem aviso nenhum.
+_duas_colunas_de_verdade() detecta isso olhando só os marcadores
+"Questão N" da própria página: se todos caem na mesma coluna, não
+existe uma coluna 2 de verdade AQUI, então a atribuição usa y0 puro
+(_chave_pagina_unica) em vez de (coluna, y0) -- se os marcadores usam
+as duas colunas de verdade (o normal), mantém (coluna, y0)
+(_chave_leitura) como antes.
 
 Questão com mais de um cluster na MESMA página vira um recorte só (uni
 ão dos retângulos). Questão cujos clusters caem em páginas DIFERENTES
@@ -65,12 +90,46 @@ _MARGEM_PT = 4  # folga em volta do retângulo detectado, pra não cortar rente 
 PASTA_ENUNCIADOS = Path(__file__).parent / "enunciados"
 
 
+def _coluna(rect: pymupdf.Rect, largura_pagina: float) -> int:
+    return 0 if rect.x0 < largura_pagina / 2 else 1
+
+
 def _chave_leitura(rect: pymupdf.Rect, largura_pagina: float) -> tuple[int, float]:
     """(coluna, y0) -- coluna 0 (esquerda) sempre ordena antes da 1
     (direita), reproduzindo a ordem de leitura de duas colunas do ENEM
     sem precisar reconstruir o layout inteiro feito pelo PyMuPDF."""
-    coluna = 0 if rect.x0 < largura_pagina / 2 else 1
-    return (coluna, rect.y0)
+    return (_coluna(rect, largura_pagina), rect.y0)
+
+
+def _chave_pagina_unica(rect: pymupdf.Rect, largura_pagina: float) -> tuple[int, float]:
+    """Mesma forma de tupla de _chave_leitura, mas ignorando coluna --
+    pra página onde o conteúdo usa a largura toda em vez do layout de
+    duas colunas (ver _duas_colunas_de_verdade)."""
+    return (0, rect.y0)
+
+
+def _duas_colunas_de_verdade(marcos: list[tuple[int, pymupdf.Rect]], largura_pagina: float) -> bool:
+    """Uma questão cujas 5 alternativas são diagrama (não texto) às
+    vezes usa a largura DA PÁGINA TODA pro grid de imagens, em vez de
+    respeitar a coluna esquerda/direita do texto corrido -- confirmado
+    numa prova real (questão 93 do 2020 azul, circuito elétrico): duas
+    das cinco imagens ficam no lado direito da página mesmo a questão
+    inteira sendo só coluna esquerda, e como a chave (coluna, y0) trata
+    QUALQUER coisa da coluna 1 como "depois" de qualquer coisa da
+    coluna 0, essas duas imagens eram atribuídas à streamlit PRÓXIMA
+    questão (cujo marcador também está na coluna 0, mas mais abaixo) em
+    vez da questão 93 -- um recorte incompleto numa questão e um
+    recorte de conteúdo ERRADO na outra.
+
+    Sinal usado pra distinguir os dois casos: se os marcadores "Questão
+    N" que aparecem NESTA página usam as duas colunas (o normal — uma
+    questão começa na esquerda, a próxima na direita), o layout de duas
+    colunas É real, então usa _chave_leitura. Se todos os marcadores
+    desta página caem na MESMA coluna, não existe uma "coluna 2" de
+    verdade aqui -- qualquer cluster do lado direito é só a figura
+    ocupando a largura toda, então usa y0 puro (_chave_pagina_unica)."""
+    colunas_dos_marcos = {_coluna(rect, largura_pagina) for _, rect in marcos}
+    return len(colunas_dos_marcos) > 1
 
 
 def localizar_clusters(caminho: str) -> dict[int, list[tuple[int, pymupdf.Rect]]]:
@@ -99,18 +158,20 @@ def localizar_clusters(caminho: str) -> dict[int, list[tuple[int, pymupdf.Rect]]
             if ocorrencias:
                 marcos.append((numero, ocorrencias[0]))
 
+        chave = _chave_leitura if _duas_colunas_de_verdade(marcos, largura_pagina) else _chave_pagina_unica
+
         area_pagina = pagina.rect.width * pagina.rect.height
         for rect in pagina.cluster_drawings():
             area_pct = (rect.width * rect.height) / area_pagina * 100
             if not (_AREA_MINIMA_PCT < area_pct < _AREA_MAXIMA_PCT):
                 continue
-            chave_cluster = _chave_leitura(rect, largura_pagina)
+            chave_cluster = chave(rect, largura_pagina)
             anteriores = [
                 (numero, marco_rect) for numero, marco_rect in marcos
-                if _chave_leitura(marco_rect, largura_pagina) <= chave_cluster
+                if chave(marco_rect, largura_pagina) <= chave_cluster
             ]
             if anteriores:
-                dono = max(anteriores, key=lambda par: _chave_leitura(par[1], largura_pagina))[0]
+                dono = max(anteriores, key=lambda par: chave(par[1], largura_pagina))[0]
             elif questao_atual is not None:
                 dono = questao_atual
             else:
