@@ -373,6 +373,43 @@ def inicializar_banco() -> None:
         if "tipo_erro" not in colunas:
             conn.execute("ALTER TABLE tentativas_usuario ADD COLUMN tipo_erro TEXT")
 
+        # SQLite não tem ALTER TABLE pra mudar CHECK constraint -- só dá
+        # pra recriar a tabela. Só roda se a tabela já existir com a
+        # constraint ANTIGA (resposta_escolhida NOT NULL, sem a opção
+        # IS NULL); depois de rodar uma vez, o texto novo não bate mais
+        # com essa checagem e vira no-op pra sempre. Preserva todo dado
+        # -- é um INSERT INTO ... SELECT * da tabela antiga pra nova,
+        # nunca um DELETE.
+        sql_tabela_atual = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='tentativas_usuario'"
+        ).fetchone()[0]
+        if "resposta_escolhida IN ('A','B','C','D','E'))" in sql_tabela_atual:
+            conn.executescript(
+                """
+                ALTER TABLE tentativas_usuario RENAME TO tentativas_usuario_migracao_old;
+                CREATE TABLE tentativas_usuario (
+                    id_tentativa        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_questao          TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
+                    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now')),
+                    resposta_escolhida  TEXT CHECK(resposta_escolhida IN ('A','B','C','D','E') OR resposta_escolhida IS NULL),
+                    resultado           TEXT NOT NULL CHECK(resultado IN ('acertou','errou')),
+                    intervalo_dias      INTEGER NOT NULL,
+                    streak_acertos      INTEGER NOT NULL,
+                    proxima_revisao     TEXT NOT NULL,
+                    tipo_erro           TEXT
+                );
+                INSERT INTO tentativas_usuario
+                    (id_tentativa, id_questao, data_tentativa, resposta_escolhida, resultado,
+                     intervalo_dias, streak_acertos, proxima_revisao, tipo_erro)
+                SELECT id_tentativa, id_questao, data_tentativa, resposta_escolhida, resultado,
+                       intervalo_dias, streak_acertos, proxima_revisao, tipo_erro
+                FROM tentativas_usuario_migracao_old;
+                DROP TABLE tentativas_usuario_migracao_old;
+                CREATE INDEX IF NOT EXISTS idx_tentativas_questao ON tentativas_usuario(id_questao);
+                CREATE INDEX IF NOT EXISTS idx_tentativas_data ON tentativas_usuario(data_tentativa);
+                """
+            )
+
 
 # ============================================================
 # ID CANÔNICO
@@ -627,7 +664,7 @@ def _recomputar_estado_revisao(id_questao: str, conn: sqlite3.Connection) -> Non
 # REGISTRO DE TENTATIVA
 # ============================================================
 
-def registrar_tentativa(id_questao: str, resposta_escolhida: str) -> dict:
+def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict:
     """Única função que deve gravar em tentativas_usuario e
     estado_revisao — evita os dois divergirem por escritas separadas.
 
@@ -635,10 +672,19 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str) -> dict:
     próprio sistema decide acerto/erro; não depende de nenhum rótulo
     externo, o que elimina o problema antigo de 'fonte_nivel' que
     cravava 'confirmado_transcricao_ia' mesmo quando não era verdade).
-    """
-    resposta = resposta_escolhida.strip().upper()
-    if resposta not in {"A", "B", "C", "D", "E"}:
-        raise ValueError(f"resposta_escolhida inválida: '{resposta_escolhida}'")
+
+    resposta_escolhida=None registra questão deixada em branco --
+    SEMPRE 'errou' (não tem letra pra comparar, e não responder nunca
+    pode contar como acerto). É uma tentativa de verdade, não um
+    "pular": entra no Leitner (agenda revisão, e cedo -- streak zera
+    igual erro comum) e em toda estatística baseada em
+    tentativas_usuario, em vez de desaparecer da conta como se a
+    questão não existisse na prova."""
+    if resposta_escolhida is not None:
+        resposta_escolhida = resposta_escolhida.strip().upper()
+        if resposta_escolhida not in {"A", "B", "C", "D", "E"}:
+            raise ValueError(f"resposta_escolhida inválida: '{resposta_escolhida}'")
+    resposta = resposta_escolhida
 
     with _conectar() as conn:
         linha = conn.execute(
@@ -647,7 +693,7 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str) -> dict:
         if linha is None:
             raise ValueError(f"Questão '{id_questao}' não existe na base.")
 
-        resultado = "acertou" if resposta == linha[0] else "errou"
+        resultado = "acertou" if (resposta is not None and resposta == linha[0]) else "errou"
         proxima_revisao, intervalo_dias, streak = calcular_proxima_revisao(id_questao, resultado, conn)
 
         conn.execute(
@@ -764,7 +810,7 @@ def apagar_rodada_tentativa(ano: int, caderno: str, grande_area: str, numero_ten
     return {"tentativas_apagadas": len(ids_tentativa), "questoes_recalculadas": len(set(ids_questao))}
 
 
-def editar_resposta_tentativa(id_tentativa: int, nova_resposta: str) -> dict:
+def editar_resposta_tentativa(id_tentativa: int, nova_resposta: str | None) -> dict:
     """Corrige a letra marcada numa tentativa JÁ REGISTRADA, de
     qualquer rodada (não precisa ser a mais recente) -- recalcula
     resultado contra o gabarito atual e reconstrói estado_revisao da
@@ -772,10 +818,15 @@ def editar_resposta_tentativa(id_tentativa: int, nova_resposta: str) -> dict:
     que mudar uma tentativa no meio do histórico pode mudar o streak
     que toda tentativa seguinte teria calculado na hora. Zera
     tipo_erro dessa tentativa -- uma classificação de erro presa a uma
-    letra que não é mais a registrada não faz sentido manter."""
-    nova_resposta = nova_resposta.strip().upper()
-    if nova_resposta not in {"A", "B", "C", "D", "E"}:
-        raise ValueError(f"resposta_escolhida inválida: '{nova_resposta}'")
+    letra que não é mais a registrada não faz sentido manter.
+
+    nova_resposta=None marca a tentativa como deixada em branco
+    (sempre 'errou') -- simétrico ao que registrar_tentativa() já
+    aceita na hora de responder."""
+    if nova_resposta is not None:
+        nova_resposta = nova_resposta.strip().upper()
+        if nova_resposta not in {"A", "B", "C", "D", "E"}:
+            raise ValueError(f"resposta_escolhida inválida: '{nova_resposta}'")
     with _conectar() as conn:
         linha = conn.execute(
             "SELECT t.id_questao, q.alternativa_correta FROM tentativas_usuario t "
@@ -785,7 +836,7 @@ def editar_resposta_tentativa(id_tentativa: int, nova_resposta: str) -> dict:
         if linha is None:
             raise ValueError(f"Tentativa '{id_tentativa}' não existe.")
         id_questao, gabarito = linha
-        resultado = "acertou" if nova_resposta == gabarito else "errou"
+        resultado = "acertou" if (nova_resposta is not None and nova_resposta == gabarito) else "errou"
         conn.execute(
             "UPDATE tentativas_usuario SET resposta_escolhida=?, resultado=?, tipo_erro=NULL WHERE id_tentativa=?",
             (nova_resposta, resultado, id_tentativa),

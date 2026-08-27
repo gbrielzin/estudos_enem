@@ -271,17 +271,18 @@ def render_simulados_feitos() -> None:
                 with col_editar:
                     with st.popover("✏️ Editar respostas", key=f"popover_editar_{sufixo_rodada}"):
                         detalhe = db.detalhe_rodada(s["ano"], s["caderno"], s["grande_area"], r["tentativa"])
-                        opcoes_letra = ["A", "B", "C", "D", "E"]
+                        opcoes_letra = ["— (não respondida)", "A", "B", "C", "D", "E"]
                         alteracoes = {}
                         for item in detalhe:
+                            valor_atual = item["resposta_escolhida"] or "— (não respondida)"
                             nova = st.selectbox(
                                 f"Q{item['numero_questao']} (gabarito {item['alternativa_correta']})",
                                 opcoes_letra,
-                                index=opcoes_letra.index(item["resposta_escolhida"]),
+                                index=opcoes_letra.index(valor_atual),
                                 key=f"editar_{sufixo_rodada}_{item['id_tentativa']}",
                             )
-                            if nova != item["resposta_escolhida"]:
-                                alteracoes[item["id_tentativa"]] = nova
+                            if nova != valor_atual:
+                                alteracoes[item["id_tentativa"]] = None if nova == "— (não respondida)" else nova
                         if st.button(
                             f"Salvar {len(alteracoes)} alteração(ões)" if alteracoes else "Nenhuma alteração",
                             disabled=not alteracoes, key=f"salvar_editar_{sufixo_rodada}",
@@ -325,9 +326,20 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
         if st.button("Aplicar sequência", key=f"aplicar_seq_{sufixo}"):
             aplicadas = 0
             for i, q in enumerate(questoes):
-                if i < len(sequencia) and sequencia[i].upper() in "ABCDE":
-                    st.session_state[f"resp_{q['id_questao']}"] = sequencia[i].upper()
+                letra = sequencia[i].upper() if i < len(sequencia) else "*"
+                chave_resp = f"resp_{q['id_questao']}"
+                if letra in "ABCDE":
+                    st.session_state[chave_resp] = letra
                     aplicadas += 1
+                else:
+                    # * (ou string mais curta que a prova) LIMPA a
+                    # resposta de propósito -- sem isso, colar uma
+                    # sequência corrigida com * numa posição que já
+                    # tinha letra de uma aplicação anterior deixava a
+                    # letra velha lá (só escrevia em cima de A-E, nunca
+                    # apagava), então "pular" não pulava de verdade se
+                    # já tinha algo marcado ali antes.
+                    st.session_state[chave_resp] = "—"
             st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
 
     mostrar_ano = len({q["ano"] for q in questoes}) > 1
@@ -361,27 +373,29 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
 
     if enviado:
         respostas = {
-            q["id_questao"]: st.session_state[f"resp_{q['id_questao']}"]
+            q["id_questao"]: st.session_state.get(f"resp_{q['id_questao']}", "—")
             for q in questoes
-            if st.session_state.get(f"resp_{q['id_questao']}", "—") != "—"
         }
-        if not respostas:
+        if not any(resp != "—" for resp in respostas.values()):
             st.warning("Marque pelo menos uma resposta antes de corrigir.")
             return
+        # Questão em branco ("—") registra como None, não fica de fora
+        # -- é uma tentativa de verdade (sempre errou, ver
+        # registrar_tentativa), não um "pular" que sumia de toda
+        # estatística baseada em tentativas_usuario.
         st.session_state[chave_resultado] = [
-            db.registrar_tentativa(id_q, resp) for id_q, resp in respostas.items()
+            db.registrar_tentativa(id_q, None if resp == "—" else resp)
+            for id_q, resp in respostas.items()
         ]
 
     resultados = st.session_state.get(chave_resultado)
     if not resultados:
         return
 
-    # total é o tamanho da prova INTEIRA, não só quem foi respondido --
-    # questão em branco conta contra o total, igual numa prova de
-    # verdade (deixar em branco não "reduz" a prova, só garante que
-    # você não acerta aquele item). Antes disso, deixar 1 de 45 em
-    # branco e acertar as outras 44 mostrava "44/44 (100%)" em vez de
-    # "44/45" -- escondia a questão em branco em vez de contar contra.
+    # total é o tamanho da prova INTEIRA -- agora toda questão (branca
+    # ou não) vira uma tentativa, então len(resultados) já é
+    # len(questoes) sempre, mas manter a variável explícita deixa a
+    # intenção clara caso os dois algum dia divirjam de novo.
     acertos = sum(1 for r in resultados if r["resultado"] == "acertou")
     total = len(questoes)
 
@@ -415,9 +429,9 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
     with st.expander(f"📋 Ver o que você marcou (prova inteira, {total} questões)"):
         for q in questoes:
             numero = q["numero_questao"]
-            r = resultado_por_id.get(q["id_questao"])
-            if r is None:
-                st.write(f"⬜ **Q{numero}** — não respondida")
+            r = resultado_por_id[q["id_questao"]]
+            if r["resposta_escolhida"] is None:
+                st.write(f"⬜ **Q{numero}** — não respondida (conta como erro), gabarito é **{r['alternativa_correta']}**")
                 continue
             marca = "✅" if r["resultado"] == "acertou" else "❌"
             st.write(
@@ -430,8 +444,9 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
         with st.expander(f"⚠️ {len(erros)} questão(ões) errada(s) — já agendadas pra revisão", expanded=True):
             for r in erros:
                 numero = numero_por_id.get(r["id_questao"], r["id_questao"])
+                marcou = f"você marcou **{r['resposta_escolhida']}**" if r["resposta_escolhida"] is not None else "**não respondida**"
                 st.write(
-                    f"**Q{numero}** — você marcou **{r['resposta_escolhida']}**, "
+                    f"**Q{numero}** — {marcou}, "
                     f"gabarito é **{r['alternativa_correta']}** — próxima revisão: {r['proxima_revisao']}"
                 )
 
@@ -459,11 +474,11 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
                             db.apagar_resolucao(res["id_resolucao"])
                             st.rerun()
 
-    if len(resultados) < total:
+    n_brancas = sum(1 for r in resultados if r["resposta_escolhida"] is None)
+    if n_brancas:
         st.caption(
-            f"{total - len(resultados)} questão(ões) não foi(ram) respondida(s) -- "
-            "contam contra o total acima, mas não têm tentativa registrada "
-            "(sem letra marcada não dá pra saber o que revisar por elas)."
+            f"{n_brancas} questão(ões) deixada(s) em branco -- contam como erro no total acima "
+            "e já entraram na fila de revisão, igual questão errada com letra marcada."
         )
 
 

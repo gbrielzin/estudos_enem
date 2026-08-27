@@ -64,11 +64,16 @@ CREATE INDEX IF NOT EXISTS idx_resolucoes_questao ON resolucoes(id_questao);
 
 -- Log de tentativas do usuário. Append-only de propósito — é o
 -- histórico de verdade, nunca é sobrescrito nem editado.
+-- resposta_escolhida aceita NULL de propósito: questão deixada em
+-- branco é uma tentativa de verdade (resultado sempre 'errou', nunca
+-- fica de fora da conta) -- não deixar em branco simplesmente não
+-- registrar nada escondia isso de toda estatística baseada nesta
+-- tabela (taxa de acerto, prioridade de estudo, Leitner).
 CREATE TABLE IF NOT EXISTS tentativas_usuario (
     id_tentativa        INTEGER PRIMARY KEY AUTOINCREMENT,
     id_questao          TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
     data_tentativa       TEXT NOT NULL DEFAULT (datetime('now')),
-    resposta_escolhida  TEXT NOT NULL CHECK(resposta_escolhida IN ('A','B','C','D','E')),
+    resposta_escolhida  TEXT CHECK(resposta_escolhida IN ('A','B','C','D','E') OR resposta_escolhida IS NULL),
     resultado           TEXT NOT NULL CHECK(resultado IN ('acertou','errou')),
     intervalo_dias      INTEGER NOT NULL,
     streak_acertos      INTEGER NOT NULL,
