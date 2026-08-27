@@ -229,6 +229,40 @@ def render_praticar_por_materia() -> None:
     _renderizar_grade_questoes(questoes, sufixo=f"materia_{area_sel}_{materia_sel}")
 
 
+def render_prova_beta() -> None:
+    """Faz a prova inteira lendo o enunciado direto no site, sem
+    precisar do PDF aberto do lado -- separado de 'Uma prova por vez'
+    de propósito (pedido do usuário): a extração de enunciado por PDF
+    é nova e ~40% das questões citam figura/gráfico/tabela que a
+    extração de texto não captura (o ENEM desenha isso como vetor, não
+    como imagem separada -- ver extrair_enunciados_pdf.py), marcadas
+    com ⚠️ no início do texto. Mesmo mecanismo de correção/tracking de
+    'Uma prova por vez' por baixo (_renderizar_grade_questoes) -- só a
+    origem das questões (só prova com enunciado carregado) e o aviso
+    são diferentes."""
+    st.warning(
+        "🧪 **Beta** -- lê o enunciado extraído automaticamente do PDF oficial. "
+        "~40% das questões citam figura/gráfico/tabela que a extração de texto sozinha não "
+        "captura (aparecem com ⚠️ no início) -- confere contra o PDF nessas. O resto "
+        "funciona igual ao Cartão-resposta normal (mesma correção, mesmo histórico)."
+    )
+
+    provas = db.provas_com_enunciado()
+    if not provas:
+        st.info("Nenhuma prova com enunciado carregado ainda -- rode extrair_enunciados_pdf.py primeiro.")
+        return
+
+    opcoes = {
+        f"{ano} — {caderno} — {RÓTULO_AREA.get(area, area)} ({com_enunciado}/{total} com enunciado)": (ano, caderno, area)
+        for ano, caderno, area, com_enunciado, total in provas
+    }
+    escolha = st.selectbox("Prova", list(opcoes.keys()), key="beta_prova_sel")
+    ano_sel, caderno_sel, area_sel = opcoes[escolha]
+
+    questoes = db.listar_questoes_da_prova(ano_sel, caderno_sel, area_sel)
+    _renderizar_grade_questoes(questoes, sufixo=f"beta_{ano_sel}_{caderno_sel}_{area_sel}")
+
+
 def render_simulados_feitos() -> None:
     """Lista toda prova com ao menos uma tentativa registrada -- pra
     responder 'quais provas eu já fiz' sem precisar abrir cada uma
@@ -1336,6 +1370,7 @@ _PAGINAS = [
     ("cartao", "📝", "Cartão-resposta"),
     ("analise", "📊", "Minha análise"),
     ("simulados", "🗂️", "Simulados já feitos"),
+    ("prova_beta", "🧪", "Prova com enunciado (beta)"),
     ("calendario", "📅", "Calendário"),
     ("objetivos", "🎯", "Objetivos"),
     ("redacao", "✍️", "Redação"),
@@ -1374,6 +1409,8 @@ if __name__ == "__main__":
         render_analise()
     elif pagina_atual == "simulados":
         render_simulados_feitos()
+    elif pagina_atual == "prova_beta":
+        render_prova_beta()
     elif pagina_atual == "calendario":
         render_calendario()
     elif pagina_atual == "objetivos":
