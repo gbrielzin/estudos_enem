@@ -267,6 +267,18 @@ def render_simulados_feitos() -> None:
                         db.nomear_tentativa(s["ano"], s["caderno"], s["grande_area"], r["tentativa"], novo_nome)
                         st.rerun()
 
+                with st.expander("📋 Ver detalhes (pra colar na IA)"):
+                    detalhe_texto = db.detalhe_rodada(s["ano"], s["caderno"], s["grande_area"], r["tentativa"])
+                    linhas_texto = [f"{titulo} — {rotulo}", f"{r['acertos']}/{r['total']} acertos", ""]
+                    for item in detalhe_texto:
+                        if item["resposta_escolhida"] is None:
+                            linhas_texto.append(f"Q{item['numero_questao']}: NÃO RESPONDI — gabarito {item['alternativa_correta']}")
+                        elif item["resultado"] == "acertou":
+                            linhas_texto.append(f"Q{item['numero_questao']}: acertei (marquei {item['resposta_escolhida']})")
+                        else:
+                            linhas_texto.append(f"Q{item['numero_questao']}: ERREI — marquei {item['resposta_escolhida']}, gabarito {item['alternativa_correta']}")
+                    st.code("\n".join(linhas_texto), language=None)
+
                 col_editar, col_excluir = st.columns(2)
                 with col_editar:
                     with st.popover("✏️ Editar respostas", key=f"popover_editar_{sufixo_rodada}"):
