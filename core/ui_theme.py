@@ -13,7 +13,6 @@ interação, então isso roda de novo a cada rerun — é barato (só injeta
 uma tag <style>), não precisa de cache.
 """
 import streamlit as st
-import streamlit.components.v1 as components
 
 _CSS = """
 <style>
@@ -36,17 +35,42 @@ footer { visibility: hidden; }
 [data-testid="stToolbarActions"] { visibility: hidden; }
 header[data-testid="stHeader"] { background: transparent; }
 
-/* Menu próprio (hamburguer + gaveta), substitui st.sidebar. Abrir/
-   fechar é via onclick + classList.toggle (JS mínimo, inline, sem
-   depender de nenhum script externo carregar) -- não o truque de
-   checkbox+label puro-CSS. Motivo: o seletor de irmão geral
-   (`:checked ~ .nav-drawer`) batia estruturalmente (element.matches()
-   confirmava) mas o valor do CSS não era aplicado de forma confiável
-   nesta sessão de teste, mesmo com !important -- um comportamento de
-   invalidação de estilo que não consegui explicar nem confiar. Toggle
-   direto de classe via onclick, verificado instantâneo e 100%
-   reproduzível, não tem essa ambiguidade: é só "o elemento tem a
-   classe ou não tem". */
+/* Menu próprio (hamburguer + gaveta), substitui st.sidebar. Toggle é
+   CSS PURO via checkbox+label (:checked ~), de propósito -- SEM
+   JavaScript nenhum envolvido. Duas abordagens com JS já foram
+   tentadas e falharam por motivos que não davam pra prever de antemão:
+   (1) onclick como atributo HTML -- st.markdown(unsafe_allow_html=True)
+   SANITIZA atributos on*, o atributo simplesmente não existe no DOM
+   renderizado; (2) onclick ligado via um <script> dentro de
+   components.html (iframe srcdoc, caminho que o Streamlit não
+   sanitiza) -- funcionou nos meus próprios testes (window.parent.
+   document alcançava os elementos, confirmado via DOM), mas falhou pro
+   usuário de verdade em todo contexto testado (celular, PC, nuvem,
+   local) sem erro nenhum aparecendo -- o suspeito mais provável é
+   acesso cross-frame bloqueado silenciosamente em algum navegador/
+   contexto que eu não consigo reproduzir aqui. CSS puro com
+   checkbox+label não depende de NENHUMA dessas coisas: é
+   comportamento nativo do HTML (clicar num <label for="id"> alterna o
+   checkbox associado), suportado por qualquer navegador com CSS
+   habilitado, sem sanitização possível e sem cross-frame envolvido --
+   a categoria inteira de bug das duas tentativas anteriores deixa de
+   poder acontecer. Estrutura obrigatória: checkbox + as duas labels +
+   a nav, todos irmãos diretos dentro do MESMO elemento pai (o
+   <div class="nav-root"> em navegacao_lateral()), senão o seletor de
+   irmão geral (~) não bate -- ver o comentário lá sobre o parser de
+   markdown do Streamlit fragmentar isso em <p> se não for tudo
+   embrulhado num único bloco. */
+.nav-toggle-checkbox {
+    position: absolute;
+    opacity: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    margin: 0;
+    top: 0.7rem;
+    left: 0.7rem;
+    z-index: 1000002;
+    cursor: pointer;
+}
 /* z-index alto de propósito: [data-testid="stHeader"]/stToolbar (a
    barra do Streamlit que sobra no topo, área do Deploy que já
    escondemos) usa z-index: 999990 -- descoberto inspecionando
@@ -84,7 +108,7 @@ header[data-testid="stHeader"] { background: transparent; }
     z-index: 999999;
     cursor: pointer;
 }
-.nav-overlay.ativo { display: block !important; }
+#nav-toggle:checked ~ .nav-overlay { display: block !important; }
 
 .nav-drawer {
     position: fixed;
@@ -114,7 +138,7 @@ header[data-testid="stHeader"] { background: transparent; }
     overflow-y: auto;
     box-shadow: 4px 0 24px rgba(0,0,0,0.4);
 }
-.nav-drawer.aberto { left: 0 !important; }
+#nav-toggle:checked ~ .nav-drawer { left: 0 !important; }
 
 .nav-drawer .nav-title {
     font-family: 'Space Grotesk', sans-serif;
@@ -267,8 +291,11 @@ def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) ->
     st.sidebar.radio(). A sidebar nativa do Streamlit abre FECHADA por
     padrão em tela estreita, e o botão pra reabrir ficou inacessível
     no celular do usuário mesmo depois de eu corrigir o CSS que
-    escondia ele por engano -- reportado em produção 2 vezes. Em vez
-    de continuar caçando comportamento responsivo interno do Streamlit
+    escondia ele por engano -- reportado em produção múltiplas vezes,
+    inclusive depois de duas reescritas com JavaScript que funcionavam
+    nos meus próprios testes (ver comentário no bloco de CSS pro
+    porquê da versão atual não usar JS nenhum). Em vez de continuar
+    caçando comportamento responsivo interno do Streamlit
     que eu não consigo testar de verdade nesta sessão (sem jeito de
     simular celular aqui), a navegação virou links puros
     (?pagina=chave, lidos via st.query_params em cartao_resposta.py) +
@@ -282,62 +309,24 @@ def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) ->
         f'class="nav-item{" ativo" if chave == pagina_atual else ""}">{emoji} {rotulo}</a>'
         for chave, emoji, rotulo in paginas
     )
-    # Tudo dentro de UM <div class="nav-root"> só por organização -- a
-    # relação de irmão não importa mais pro toggle (isso era só
-    # problema da versão checkbox+CSS puro, abandonada).
+    # Tudo dentro de UM <div class="nav-root">: o parser de markdown do
+    # Streamlit trata <input>/<label> soltos como conteúdo inline e os
+    # embrulha num <p> automático, mas <nav> (bloco) escapa desse <p> --
+    # quebra a relação de irmão que o seletor CSS ~ depende. Um <div>
+    # envolvendo tudo é claramente bloco, então o parser passa o
+    # conteúdo interno direto, sem fragmentar (confirmado via DOM antes
+    # de existir esse <div>: checkbox e nav-drawer não eram irmãos).
     st.markdown(
         '<div class="nav-root">'
-        '<div class="nav-hamburger" role="button" tabindex="0" '
-        'aria-label="Abrir menu">☰</div>'
-        '<div class="nav-overlay"></div>'
+        '<input type="checkbox" id="nav-toggle" class="nav-toggle-checkbox" aria-label="Abrir menu">'
+        '<label for="nav-toggle" class="nav-hamburger">☰</label>'
+        '<label for="nav-toggle" class="nav-overlay"></label>'
         '<nav class="nav-drawer">'
         '<div class="nav-title">📝 Menu</div>'
         f"{itens_html}"
         "</nav>"
         "</div>",
         unsafe_allow_html=True,
-    )
-    # st.markdown(unsafe_allow_html=True) SANITIZA atributos on* (onclick
-    # some do DOM renderizado, confirmado inspecionando o elemento real --
-    # não é bloqueado por CSS/especificidade, o próprio atributo não
-    # existe). Por isso o clique é ligado à parte via components.html:
-    # esse caminho renderiza dentro de um <iframe srcdoc>, que o
-    # Streamlit não sanitiza (é a via oficial pra JS de verdade). O
-    # iframe srcdoc herda o mesmo origin da página, então
-    # window.parent.document alcança os elementos de verdade -- viram
-    # os MESMOS nós que o <div class="nav-root"> acima criou, só que
-    # com onclick ligado via propriedade (não atributo), o que também
-    # evita empilhar handlers duplicados a cada rerun do Streamlit
-    # (atribuir .onclick substitui o anterior, addEventListener não).
-    components.html(
-        """
-        <script>
-        (function () {
-            var doc = window.parent.document;
-            var ham = doc.querySelector('.nav-hamburger');
-            var ov = doc.querySelector('.nav-overlay');
-            var dr = doc.querySelector('.nav-drawer');
-            if (!ham || !ov || !dr) { return; }
-            function alternar() {
-                dr.classList.toggle('aberto');
-                ov.classList.toggle('ativo');
-            }
-            function fechar() {
-                dr.classList.remove('aberto');
-                ov.classList.remove('ativo');
-            }
-            ham.onclick = alternar;
-            ham.onkeydown = function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    alternar();
-                }
-            };
-            ov.onclick = fechar;
-        })();
-        </script>
-        """,
-        height=0,
     )
 
 
