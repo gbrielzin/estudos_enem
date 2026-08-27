@@ -229,6 +229,46 @@ def render_praticar_por_materia() -> None:
     _renderizar_grade_questoes(questoes, sufixo=f"materia_{area_sel}_{materia_sel}")
 
 
+def render_simulados_feitos() -> None:
+    """Lista toda prova com ao menos uma tentativa registrada -- pra
+    responder 'quais provas eu já fiz' sem precisar abrir cada uma
+    em 'Uma prova por vez' e olhar o expander de histórico ali dentro.
+    Cada rodada é a mesma numeração que resumo_por_tentativa() já
+    deriva (não inventa sessão nova) -- só reúne isso por prova e
+    permite nomear/rever mais fácil, num lugar só."""
+    simulados = db.simulados_feitos()
+    if not simulados:
+        st.info("Nenhum simulado respondido ainda -- assim que você corrigir a primeira prova, ela aparece aqui.")
+        return
+
+    st.caption(f"{len(simulados)} prova(s) com pelo menos uma tentativa registrada.")
+
+    for s in simulados:
+        ultima = s["rodadas"][-1]
+        cobertura = f"{ultima['total']}/{s['total_questoes']}"
+        titulo = f"{s['ano']} — {s['caderno']} — {RÓTULO_AREA.get(s['grande_area'], s['grande_area'])}"
+        pct_ultima = f"{ultima['taxa_acerto']*100:.0f}%" if ultima["taxa_acerto"] is not None else "—"
+
+        with st.expander(f"{titulo} — última tentativa: {ultima['acertos']}/{ultima['total']} ({pct_ultima}) — cobertura {cobertura}"):
+            for r in s["rodadas"]:
+                pct = f"{r['taxa_acerto']*100:.0f}%" if r["taxa_acerto"] is not None else "—"
+                rotulo = f"Tentativa {r['tentativa']}" + (f" — {r['nome']}" if r["nome"] else "")
+                col_txt, col_nome = st.columns([3, 2])
+                with col_txt:
+                    st.write(f"**{rotulo}**: {r['acertos']}/{r['total']} ({pct}) — {r['inicio'][:10]}")
+                with col_nome:
+                    chave = f"nome_simulados_feitos_{s['ano']}_{s['caderno']}_{s['grande_area']}_{r['tentativa']}"
+                    novo_nome = st.text_input(
+                        "Nome", value=r["nome"], placeholder="ex: fiz cansado à noite",
+                        key=chave, label_visibility="collapsed",
+                    )
+                    if novo_nome != r["nome"] and novo_nome.strip():
+                        db.nomear_tentativa(s["ano"], s["caderno"], s["grande_area"], r["tentativa"], novo_nome)
+                        st.rerun()
+            if ultima["total"] < s["total_questoes"]:
+                st.caption(f"{s['total_questoes'] - ultima['total']} questão(ões) dessa prova ainda sem tentativa nenhuma.")
+
+
 def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
     """Núcleo compartilhado por prova única, simulado, revisão do dia
     e prática por matéria: grade de resposta A-E, correção contra o
@@ -254,19 +294,28 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
     mostrar_ano = len({q["ano"] for q in questoes}) > 1
 
     with st.form(f"cartao_resposta_form_{sufixo}"):
-        cols = st.columns(3)
-        for i, q in enumerate(questoes):
-            with cols[i % 3]:
-                rotulo = f"Q{q['numero_questao']} · {q['ano']}" if mostrar_ano else f"Q{q['numero_questao']}"
-                if q["status_classificacao"] == "nao_classificado":
-                    rotulo += " ⚠️"
-                st.radio(
-                    rotulo,
-                    ["—", "A", "B", "C", "D", "E"],
-                    horizontal=True,
-                    key=f"resp_{q['id_questao']}",
-                )
-                _mostrar_enunciado_leitura(q)
+        # Uma st.columns(3) NOVA por linha de 3, em vez de uma só pra
+        # grade inteira -- com uma única chamada, cols[i % 3] distribui
+        # "por coluna" (Q1,Q4,Q7... na coluna 0, Q2,Q5,Q8... na coluna
+        # 1...), e no celular, onde o Streamlit empilha as colunas na
+        # vertical, cada coluna renderiza seu bloco inteiro antes da
+        # próxima -- a leitura vira 1,4,7,10...,2,5,8,11...,3,6,9,12...,
+        # parecendo que questão foi pulada. Uma st.columns(3) por linha
+        # preserva a ordem sequencial mesmo empilhada.
+        for inicio in range(0, len(questoes), 3):
+            cols = st.columns(3)
+            for col, q in zip(cols, questoes[inicio:inicio + 3]):
+                with col:
+                    rotulo = f"Q{q['numero_questao']} · {q['ano']}" if mostrar_ano else f"Q{q['numero_questao']}"
+                    if q["status_classificacao"] == "nao_classificado":
+                        rotulo += " ⚠️"
+                    st.radio(
+                        rotulo,
+                        ["—", "A", "B", "C", "D", "E"],
+                        horizontal=True,
+                        key=f"resp_{q['id_questao']}",
+                    )
+                    _mostrar_enunciado_leitura(q)
         enviado = st.form_submit_button("Corrigir", type="primary")
 
     chave_resultado = f"resultados_{sufixo}"
@@ -288,8 +337,14 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
     if not resultados:
         return
 
+    # total é o tamanho da prova INTEIRA, não só quem foi respondido --
+    # questão em branco conta contra o total, igual numa prova de
+    # verdade (deixar em branco não "reduz" a prova, só garante que
+    # você não acerta aquele item). Antes disso, deixar 1 de 45 em
+    # branco e acertar as outras 44 mostrava "44/44 (100%)" em vez de
+    # "44/45" -- escondia a questão em branco em vez de contar contra.
     acertos = sum(1 for r in resultados if r["resultado"] == "acertou")
-    total = len(resultados)
+    total = len(questoes)
 
     st.success(f"{acertos}/{total} acertos ({acertos / total * 100:.0f}%)")
 
@@ -316,11 +371,16 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
         st.warning(aviso_desfazer)
 
     numero_por_id = {q["id_questao"]: q["numero_questao"] for q in questoes}
+    resultado_por_id = {r["id_questao"]: r for r in resultados}
 
-    with st.expander(f"📋 Ver o que você marcou (todas as {total} respostas)"):
-        for r in resultados:
+    with st.expander(f"📋 Ver o que você marcou (prova inteira, {total} questões)"):
+        for q in questoes:
+            numero = q["numero_questao"]
+            r = resultado_por_id.get(q["id_questao"])
+            if r is None:
+                st.write(f"⬜ **Q{numero}** — não respondida")
+                continue
             marca = "✅" if r["resultado"] == "acertou" else "❌"
-            numero = numero_por_id.get(r["id_questao"], r["id_questao"])
             st.write(
                 f"{marca} **Q{numero}** — você marcou **{r['resposta_escolhida']}**, "
                 f"gabarito é **{r['alternativa_correta']}**"
@@ -354,8 +414,12 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
                     else:
                         st.caption(f"Resolução em texto ({res['canal'] or 'sem canal'}): {res['conteudo']}")
 
-    if total < len(questoes):
-        st.caption(f"{len(questoes) - total} questão(ões) não foi(ram) respondida(s) e não entrou(aram) no cálculo.")
+    if len(resultados) < total:
+        st.caption(
+            f"{total - len(resultados)} questão(ões) não foi(ram) respondida(s) -- "
+            "contam contra o total acima, mas não têm tentativa registrada "
+            "(sem letra marcada não dá pra saber o que revisar por elas)."
+        )
 
 
 PASTA_ENUNCIADOS = Path(__file__).parent / "enunciados"
@@ -1092,6 +1156,7 @@ def _tagline_contagem_regressiva() -> str:
 _PAGINAS = [
     ("cartao", "📝", "Cartão-resposta"),
     ("analise", "📊", "Minha análise"),
+    ("simulados", "🗂️", "Simulados já feitos"),
     ("calendario", "📅", "Calendário"),
     ("objetivos", "🎯", "Objetivos"),
     ("redacao", "✍️", "Redação"),
@@ -1128,6 +1193,8 @@ if __name__ == "__main__":
         render_cartao_resposta()
     elif pagina_atual == "analise":
         render_analise()
+    elif pagina_atual == "simulados":
+        render_simulados_feitos()
     elif pagina_atual == "calendario":
         render_calendario()
     elif pagina_atual == "objetivos":
