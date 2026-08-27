@@ -281,9 +281,63 @@ div.app-streak-calendar {
 </style>
 """
 
+# Tema claro só pra página "Prova com enunciado (beta)" -- pedido
+# explícito do usuário pra parecer com o PDF do ENEM (folha branca,
+# texto escuro) em vez do tema escuro verde do resto do app, enquanto
+# ele lê e responde. Mira só [data-testid="stMain"] (a área de
+# conteúdo principal) e o que tem DENTRO dela via herança de `color`
+# (que se propaga pra filho sem cor própria, mas nunca vence uma regra
+# mais específica -- ex: os links do menu (.nav-drawer a.nav-item) têm
+# cor própria declarada, então não mudam) -- a gaveta/hambúrguer de
+# navegação, com z-index acima de tudo e cor própria em cada regra,
+# fica com o visual de sempre de propósito, é navegação, não é "a
+# folha de prova". Não troca o tema inteiro do Streamlit (teria que
+# mudar .streamlit/config.toml, que vale pro app inteiro, não só uma
+# página) -- por isso st.success/st.warning depois de corrigir ainda
+# usam o estilo pensado pro tema escuro; only a parte de LER a questão
+# (o que importava pro pedido) foi ajustada.
+_CSS_TEMA_CLARO_EXAME = """
+<style>
+[data-testid="stMain"] {
+    background: #FFFFFF !important;
+    color: #1A1A1A !important;
+}
+[data-testid="stMain"] h1, [data-testid="stMain"] h2, [data-testid="stMain"] h3,
+[data-testid="stMain"] h4, [data-testid="stMain"] h5, [data-testid="stMain"] p,
+[data-testid="stMain"] li, [data-testid="stMain"] span, [data-testid="stMain"] label {
+    color: #1A1A1A !important;
+}
+[data-testid="stMain"] [data-testid="stForm"] {
+    background: #FFFFFF !important;
+    border: 1px solid #CCCCCC !important;
+}
+[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"] {
+    background: #FAFAFA !important;
+    border: 1px solid #DDDDDD !important;
+}
+[data-testid="stMain"] div[data-testid="stRadio"] label {
+    border: 1px solid #999999 !important;
+    background: #FFFFFF !important;
+}
+[data-testid="stMain"] div[data-testid="stRadio"] label:has(input:checked) {
+    border-color: #1A1A1A !important;
+    background: #EAEAEA !important;
+}
+[data-testid="stMain"] .app-hero span.tagline {
+    color: #555555 !important;
+}
+</style>
+"""
+
 
 def injetar_tema() -> None:
     st.markdown(_CSS, unsafe_allow_html=True)
+
+
+def injetar_tema_exame_claro() -> None:
+    """Chamar SÓ na página beta de prova com enunciado, depois de
+    injetar_tema() -- ver comentário de _CSS_TEMA_CLARO_EXAME."""
+    st.markdown(_CSS_TEMA_CLARO_EXAME, unsafe_allow_html=True)
 
 
 def navegacao_lateral(paginas: list[tuple[str, str, str]], pagina_atual: str) -> None:

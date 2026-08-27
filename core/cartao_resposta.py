@@ -260,7 +260,7 @@ def render_prova_beta() -> None:
     ano_sel, caderno_sel, area_sel = opcoes[escolha]
 
     questoes = db.listar_questoes_da_prova(ano_sel, caderno_sel, area_sel)
-    _renderizar_grade_questoes(questoes, sufixo=f"beta_{ano_sel}_{caderno_sel}_{area_sel}")
+    _renderizar_grade_questoes(questoes, sufixo=f"beta_{ano_sel}_{caderno_sel}_{area_sel}", estilo_exame=True)
 
 
 def render_simulados_feitos() -> None:
@@ -355,64 +355,95 @@ def render_simulados_feitos() -> None:
                 st.caption(f"{s['total_questoes'] - ultima['total']} questão(ões) dessa prova ainda sem tentativa nenhuma.")
 
 
-def _renderizar_grade_questoes(questoes: list[dict], sufixo: str) -> None:
-    """Núcleo compartilhado por prova única, simulado, revisão do dia
-    e prática por matéria: grade de resposta A-E, correção contra o
-    gabarito via registrar_tentativa(), classificação de erro e vídeo
-    de resolução. Todo mundo que monta uma lista de questões (não
-    importa a origem) cai aqui — não duplica essa lógica em cada modo."""
+def _renderizar_grade_questoes(questoes: list[dict], sufixo: str, estilo_exame: bool = False) -> None:
+    """Núcleo compartilhado por prova única, simulado, revisão do dia,
+    prática por matéria e a prova beta com enunciado: grade de
+    resposta A-E, correção contra o gabarito via registrar_tentativa(),
+    classificação de erro e vídeo de resolução. Todo mundo que monta
+    uma lista de questões (não importa a origem) cai aqui — não
+    duplica essa lógica em cada modo.
+
+    estilo_exame=True troca só a PARTE DE ENTRADA (como a questão é
+    exibida antes de responder) pro layout "uma embaixo da outra, com
+    o enunciado inteiro visível antes da resposta", pedido explícito
+    do usuário pra prova beta parecer com o PDF do ENEM em vez do
+    cartão-resposta compacto -- esconde também o preenchimento rápido
+    (não faz sentido colar sequência numa prova que você está lendo
+    pela primeira vez, é ferramenta de transcrever prova já feita no
+    papel). Tudo depois de responder (corrigir, desfazer, ver o que
+    marcou, erros) continua idêntico nos dois estilos."""
     _renderizar_editor_enunciado(questoes, sufixo)
 
-    with st.expander("⚡ Preenchimento rápido (cola a sequência de letras)"):
-        st.caption(
-            "Cola as letras na ordem das questões, sem espaço nem pontuação (ex: ABCDEBAACD...). "
-            "Use * ou deixa em branco pra pular uma questão que você não respondeu."
-        )
-        sequencia = st.text_input("Sequência de respostas", key=f"sequencia_rapida_{sufixo}")
-        if st.button("Aplicar sequência", key=f"aplicar_seq_{sufixo}"):
-            aplicadas = 0
-            for i, q in enumerate(questoes):
-                letra = sequencia[i].upper() if i < len(sequencia) else "*"
-                chave_resp = f"resp_{q['id_questao']}"
-                if letra in "ABCDE":
-                    st.session_state[chave_resp] = letra
-                    aplicadas += 1
-                else:
-                    # * (ou string mais curta que a prova) LIMPA a
-                    # resposta de propósito -- sem isso, colar uma
-                    # sequência corrigida com * numa posição que já
-                    # tinha letra de uma aplicação anterior deixava a
-                    # letra velha lá (só escrevia em cima de A-E, nunca
-                    # apagava), então "pular" não pulava de verdade se
-                    # já tinha algo marcado ali antes.
-                    st.session_state[chave_resp] = "—"
-            st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
+    if not estilo_exame:
+        with st.expander("⚡ Preenchimento rápido (cola a sequência de letras)"):
+            st.caption(
+                "Cola as letras na ordem das questões, sem espaço nem pontuação (ex: ABCDEBAACD...). "
+                "Use * ou deixa em branco pra pular uma questão que você não respondeu."
+            )
+            sequencia = st.text_input("Sequência de respostas", key=f"sequencia_rapida_{sufixo}")
+            if st.button("Aplicar sequência", key=f"aplicar_seq_{sufixo}"):
+                aplicadas = 0
+                for i, q in enumerate(questoes):
+                    letra = sequencia[i].upper() if i < len(sequencia) else "*"
+                    chave_resp = f"resp_{q['id_questao']}"
+                    if letra in "ABCDE":
+                        st.session_state[chave_resp] = letra
+                        aplicadas += 1
+                    else:
+                        # * (ou string mais curta que a prova) LIMPA a
+                        # resposta de propósito -- sem isso, colar uma
+                        # sequência corrigida com * numa posição que já
+                        # tinha letra de uma aplicação anterior deixava a
+                        # letra velha lá (só escrevia em cima de A-E, nunca
+                        # apagava), então "pular" não pulava de verdade se
+                        # já tinha algo marcado ali antes.
+                        st.session_state[chave_resp] = "—"
+                st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
 
     mostrar_ano = len({q["ano"] for q in questoes}) > 1
 
     with st.form(f"cartao_resposta_form_{sufixo}"):
-        # Uma st.columns(3) NOVA por linha de 3, em vez de uma só pra
-        # grade inteira -- com uma única chamada, cols[i % 3] distribui
-        # "por coluna" (Q1,Q4,Q7... na coluna 0, Q2,Q5,Q8... na coluna
-        # 1...), e no celular, onde o Streamlit empilha as colunas na
-        # vertical, cada coluna renderiza seu bloco inteiro antes da
-        # próxima -- a leitura vira 1,4,7,10...,2,5,8,11...,3,6,9,12...,
-        # parecendo que questão foi pulada. Uma st.columns(3) por linha
-        # preserva a ordem sequencial mesmo empilhada.
-        for inicio in range(0, len(questoes), 3):
-            cols = st.columns(3)
-            for col, q in zip(cols, questoes[inicio:inicio + 3]):
-                with col:
-                    rotulo = f"Q{q['numero_questao']} · {q['ano']}" if mostrar_ano else f"Q{q['numero_questao']}"
-                    if q["status_classificacao"] == "nao_classificado":
-                        rotulo += " ⚠️"
-                    st.radio(
-                        rotulo,
-                        ["—", "A", "B", "C", "D", "E"],
-                        horizontal=True,
-                        key=f"resp_{q['id_questao']}",
-                    )
-                    _mostrar_enunciado_leitura(q)
+        if estilo_exame:
+            # Uma questão por "linha", enunciado inteiro visível ANTES
+            # da resposta -- igual abrir o caderno de prova de verdade:
+            # lê a questão, só depois marca a letra. O grid compacto
+            # (radio primeiro, enunciado escondido num expander depois)
+            # faz sentido pra revisão rápida, não pra ler uma prova
+            # pela primeira vez.
+            for q in questoes:
+                rotulo = f"Questão {q['numero_questao']}" + (f" · {q['ano']}" if mostrar_ano else "")
+                if q["status_classificacao"] == "nao_classificado":
+                    rotulo += " ⚠️"
+                st.markdown(f"##### {rotulo}")
+                _mostrar_enunciado_exame(q)
+                st.radio(
+                    "Resposta", ["—", "A", "B", "C", "D", "E"],
+                    horizontal=True, key=f"resp_{q['id_questao']}", label_visibility="collapsed",
+                )
+                st.divider()
+        else:
+            # Uma st.columns(3) NOVA por linha de 3, em vez de uma só pra
+            # grade inteira -- com uma única chamada, cols[i % 3] distribui
+            # "por coluna" (Q1,Q4,Q7... na coluna 0, Q2,Q5,Q8... na coluna
+            # 1...), e no celular, onde o Streamlit empilha as colunas na
+            # vertical, cada coluna renderiza seu bloco inteiro antes da
+            # próxima -- a leitura vira 1,4,7,10...,2,5,8,11...,3,6,9,12...,
+            # parecendo que questão foi pulada. Uma st.columns(3) por linha
+            # preserva a ordem sequencial mesmo empilhada.
+            for inicio in range(0, len(questoes), 3):
+                cols = st.columns(3)
+                for col, q in zip(cols, questoes[inicio:inicio + 3]):
+                    with col:
+                        rotulo = f"Q{q['numero_questao']} · {q['ano']}" if mostrar_ano else f"Q{q['numero_questao']}"
+                        if q["status_classificacao"] == "nao_classificado":
+                            rotulo += " ⚠️"
+                        st.radio(
+                            rotulo,
+                            ["—", "A", "B", "C", "D", "E"],
+                            horizontal=True,
+                            key=f"resp_{q['id_questao']}",
+                        )
+                        _mostrar_enunciado_leitura(q)
         enviado = st.form_submit_button("Corrigir", type="primary")
 
     chave_resultado = f"resultados_{sufixo}"
@@ -539,6 +570,27 @@ def _mostrar_enunciado_leitura(q: dict) -> None:
     if not texto and not imagem:
         return
     with st.expander("📄 Enunciado"):
+        if texto:
+            st.write(texto)
+        if imagem and Path(imagem).exists():
+            st.image(imagem)
+
+
+def _mostrar_enunciado_exame(q: dict) -> None:
+    """Enunciado SEMPRE visível (nunca escondido num expander) --
+    versão pra estilo_exame=True, onde o objetivo é ler a questão
+    igual um caderno de prova de verdade, não esconder o texto atrás
+    de um clique. st.container(border=True) + st.write() em vez de
+    markdown com HTML de propósito -- o texto vem de extração de PDF e
+    questão de matemática frequentemente tem '<'/'>' de verdade
+    (ex: "x < 5"), que markdown com unsafe_allow_html interpretaria
+    como tag HTML e quebraria a exibição."""
+    texto = q.get("enunciado_texto")
+    imagem = q.get("enunciado_imagem_path")
+    if not texto and not imagem:
+        st.caption("Sem enunciado carregado pra essa questão ainda.")
+        return
+    with st.container(border=True):
         if texto:
             st.write(texto)
         if imagem and Path(imagem).exists():
@@ -1399,6 +1451,9 @@ if __name__ == "__main__":
     pagina_atual = st.query_params.get("pagina", "cartao")
     if pagina_atual not in valores_validos:
         pagina_atual = "cartao"
+
+    if pagina_atual == "prova_beta":
+        ui_theme.injetar_tema_exame_claro()
 
     ui_theme.navegacao_lateral(_PAGINAS, pagina_atual)
     ui_theme.hero("📝 Cartão-resposta digital", _tagline_contagem_regressiva())
