@@ -17,6 +17,7 @@ nova aba dentro do app.py existente, junto das outras abas.
 """
 
 import os
+import re
 import tempfile
 from datetime import date, datetime
 from pathlib import Path
@@ -415,11 +416,38 @@ def _renderizar_grade_questoes(questoes: list[dict], sufixo: str, estilo_exame: 
                 if q["status_classificacao"] == "nao_classificado":
                     rotulo += " ⚠️"
                 st.markdown(f"##### {rotulo}")
-                _mostrar_enunciado_exame(q)
-                st.radio(
-                    "Resposta", ["—", "A", "B", "C", "D", "E"],
-                    horizontal=True, key=f"resp_{q['id_questao']}", label_visibility="collapsed",
-                )
+                alternativas = _mostrar_enunciado_exame(q)
+                if alternativas:
+                    # Vertical (sem horizontal=True) de propósito: com
+                    # o texto da alternativa embutido no rótulo, 5
+                    # opções de frase inteira lado a lado ficariam
+                    # espremidas -- só faz sentido horizontal quando a
+                    # opção é uma letra sozinha.
+                    #
+                    # alt=alternativas (default arg, não closure sobre
+                    # a variável do loop): sem isso, as ~90 lambdas
+                    # deste for compartilham a MESMA célula de
+                    # `alternativas`, que o Python só resolve no
+                    # MOMENTO em que a lambda é chamada -- dentro do
+                    # st.radio() da própria iteração isso nunca dá
+                    # errado (é chamado na hora, com o valor certo),
+                    # mas qualquer código que guarde essa função pra
+                    # invocar depois (AppTest faz isso, pra computar o
+                    # índice selecionado) pega o `alternativas` da
+                    # ÚLTIMA questão do loop, não da questão dona do
+                    # radio -- descoberto tentando testar isso via
+                    # AppTest, não em uso real, mas era uma fragilidade
+                    # de verdade independente do teste.
+                    st.radio(
+                        "Resposta", ["—", "A", "B", "C", "D", "E"],
+                        format_func=lambda letra, alt=alternativas: f"{letra}) {alt[letra]}" if letra in alt else "Não respondida",
+                        key=f"resp_{q['id_questao']}", label_visibility="collapsed",
+                    )
+                else:
+                    st.radio(
+                        "Resposta", ["—", "A", "B", "C", "D", "E"],
+                        horizontal=True, key=f"resp_{q['id_questao']}", label_visibility="collapsed",
+                    )
                 st.divider()
         else:
             # Uma st.columns(3) NOVA por linha de 3, em vez de uma só pra
@@ -576,7 +604,38 @@ def _mostrar_enunciado_leitura(q: dict) -> None:
             st.image(imagem)
 
 
-def _mostrar_enunciado_exame(q: dict) -> None:
+_PADRAO_ALTERNATIVA_LINHA = re.compile(r"^([A-E])\s+(.+)$")
+
+
+def _separar_alternativas(texto: str) -> tuple[str, dict[str, str]]:
+    """Tenta separar as 5 alternativas do resto do enunciado, pra
+    poder mostrar o texto de cada uma junto da letra no radio (em vez
+    de só 'A B C D E' soltos, obrigando a rolar pra cima e contar qual
+    letra é qual). Só confia que as ÚLTIMAS 5 linhas não-vazias são as
+    alternativas, e só se vierem na ordem estrita A,B,C,D,E -- um
+    regex solto por linha (ex: r'^[A-E]\\s') pegaria falso positivo
+    toda vez que uma frase do ENUNCIADO começa com o artigo 'A' (comum
+    em português: "A enorme quantidade de resíduos...") ou queimaria
+    uma questão cujas alternativas são diagrama, não texto, onde a
+    extração já sai fora de ordem (ver extrair_figuras_pdf.py, questão
+    93 do 2020 azul: "A ... D ... B ... E ... C ..." embaralhado). Se
+    as 5 últimas linhas não baterem exatamente com A-B-C-D-E nessa
+    ordem, devolve o texto inteiro sem separar nada -- degrada pro
+    radio de letra pura em vez de arriscar cortar o texto errado."""
+    linhas = [l for l in texto.split("\n") if l.strip()]
+    if len(linhas) < 5:
+        return texto, {}
+    alternativas = {}
+    for letra_esperada, linha in zip("ABCDE", linhas[-5:]):
+        m = _PADRAO_ALTERNATIVA_LINHA.match(linha.strip())
+        if not m or m.group(1) != letra_esperada:
+            return texto, {}
+        alternativas[letra_esperada] = m.group(2).strip()
+    corpo = "\n".join(linhas[:-5]).strip()
+    return corpo, alternativas
+
+
+def _mostrar_enunciado_exame(q: dict) -> dict[str, str]:
     """Enunciado SEMPRE visível (nunca escondido num expander) --
     versão pra estilo_exame=True, onde o objetivo é ler a questão
     igual um caderno de prova de verdade, não esconder o texto atrás
@@ -584,17 +643,23 @@ def _mostrar_enunciado_exame(q: dict) -> None:
     markdown com HTML de propósito -- o texto vem de extração de PDF e
     questão de matemática frequentemente tem '<'/'>' de verdade
     (ex: "x < 5"), que markdown com unsafe_allow_html interpretaria
-    como tag HTML e quebraria a exibição."""
+    como tag HTML e quebraria a exibição.
+
+    Devolve {letra: texto_alternativa} (vazio se não deu pra separar
+    com segurança, ver _separar_alternativas) pro chamador montar o
+    radio com o texto de cada opção, em vez de só a letra."""
     texto = q.get("enunciado_texto")
     imagem = q.get("enunciado_imagem_path")
     if not texto and not imagem:
         st.caption("Sem enunciado carregado pra essa questão ainda.")
-        return
+        return {}
+    corpo, alternativas = _separar_alternativas(texto) if texto else ("", {})
     with st.container(border=True):
-        if texto:
-            st.write(texto)
+        if corpo:
+            st.write(corpo)
         if imagem and Path(imagem).exists():
             st.image(imagem)
+    return alternativas
 
 
 def _renderizar_editor_enunciado(questoes: list[dict], sufixo: str) -> None:
