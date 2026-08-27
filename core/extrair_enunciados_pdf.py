@@ -99,7 +99,7 @@ def _reformatar_paragrafos(texto: str) -> str:
 
 
 _PADRAO_CITA_FIGURA = re.compile(
-    r"figura|gr[aá]fico|esquema|tabela|imagem|tirinha|charge|quadro a seguir|ilustra",
+    r"figura|gr[aá]fico|esquema|tabela|imagem|tirinha|charge|quadro a seguir|ilustra|estruturas? química",
     re.IGNORECASE,
 )
 _AVISO_FIGURA = (
