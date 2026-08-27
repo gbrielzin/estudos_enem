@@ -648,6 +648,43 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str) -> dict:
     }
 
 
+def desfazer_tentativas(ids_tentativa: list[int]) -> dict:
+    """Desfaz um lote de tentativas recém-registradas -- pensado pra
+    corrigir um erro de transcrição percebido na hora logo após clicar
+    'Corrigir' ('marquei a letra errada por engano'), não pra reescrever
+    desempenho de dias/semanas atrás (tentativas_usuario continua
+    append-only pra qualquer outro caso -- ver CLAUDE.md).
+
+    Só desfaz questão que NÃO tinha NENHUMA tentativa anterior a essa
+    (ou seja, essa era a primeira/única) -- pra qualquer questão com
+    histórico anterior, desfazer exigiria recalcular streak/intervalo
+    do Leitner reproduzindo o que sobra, o que esta função
+    deliberadamente não tenta fazer ainda (sem caso de uso real pra
+    justificar esse risco agora). Questões puladas aparecem em
+    'puladas_com_historico' pra a UI avisar em vez de fingir que
+    desfez."""
+    if not ids_tentativa:
+        return {"desfeitas": [], "puladas_com_historico": []}
+    with _conectar() as conn:
+        placeholders = ",".join("?" * len(ids_tentativa))
+        linhas = conn.execute(
+            f"SELECT id_tentativa, id_questao FROM tentativas_usuario WHERE id_tentativa IN ({placeholders})",
+            ids_tentativa,
+        ).fetchall()
+        desfeitas, puladas = [], []
+        for id_t, id_q in linhas:
+            total = conn.execute(
+                "SELECT COUNT(*) FROM tentativas_usuario WHERE id_questao = ?", (id_q,)
+            ).fetchone()[0]
+            if total > 1:
+                puladas.append(id_q)
+                continue
+            conn.execute("DELETE FROM tentativas_usuario WHERE id_tentativa = ?", (id_t,))
+            conn.execute("DELETE FROM estado_revisao WHERE id_questao = ?", (id_q,))
+            desfeitas.append(id_t)
+    return {"desfeitas": desfeitas, "puladas_com_historico": puladas}
+
+
 TIPOS_ERRO = {
     "erro_de_conta": "Erro de conta (contas certas na cabeça, errou na execução)",
     "erro_de_pegadinha": "Erro de pegadinha (leu rápido, confundiu o que foi pedido)",
@@ -1272,6 +1309,36 @@ def resumo_por_tentativa(ano: int, caderno: str, grande_area: str) -> list[dict]
         }
         for r in linhas
     ]
+
+
+def nomear_tentativa(ano: int, caderno: str, grande_area: str, numero_tentativa: int, nome: str) -> None:
+    """Dá um rótulo livre pra uma tentativa (numero_tentativa é o mesmo
+    número derivado por resumo_por_tentativa() -- essa função só
+    anota um nome pra ele, nunca cria/renumera tentativa nenhuma)."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        conn.execute(
+            """
+            INSERT INTO nomes_tentativas (ano, caderno, grande_area, numero_tentativa, nome)
+            VALUES (?,?,?,?,?)
+            ON CONFLICT(ano, caderno, grande_area, numero_tentativa) DO UPDATE SET nome=excluded.nome
+            """,
+            (ano, caderno_norm, grande_area_norm, numero_tentativa, nome.strip()),
+        )
+
+
+def nomes_tentativas(ano: int, caderno: str, grande_area: str) -> dict[int, str]:
+    """{numero_tentativa: nome} pra uma prova -- só as que já foram
+    nomeadas; tentativa sem nome simplesmente não aparece aqui."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            "SELECT numero_tentativa, nome FROM nomes_tentativas WHERE ano=? AND caderno=? AND grande_area=?",
+            (ano, caderno_norm, grande_area_norm),
+        ).fetchall()
+    return dict(linhas)
 
 
 def calcular_ofensiva() -> dict:
