@@ -5,3 +5,15 @@ core/enem_teste.db
 core/backups/
 core/vision_board/
 core/scratch_enunciados_*.txt
+
+# Logs de debug de sessão de teste, não são código.
+*.log
+
+# Exports brutos do Claude Design baixados pelo usuário -- redundantes
+# com design_handoff_enem_gamificado/ (a versão curada que o código de
+# verdade referencia) e um deles carrega o runtime JS do editor +
+# fotos pessoais em uploads/ (não algo pra ir pro histórico do git,
+# mesmo em repo privado).
+Redesign ENEM app gamificado.zip
+Redesign ENEM app gamificado (1).zip
+Redesign ENEM app gamificado (1)/

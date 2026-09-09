@@ -1,31 +1,34 @@
-# Tema claro "folha + verde" do cartão-resposta -- fundo branco/cinza
-# claro com texto quase preto (validado antes só na página beta "Prova
-# com enunciado", promovido pro app inteiro a pedido do usuário: "a
-# fonte assim de cor deixa padronizada branco... que nem você fez na
-# prova"). primaryColor/greenColor usam um verde mais escuro que o
-# neon original (#39FF14) de propósito -- neon sobre branco falha
-# contraste de texto (WCAG); #39FF14 continua vivo em glow/destaque
-# pontual via core/ui_theme.py, só não como cor de texto/borda sólida.
-# Ver core/ui_theme.py pro CSS complementar (esconde o rodapé "Made
-# with Streamlit", estiliza botões/cards/bolhas de resposta, mantém a
-# gaveta de navegação no visual escuro original) que o config sozinho
-# não alcança.
+# Tema escuro "grafite + lima" (redesign gamificado, 2026-09) -- importado
+# do projeto de design do usuário no Claude Design ("Redesign ENEM app
+# gamificado", paleta "Grafite & Lima"): lima como cor de ação, violeta
+# como cor de progresso, âmbar como recompensa (ver core/ui_theme.py pras
+# variáveis --tema-roxo/--tema-ouro). Substitui o tema claro "folha + verde"
+# anterior -- pedido explícito do usuário pra unificar o visual com o app
+# mobile (Expo/React Native), que já usa exatamente esta paleta.
+#
+# primaryColor usa o lima puro (#6EE12B) porque agora o fundo é ESCURO --
+# o motivo original de usar um verde mais escuro (#15803D) era só evitar
+# neon sobre fundo BRANCO (falha contraste WCAG de texto); sobre fundo
+# escuro o lima já tem contraste de sobra, o problema original não existe
+# mais. Ver core/ui_theme.py pro CSS complementar (esconde o rodapé "Made
+# with Streamlit", estiliza botões/cards/bolhas de resposta, gaveta de
+# navegação, e o mascote "Pipo") que o config sozinho não alcança.
 
 [theme]
-base = "light"
+base = "dark"
 
-primaryColor = "#15803D"
-backgroundColor = "#FFFFFF"
-secondaryBackgroundColor = "#FAFAFA"
-textColor = "#1A1A1A"
-borderColor = "#DDDDDD"
-greenColor = "#15803D"
+primaryColor = "#6EE12B"
+backgroundColor = "#0A0C10"
+secondaryBackgroundColor = "#171B24"
+textColor = "#F2F4F7"
+borderColor = "#232733"
+greenColor = "#6EE12B"
 
 showWidgetBorder = true
 showSidebarBorder = true
 
-font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
-headingFont = "Space Grotesk:https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap"
+font = "Nunito:https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap"
+headingFont = "Baloo 2:https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap"
 codeFont = "JetBrains Mono:https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap"
 
 baseFontWeight = 400
@@ -33,5 +36,5 @@ headingFontWeights = 700
 metricValueFontSize = "2.25rem"
 metricValueFontWeight = 700
 
-baseRadius = "0.6rem"
-buttonRadius = "0.5rem"
+baseRadius = "1rem"
+buttonRadius = "0.9rem"

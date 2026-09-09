@@ -6,3 +6,5 @@ google-auth-oauthlib
 PyMuPDF
 requests
 Pillow
+fastapi
+uvicorn

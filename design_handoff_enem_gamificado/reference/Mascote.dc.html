@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="{{ rootStyle }}">
+  <div style="{{ bgA }}"></div>
+  <div style="{{ bgB }}"></div>
+  <div style="{{ bgC }}"></div>
+  <div style="{{ tailStyle }}"></div>
+  <div style="{{ earL }}"><div style="{{ earIn }}"></div></div>
+  <div style="{{ earR }}"><div style="{{ earIn }}"></div></div>
+  <div style="{{ bodyStyle }}">
+    <div style="{{ bellyStyle }}"></div>
+    <div style="{{ mark1 }}"></div>
+    <div style="{{ mark2 }}"></div>
+    <div style="{{ mark3 }}"></div>
+  </div>
+  <div style="{{ eyeL }}">
+    <div style="{{ pupilStyle }}"></div>
+    <div style="{{ lidStyle }}"></div>
+  </div>
+  <div style="{{ eyeR }}">
+    <div style="{{ pupilStyle }}"></div>
+    <div style="{{ lidStyle }}"></div>
+  </div>
+  <div style="{{ whiskerL1 }}"></div>
+  <div style="{{ whiskerL2 }}"></div>
+  <div style="{{ whiskerL3 }}"></div>
+  <div style="{{ whiskerR1 }}"></div>
+  <div style="{{ whiskerR2 }}"></div>
+  <div style="{{ whiskerR3 }}"></div>
+  <div style="{{ noseStyle }}"></div>
+  <div style="{{ mouthStyle }}"></div>
+  <div style="{{ cheekL }}"></div>
+  <div style="{{ cheekR }}"></div>
+  <div style="{{ collarStyle }}"></div>
+  <div style="{{ sparkStyle }}"></div>
+  <div style="{{ fgA }}"></div>
+  <div style="{{ fgB }}"></div>
+  <div style="{{ fgC }}"></div>
+  <div style="{{ fgD }}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:200,&quot;height&quot;:200},&quot;color&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FDFEFF&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#FDFEFF&quot;,&quot;#F0E4D4&quot;,&quot;#3A4152&quot;,&quot;#F5C98A&quot;]},&quot;shadow&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#C4CFDB&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nose&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF8FA3&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#FF8FA3&quot;,&quot;#E0A0AE&quot;,&quot;#8B93A7&quot;]},&quot;pattern&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;none&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;patches&quot;,&quot;tabby&quot;,&quot;tuxedo&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Variante&quot;},&quot;patch&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#DCE4EC&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Variante&quot;},&quot;collar&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;&quot;,&quot;#6EE12B&quot;,&quot;#7C5CFF&quot;,&quot;#FFC42E&quot;],&quot;section&quot;:&quot;Variante&quot;},&quot;scene&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;none&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;novelo&quot;,&quot;fogueira&quot;,&quot;casinha&quot;,&quot;estudo&quot;,&quot;noite&quot;,&quot;trofeu&quot;,&quot;cochilo&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Variante&quot;},&quot;mood&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;happy&quot;,&quot;options&quot;:[&quot;happy&quot;,&quot;cheer&quot;,&quot;sad&quot;,&quot;sleep&quot;],&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;float&quot;,&quot;default&quot;:1,&quot;min&quot;:0.4,&quot;max&quot;:2,&quot;step&quot;:0.05,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const color = this.props.color ?? "#FDFEFF";
+    const shadow = this.props.shadow ?? "#C4CFDB";
+    const nose = this.props.nose ?? "#FF8FA3";
+    const patch = this.props.patch ?? "#DCE4EC";
+    const collar = this.props.collar ?? "";
+    const pattern = this.props.pattern ?? "none";
+    const mood = this.props.mood ?? "happy";
+    const k = parseFloat(this.props.size ?? 1) || 1;
+
+    const tilt = mood === "cheer" ? -7 : mood === "sad" ? 5 : 0;
+    const pupilY = mood === "sad" ? 4 : mood === "cheer" ? -2 : 0;
+    const closed = mood === "sleep" || mood === "sad";
+    const earTilt = mood === "sad" ? 32 : mood === "cheer" ? -4 : 7;
+    const tri = "polygon(50% 0%, 100% 100%, 0% 100%)";
+    const off = { display: "none" };
+
+    const ear = (side) => ({
+      position: "absolute", [side]: "8px", top: "0px", width: "33px", height: "35px",
+      clipPath: tri, background: color,
+      transform: "rotate(" + (side === "left" ? -earTilt : earTilt) + "deg)",
+      transformOrigin: "bottom center"
+    });
+    const eye = (side) => ({
+      position: "absolute", [side]: "17px", top: "34px", width: "27px", height: "27px",
+      borderRadius: "50%", background: "#F4F7FA",
+      display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
+      boxShadow: "inset 0 0 0 1.5px " + shadow
+    });
+    const whisker = (side, i) => ({
+      position: "absolute", [side]: "-8px", top: (63 + i * 8) + "px",
+      width: "28px", height: "2.5px", borderRadius: "999px", background: shadow,
+      transform: "rotate(" + (side === "left" ? 1 : -1) * (i === 0 ? 13 : i === 1 ? 0 : -13) + "deg)"
+    });
+    const cheek = (side) => ({
+      position: "absolute", [side]: "11px", top: "70px", width: "15px", height: "9px",
+      borderRadius: "50%", background: "rgba(255,143,163,.5)"
+    });
+
+    // Variantes destravaveis: manchas mudam so o desenho, nunca a silhueta.
+    let m1 = off, m2 = off, m3 = off;
+    if (pattern === "patches") {
+      m1 = { position: "absolute", left: "-4px", top: "-2px", width: "34px", height: "30px", borderRadius: "50% 50% 60% 40%", background: patch };
+      m2 = { position: "absolute", right: "6px", bottom: "-6px", width: "30px", height: "26px", borderRadius: "60% 40% 50% 50%", background: patch };
+    } else if (pattern === "tabby") {
+      m1 = { position: "absolute", left: "24px", top: "-3px", width: "8px", height: "16px", borderRadius: "999px", background: patch };
+      m2 = { position: "absolute", left: "40px", top: "-5px", width: "8px", height: "19px", borderRadius: "999px", background: patch };
+      m3 = { position: "absolute", left: "56px", top: "-3px", width: "8px", height: "16px", borderRadius: "999px", background: patch };
+    } else if (pattern === "tuxedo") {
+      m1 = { position: "absolute", left: "-6px", top: "-6px", width: "46px", height: "44px", borderRadius: "0 0 70% 30%", background: patch };
+    }
+
+    // Cenarios: adereços em volta do gato, mesma silhueta sempre.
+    const scene = this.props.scene ?? "none";
+    let bgA = off, bgB = off, bgC = off, fgA = off, fgB = off, fgC = off, fgD = off;
+    if (scene === "novelo") {
+      fgA = { position: "absolute", left: "-24px", bottom: "-4px", width: "34px", height: "34px", borderRadius: "50%", background: "#7C5CFF", boxShadow: "0 4px 0 rgba(0,0,0,.25), inset -6px -6px 0 rgba(0,0,0,.14)" };
+      fgB = { position: "absolute", left: "-19px", bottom: "3px", width: "24px", height: "24px", borderRadius: "50%", border: "2.5px solid rgba(255,255,255,.55)", transform: "rotate(28deg) skewX(-12deg)" };
+      fgC = { position: "absolute", left: "6px", bottom: "6px", width: "26px", height: "16px", borderRadius: "0 0 999px 0", borderRight: "2.5px solid #7C5CFF", borderBottom: "2.5px solid #7C5CFF" };
+    } else if (scene === "fogueira") {
+      bgA = { position: "absolute", right: "-30px", bottom: "-6px", width: "56px", height: "56px", borderRadius: "50%", background: "rgba(255,180,60,.22)", filter: "blur(2px)" };
+      fgA = { position: "absolute", right: "-26px", bottom: "-4px", width: "44px", height: "9px", borderRadius: "999px", background: "#6B4A2F", boxShadow: "0 3px 0 rgba(0,0,0,.28)", transform: "rotate(-8deg)" };
+      fgB = { position: "absolute", right: "-24px", bottom: "1px", width: "40px", height: "9px", borderRadius: "999px", background: "#8A6039", transform: "rotate(9deg)" };
+      fgC = { position: "absolute", right: "-14px", bottom: "8px", width: "22px", height: "30px", borderRadius: "50% 50% 46% 46% / 70% 70% 30% 30%", background: "#FF8A2B", boxShadow: "0 0 14px rgba(255,138,43,.5)" };
+      fgD = { position: "absolute", right: "-9px", bottom: "10px", width: "12px", height: "17px", borderRadius: "50% 50% 46% 46% / 70% 70% 30% 30%", background: "#FFC42E" };
+    } else if (scene === "casinha") {
+      bgA = { position: "absolute", left: "-16px", top: "22px", width: "136px", height: "84px", borderRadius: "10px", background: "#232A38", boxShadow: "inset 0 0 0 2.5px #39435A" };
+      bgB = { position: "absolute", left: "-24px", top: "-2px", width: "152px", height: "42px", clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)", background: "#7C5CFF" };
+      bgC = { position: "absolute", left: "14px", top: "34px", width: "76px", height: "72px", borderRadius: "999px 999px 0 0", background: "#141821" };
+    } else if (scene === "estudo") {
+      fgA = { position: "absolute", left: "10px", bottom: "-10px", width: "44px", height: "26px", borderRadius: "3px 0 0 3px", background: "#F2F4F7", boxShadow: "0 4px 0 rgba(0,0,0,.25)", transform: "rotate(-7deg)", transformOrigin: "right bottom" };
+      fgB = { position: "absolute", right: "10px", bottom: "-10px", width: "44px", height: "26px", borderRadius: "0 3px 3px 0", background: "#DDE3EA", boxShadow: "0 4px 0 rgba(0,0,0,.25)", transform: "rotate(7deg)", transformOrigin: "left bottom" };
+      fgC = { position: "absolute", left: "50%", bottom: "-11px", width: "5px", height: "27px", marginLeft: "-2.5px", borderRadius: "2px", background: "#6EE12B" };
+    } else if (scene === "noite") {
+      bgA = { position: "absolute", right: "-26px", top: "-14px", width: "34px", height: "34px", borderRadius: "50%", background: "#FFC42E", boxShadow: "0 0 18px rgba(255,196,46,.4)" };
+      bgB = { position: "absolute", right: "-18px", top: "-18px", width: "30px", height: "30px", borderRadius: "50%", background: "#141821" };
+      bgC = { position: "absolute", left: "-22px", top: "10px", width: "9px", height: "9px", transform: "rotate(45deg)", borderRadius: "2px", background: "#F2F4F7" };
+      fgA = { position: "absolute", left: "-6px", top: "-14px", width: "6px", height: "6px", transform: "rotate(45deg)", borderRadius: "2px", background: "#8B93A7" };
+    } else if (scene === "trofeu") {
+      fgA = { position: "absolute", right: "-24px", bottom: "6px", width: "30px", height: "26px", borderRadius: "6px 6px 999px 999px", background: "#FFC42E", boxShadow: "0 4px 0 rgba(0,0,0,.25)" };
+      fgB = { position: "absolute", right: "-16px", bottom: "-4px", width: "14px", height: "12px", background: "#E0A420" };
+      fgC = { position: "absolute", right: "-26px", bottom: "-8px", width: "34px", height: "8px", borderRadius: "3px", background: "#FFC42E", boxShadow: "0 3px 0 rgba(0,0,0,.25)" };
+      fgD = { position: "absolute", right: "-6px", top: "-8px", width: "13px", height: "13px", transform: "rotate(45deg)", borderRadius: "3px", background: "#6EE12B" };
+    } else if (scene === "cochilo") {
+      fgA = { position: "absolute", left: "-18px", bottom: "-8px", width: "140px", height: "22px", borderRadius: "999px", background: "#2A3140", boxShadow: "0 4px 0 rgba(0,0,0,.28)" };
+      fgB = { position: "absolute", left: "-10px", bottom: "6px", width: "40px", height: "12px", borderRadius: "999px", background: "#39435A" };
+      bgA = { position: "absolute", right: "-22px", top: "-6px", width: "16px", height: "16px", borderRadius: "50%", border: "2.5px solid #39435A" };
+      bgB = { position: "absolute", right: "-30px", top: "-22px", width: "10px", height: "10px", borderRadius: "50%", border: "2.5px solid #39435A" };
+    }
+
+    return {
+      bgA: bgA, bgB: bgB, bgC: bgC, fgA: fgA, fgB: fgB, fgC: fgC, fgD: fgD,
+      rootStyle: { position: "relative", width: "104px", height: "104px", transformOrigin: "bottom center", transform: "scale(" + k + ") rotate(" + tilt + "deg)", flex: "0 0 auto" },
+      tailStyle: { position: "absolute", right: "-18px", top: mood === "cheer" ? "40px" : "62px", width: "46px", height: "13px", borderRadius: "999px", background: color, boxShadow: "0 3px 0 " + shadow, transform: "rotate(" + (mood === "cheer" ? -54 : -16) + "deg)", transformOrigin: "left center" },
+      earL: ear("left"),
+      earR: ear("right"),
+      earIn: { position: "absolute", left: "9.5px", top: "13px", width: "14px", height: "18px", clipPath: tri, background: nose, opacity: .8 },
+      bodyStyle: { position: "absolute", left: "8px", top: "14px", width: "88px", height: "84px", borderRadius: "50% 50% 44% 44% / 56% 56% 44% 44%", overflow: "hidden", background: color, boxShadow: "0 8px 0 " + shadow + ", inset 0 -7px 0 rgba(0,0,0,.06)" },
+      bellyStyle: { position: "absolute", left: "18px", top: "40px", width: "52px", height: "38px", borderRadius: "50%", background: "rgba(255,255,255,.5)" },
+      mark1: m1, mark2: m2, mark3: m3,
+      eyeL: eye("left"),
+      eyeR: eye("right"),
+      pupilStyle: { width: mood === "cheer" ? "12px" : "9.5px", height: "18px", borderRadius: "50%", background: "#141821", transform: "translateY(" + pupilY + "px)" },
+      lidStyle: closed
+        ? { position: "absolute", left: 0, top: 0, width: "27px", height: mood === "sleep" ? "17px" : "14px", background: color, borderBottom: "2.5px solid " + shadow }
+        : off,
+      whiskerL1: whisker("left", 0), whiskerL2: whisker("left", 1), whiskerL3: whisker("left", 2),
+      whiskerR1: whisker("right", 0), whiskerR2: whisker("right", 1), whiskerR3: whisker("right", 2),
+      noseStyle: { position: "absolute", left: "50%", top: "63px", width: "15px", height: "11px", marginLeft: "-7.5px", clipPath: "polygon(0% 0%, 100% 0%, 50% 100%)", background: nose },
+      mouthStyle: mood === "cheer"
+        ? { position: "absolute", left: "50%", top: "75px", width: "21px", height: "15px", marginLeft: "-10.5px", borderRadius: "0 0 999px 999px", background: "#8C3448" }
+        : { position: "absolute", left: "50%", top: "74px", width: "19px", height: "9px", marginLeft: "-9.5px", borderRadius: "0 0 999px 999px", border: "2.5px solid " + shadow, borderTop: "none", background: "transparent" },
+      cheekL: cheek("left"), cheekR: cheek("right"),
+      collarStyle: collar
+        ? { position: "absolute", left: "22px", top: "92px", width: "60px", height: "11px", borderRadius: "999px", background: collar, boxShadow: "0 3px 0 rgba(0,0,0,.22)" }
+        : off,
+      sparkStyle: mood === "cheer"
+        ? { position: "absolute", left: "-10px", top: "-6px", width: "15px", height: "15px", transform: "rotate(45deg)", borderRadius: "4px", background: "#FFC42E" }
+        : off
+    };
+  }
+}
+</script>
+</body>
+</html>

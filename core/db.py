@@ -364,6 +364,23 @@ def inicializar_banco() -> None:
     migrações leves em bancos já existentes (coluna nova em tabela
     antiga), sem apagar nenhum dado."""
     with _conectar() as conn:
+        # Migra coluna nova em `questoes` ANTES de rodar schema.sql:
+        # schema.sql cria índice sobre `origem` (idx_questoes_origem),
+        # e CREATE INDEX falha se a coluna ainda não existe numa
+        # tabela já antiga que o CREATE TABLE IF NOT EXISTS do script
+        # não vai alterar -- então a migração de coluna precisa
+        # acontecer antes do script rodar, não depois.
+        tabelas = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+        if "questoes" in tabelas:
+            colunas_questoes = {r[1] for r in conn.execute("PRAGMA table_info(questoes)").fetchall()}
+            if "origem" not in colunas_questoes:
+                conn.execute(
+                    "ALTER TABLE questoes ADD COLUMN origem TEXT NOT NULL DEFAULT 'enem_oficial' "
+                    "CHECK(origem IN ('enem_oficial','banco_pratica'))"
+                )
+            if "fonte" not in colunas_questoes:
+                conn.execute("ALTER TABLE questoes ADD COLUMN fonte TEXT")
+
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
         conn.executemany(
             "INSERT OR IGNORE INTO topicos_validos (grande_area, materia) VALUES (?, ?)",
@@ -390,7 +407,53 @@ def inicializar_banco() -> None:
                 CREATE TABLE tentativas_usuario (
                     id_tentativa        INTEGER PRIMARY KEY AUTOINCREMENT,
                     id_questao          TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
-                    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now')),
+                    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+                    resposta_escolhida  TEXT CHECK(resposta_escolhida IN ('A','B','C','D','E') OR resposta_escolhida IS NULL),
+                    resultado           TEXT NOT NULL CHECK(resultado IN ('acertou','errou')),
+                    intervalo_dias      INTEGER NOT NULL,
+                    streak_acertos      INTEGER NOT NULL,
+                    proxima_revisao     TEXT NOT NULL,
+                    tipo_erro           TEXT
+                );
+                INSERT INTO tentativas_usuario
+                    (id_tentativa, id_questao, data_tentativa, resposta_escolhida, resultado,
+                     intervalo_dias, streak_acertos, proxima_revisao, tipo_erro)
+                SELECT id_tentativa, id_questao, data_tentativa, resposta_escolhida, resultado,
+                       intervalo_dias, streak_acertos, proxima_revisao, tipo_erro
+                FROM tentativas_usuario_migracao_old;
+                DROP TABLE tentativas_usuario_migracao_old;
+                CREATE INDEX IF NOT EXISTS idx_tentativas_questao ON tentativas_usuario(id_questao);
+                CREATE INDEX IF NOT EXISTS idx_tentativas_data ON tentativas_usuario(data_tentativa);
+                """
+            )
+
+        # Migração separada: DEFAULT de data_tentativa mudou de UTC
+        # (datetime('now')) pra hora LOCAL (datetime('now','localtime')).
+        # Bug real, não cosmético -- achado rodando os testes à noite:
+        # SQLite datetime('now') é sempre UTC, mas todo o Python do
+        # projeto usa date.today()/datetime.now() (hora local). Num
+        # usuário em UTC-3, das ~21h às 23h59 locais o UTC já é o dia
+        # seguinte -- uma tentativa registrada nesse intervalo gravava
+        # com data_tentativa de AMANHÃ, fazendo "hoje" (meta diária,
+        # missão do dia, streak) nunca bater com o que acabou de ser
+        # respondido. SQLite não tem ALTER TABLE pra mudar um DEFAULT --
+        # mesmo padrão de rebuild da migração acima, só que trocando o
+        # DEFAULT, não o CHECK. Dado já gravado (datas antigas em UTC)
+        # não é reescrito -- só INSERTs novos, a partir de agora, usam a
+        # hora certa; script bem antigo com poucas tentativas do fim do
+        # dia UTC-3 pode ter uma data ligeiramente adiantada no passado,
+        # não vale a pena tentar adivinhar/corrigir retroativamente.
+        sql_tabela_atual = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='tentativas_usuario'"
+        ).fetchone()[0]
+        if "datetime('now'))" in sql_tabela_atual:
+            conn.executescript(
+                """
+                ALTER TABLE tentativas_usuario RENAME TO tentativas_usuario_migracao_old;
+                CREATE TABLE tentativas_usuario (
+                    id_tentativa        INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id_questao          TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
+                    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
                     resposta_escolhida  TEXT CHECK(resposta_escolhida IN ('A','B','C','D','E') OR resposta_escolhida IS NULL),
                     resultado           TEXT NOT NULL CHECK(resultado IN ('acertou','errou')),
                     intervalo_dias      INTEGER NOT NULL,
@@ -547,6 +610,275 @@ def inserir_questao(
                 )
 
     return id_questao, status
+
+
+# ============================================================
+# BANCO DE PRÁTICA (questões fora do ENEM oficial -- ex: trazidas de
+# uma sessão de estudo com IA sobre um assunto específico)
+# ============================================================
+
+ANO_BANCO_PRATICA = 0
+CADERNO_BANCO_PRATICA = "banco_pratica"
+
+
+def gerar_id_pratica(numero: int) -> str:
+    """Gera o id_questao de uma questão do banco de prática, ex:
+    'pratica_00001'. Separado de gerar_id_canonico() de propósito --
+    banco de prática não tem ano/caderno/numero de prova real por
+    trás, só um contador sequencial próprio (ver numero_questao em
+    inserir_questao_pratica)."""
+    return f"pratica_{numero:05d}"
+
+
+def inserir_questao_pratica(
+    grande_area: str,
+    materia: str,
+    alternativa_correta: str,
+    enunciado_texto: str,
+    fonte: str | None = None,
+    topico: str | None = None,
+) -> tuple[str, str]:
+    """Insere UMA questão no banco de prática (origem='banco_pratica')
+    -- não é uma questão de prova real do ENEM, então não tem
+    ano/caderno/numero de verdade por trás. Usa ANO_BANCO_PRATICA/
+    CADERNO_BANCO_PRATICA como sentinela só pra satisfazer as colunas
+    NOT NULL de `questoes`; numero_questao aqui é um contador GLOBAL
+    do banco de prática inteiro (não por matéria), derivado do maior
+    já usado -- suficiente pra id único, sem precisar de outra tabela
+    só pra isso.
+
+    Passa pela MESMA validação de taxonomia que inserir_questao() (se
+    a matéria não bater com TAXONOMIA_VALIDA, ainda grava, mas com
+    status_classificacao='nao_classificado' pra triagem) -- de
+    propósito, pra não perder registro nem inventar categoria nova.
+
+    `fonte` é texto livre (ex: 'gemini', 'chatgpt', 'autoral') --
+    filtro auxiliar dentro do banco de prática, não afeta a
+    identidade da questão nem a validação.
+
+    Retorna (id_questao, status_classificacao), igual inserir_questao().
+    """
+    if alternativa_correta.strip().upper() not in {"A", "B", "C", "D", "E"}:
+        raise ValueError(f"alternativa_correta inválida: '{alternativa_correta}'")
+    if not enunciado_texto or not enunciado_texto.strip():
+        raise ValueError("enunciado_texto não pode ser vazio numa questão do banco de prática.")
+
+    grande_area_norm = normalizar_texto(grande_area)
+    materia_norm = canonicalizar_materia(normalizar_texto(materia))
+    status = (
+        "classificado"
+        if (grande_area_norm, materia_norm) in TAXONOMIA_VALIDA
+        else "nao_classificado"
+    )
+
+    with _conectar() as conn:
+        numero = conn.execute(
+            "SELECT COALESCE(MAX(numero_questao), 0) + 1 FROM questoes WHERE origem = 'banco_pratica'"
+        ).fetchone()[0]
+        id_questao = gerar_id_pratica(numero)
+        conn.execute(
+            """
+            INSERT INTO questoes (
+                id_questao, ano, caderno, numero_questao, grande_area, materia,
+                topico, enunciado_texto, alternativa_correta, status_classificacao,
+                origem, fonte
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,'banco_pratica',?)
+            """,
+            (
+                id_questao, ANO_BANCO_PRATICA, CADERNO_BANCO_PRATICA, numero,
+                grande_area_norm, materia_norm, topico, enunciado_texto.strip(),
+                alternativa_correta.strip().upper(), status, fonte.strip() if fonte else None,
+            ),
+        )
+    return id_questao, status
+
+
+_PADRAO_ALTERNATIVA_IMPORT = re.compile(r"^\s*([A-Ea-e])\s*[\)\.\:\-]\s+(.+)$")
+_PADRAO_GABARITO_IMPORT = re.compile(r"^\s*gabarito\s*[:\-]?\s*([A-Ea-e])\s*$", re.IGNORECASE)
+
+
+def importar_questoes_praticas_texto(
+    texto: str, grande_area: str, materia: str, fonte: str | None = None,
+) -> dict:
+    """Importa VÁRIAS questões do banco de prática de um texto colado
+    de uma vez (ex: uma sessão inteira de prática de Óptica com uma
+    IA) -- alternativa ao formulário questão-por-questão, que não
+    escala pra "faça 40 questões pra fixar".
+
+    Formato esperado, um bloco por questão, blocos separados por uma
+    linha só com '---':
+
+        <enunciado, uma ou mais linhas>
+        A) <alternativa A>
+        B) <alternativa B>
+        C) <alternativa C>
+        D) <alternativa D>
+        E) <alternativa E>
+        GABARITO: <letra>
+
+    A letra de cada alternativa aceita ')', '.', ':' ou '-' depois
+    (A), A., A:, A-) e é case-insensitive -- cópia de resposta de IA
+    varia o formato o tempo todo, não vale a pena travar num único
+    separador. Cada bloco malformado (faltando alguma alternativa ou
+    o gabarito) é reportado em 'erros' com um trecho do bloco, mas NÃO
+    aborta a importação inteira -- os blocos válidos do mesmo texto
+    colado ainda são gravados, prática real de como isso vai ser usado
+    (colar uma sessão inteira, corrigir só o que deu problema depois).
+
+    O enunciado_texto gravado reconstrói as 5 alternativas em ordem
+    A-E (mesmo que coladas fora de ordem), então a leitura na prática
+    por matéria sempre mostra as opções na ordem certa.
+
+    Retorna {'inseridas': [id_questao, ...], 'erros': [str, ...]}."""
+    blocos = re.split(r"(?m)^\s*-{3,}\s*$", texto)
+    inseridas: list[str] = []
+    erros: list[str] = []
+
+    for bloco in blocos:
+        bloco = bloco.strip()
+        if not bloco:
+            continue
+
+        linhas = bloco.split("\n")
+        gabarito_letra = None
+        linhas_restantes = []
+        for linha in linhas:
+            m_gab = _PADRAO_GABARITO_IMPORT.match(linha)
+            if m_gab:
+                gabarito_letra = m_gab.group(1).upper()
+            else:
+                linhas_restantes.append(linha)
+
+        alternativas: dict[str, str] = {}
+        linhas_enunciado = []
+        for linha in linhas_restantes:
+            m_alt = _PADRAO_ALTERNATIVA_IMPORT.match(linha)
+            if m_alt:
+                letra = m_alt.group(1).upper()
+                alternativas[letra] = m_alt.group(2).strip()
+            elif not alternativas:
+                # só conta como enunciado o que vem ANTES da primeira
+                # alternativa -- qualquer linha solta depois (ex: uma
+                # observação da IA no final) não vira enunciado.
+                linhas_enunciado.append(linha)
+
+        trecho = bloco[:80].replace("\n", " ") + ("..." if len(bloco) > 80 else "")
+
+        if gabarito_letra is None:
+            erros.append(f"Sem 'GABARITO: <letra>' encontrado no bloco: \"{trecho}\"")
+            continue
+        faltando = [l for l in "ABCDE" if l not in alternativas]
+        if faltando:
+            erros.append(f"Faltando alternativa(s) {', '.join(faltando)} no bloco: \"{trecho}\"")
+            continue
+        enunciado = "\n".join(linhas_enunciado).strip()
+        if not enunciado:
+            erros.append(f"Sem enunciado (texto antes das alternativas) no bloco: \"{trecho}\"")
+            continue
+
+        enunciado_completo = enunciado + "\n\n" + "\n".join(f"{l}) {alternativas[l]}" for l in "ABCDE")
+        id_questao, _ = inserir_questao_pratica(
+            grande_area=grande_area, materia=materia,
+            alternativa_correta=gabarito_letra, enunciado_texto=enunciado_completo,
+            fonte=fonte,
+        )
+        inseridas.append(id_questao)
+
+    return {"inseridas": inseridas, "erros": erros}
+
+
+def fontes_banco_pratica() -> list[str]:
+    """Valores distintos de 'fonte' já usados no banco de prática --
+    alimenta o filtro/seletor da tela de prática por matéria."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            "SELECT DISTINCT fonte FROM questoes WHERE origem = 'banco_pratica' AND fonte IS NOT NULL ORDER BY fonte"
+        ).fetchall()
+    return [r[0] for r in linhas]
+
+
+def trilha_banco_pratica(
+    grande_area: str, materia: str, tamanho_no: int = 5, fonte: str | None = None,
+) -> list[dict]:
+    """Divide as questões do banco de prática de uma matéria em 'nós'
+    sequenciais de tamanho_no questões — a trilha estilo Duolingo
+    (pedido explícito do usuário: "em cada ponto que separa se tem
+    que fazer 5 exercícios, aí depois vai pros próximos 5").
+
+    Cada nó vem com:
+      - 'indice': posição do nó na trilha (0, 1, 2...)
+      - 'questoes': as questões do nó, cada uma com 'ja_respondida'
+        (bool) somada aos campos normais de _linha_para_questao_grade
+      - 'concluido': True se TODAS as questões do nó já têm pelo menos
+        uma tentativa registrada
+      - 'desbloqueado': True se este nó pode ser jogado agora -- o
+        primeiro nó sempre está desbloqueado; os seguintes só
+        desbloqueiam quando TODOS os nós anteriores estão concluídos
+        (progressão sequencial, igual ao Duolingo)
+
+    Nada disso é armazenado à parte -- 'concluido'/'ja_respondida' são
+    derivados ao vivo de tentativas_usuario, mesmo princípio de toda
+    outra função analítica deste módulo (prioridade_de_estudo,
+    confianca_recente_por_materia etc.): sem tabela nova, sem estado
+    que possa divergir do histórico real.
+
+    questoes_por_materia() já ordena por numero_questao ASC dentro de
+    banco_pratica (todo mundo tem ano=0, então o ORDER BY ano DESC não
+    discrimina) -- que é exatamente a ordem de inserção/criação, a
+    ordem certa pra uma trilha sequencial."""
+    questoes = questoes_por_materia(grande_area, materia, origem="banco_pratica")
+    if fonte:
+        questoes = [q for q in questoes if q.get("fonte") == fonte]
+    if not questoes:
+        return []
+
+    ids = [q["id_questao"] for q in questoes]
+    with _conectar() as conn:
+        marcadores = ",".join("?" * len(ids))
+        linhas = conn.execute(
+            f"SELECT DISTINCT id_questao FROM tentativas_usuario WHERE id_questao IN ({marcadores})",
+            ids,
+        ).fetchall()
+    respondidas = {r[0] for r in linhas}
+
+    nos = []
+    desbloqueado = True
+    for i in range(0, len(questoes), tamanho_no):
+        bloco = [dict(q, ja_respondida=q["id_questao"] in respondidas) for q in questoes[i:i + tamanho_no]]
+        concluido = all(q["ja_respondida"] for q in bloco)
+        nos.append({
+            "indice": i // tamanho_no, "questoes": bloco,
+            "concluido": concluido, "desbloqueado": desbloqueado,
+        })
+        desbloqueado = desbloqueado and concluido
+    return nos
+
+
+def listar_banco_pratica() -> list[dict]:
+    """Toda questão do banco de prática, mais recente primeiro --
+    alimenta a listagem/gerenciamento no Admin (apagar uma questão
+    ruim usa apagar_questao(id_questao), que já é genérico o
+    suficiente pra funcionar aqui sem mudança nenhuma).
+
+    Ordena por numero_questao DESC (não só criado_em) porque
+    criado_em só tem resolução de segundo -- duas inserções no mesmo
+    segundo (ex: importar_questoes_praticas_texto inserindo vários
+    blocos de uma vez) empatariam nele; numero_questao é sequencial
+    por inserção, então desempata na ordem certa sempre."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            "SELECT id_questao, grande_area, materia, status_classificacao, "
+            "alternativa_correta, fonte, enunciado_texto, criado_em "
+            "FROM questoes WHERE origem = 'banco_pratica' ORDER BY numero_questao DESC"
+        ).fetchall()
+    return [
+        {
+            "id_questao": r[0], "grande_area": r[1], "materia": r[2],
+            "status_classificacao": r[3], "alternativa_correta": r[4],
+            "fonte": r[5], "enunciado_texto": r[6], "criado_em": r[7],
+        }
+        for r in linhas
+    ]
 
 
 def inserir_resolucao(id_questao: str, tipo: str, conteudo: str, canal: str | None = None) -> bool:
@@ -709,7 +1041,7 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict
         conn.execute(
             """
             INSERT INTO estado_revisao (id_questao, intervalo_dias, streak_acertos, proxima_revisao, ultima_tentativa)
-            VALUES (?,?,?,?, date('now'))
+            VALUES (?,?,?,?, date('now','localtime'))
             ON CONFLICT(id_questao) DO UPDATE SET
                 intervalo_dias = excluded.intervalo_dias,
                 streak_acertos = excluded.streak_acertos,
@@ -998,10 +1330,16 @@ def listar_provas() -> list[tuple[int, str, str]]:
     alimenta o seletor de prova do cartão-resposta digital. Matemática
     e Ciências da Natureza do mesmo ano/caderno aparecem como opções
     SEPARADAS, mesmo sendo o mesmo dia de prova de verdade — pra não
-    misturar 45+44 questões de áreas diferentes na mesma grade."""
+    misturar 45+44 questões de áreas diferentes na mesma grade.
+
+    Filtra origem='enem_oficial' -- questão do banco de prática não é
+    uma prova de verdade (ver ANO_BANCO_PRATICA/CADERNO_BANCO_PRATICA),
+    não deve aparecer aqui nem em nada que dependa disto (simulado
+    completo, simulados já feitos, apagar prova)."""
     with _conectar() as conn:
         linhas = conn.execute(
-            "SELECT DISTINCT ano, caderno, grande_area FROM questoes ORDER BY ano DESC, caderno, grande_area"
+            "SELECT DISTINCT ano, caderno, grande_area FROM questoes "
+            "WHERE origem = 'enem_oficial' ORDER BY ano DESC, caderno, grande_area"
         ).fetchall()
     return linhas
 
@@ -1011,7 +1349,9 @@ def provas_com_enunciado() -> list[tuple[int, str, str, int, int]]:
     com enunciado_texto preenchido, com a cobertura (quantas de quantas)
     -- alimenta a página beta de fazer a prova inteira lendo o
     enunciado no site, que só faz sentido oferecer pra prova que já
-    passou por extrair_enunciados_pdf.py (ou pelo editor manual)."""
+    passou por extrair_enunciados_pdf.py (ou pelo editor manual).
+
+    Filtra origem='enem_oficial' pelo mesmo motivo de listar_provas()."""
     with _conectar() as conn:
         linhas = conn.execute(
             """
@@ -1019,6 +1359,7 @@ def provas_com_enunciado() -> list[tuple[int, str, str, int, int]]:
                    SUM(CASE WHEN enunciado_texto IS NOT NULL THEN 1 ELSE 0 END),
                    COUNT(*)
             FROM questoes
+            WHERE origem = 'enem_oficial'
             GROUP BY ano, caderno, grande_area
             HAVING SUM(CASE WHEN enunciado_texto IS NOT NULL THEN 1 ELSE 0 END) > 0
             ORDER BY ano DESC, caderno, grande_area
@@ -1113,7 +1454,7 @@ def progresso_simulados() -> list[dict]:
 
 _COLUNAS_QUESTAO_GRADE = (
     "id_questao, numero_questao, materia, status_classificacao, "
-    "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path"
+    "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path, origem, fonte"
 )
 
 
@@ -1126,6 +1467,7 @@ def _linha_para_questao_grade(r: tuple) -> dict:
         "id_questao": r[0], "numero_questao": r[1], "materia": r[2],
         "status_classificacao": r[3], "ano": r[4], "caderno": r[5],
         "grande_area": r[6], "enunciado_texto": r[7], "enunciado_imagem_path": r[8],
+        "origem": r[9], "fonte": r[10],
     }
 
 
@@ -1165,24 +1507,35 @@ def questoes_por_ids(ids: list[str]) -> list[dict]:
     return [por_id[id_q] for id_q in ids if id_q in por_id]
 
 
-def questoes_por_materia(grande_area: str, materia: str) -> list[dict]:
+def questoes_por_materia(grande_area: str, materia: str, origem: str | None = None) -> list[dict]:
     """Todas as questões JÁ CLASSIFICADAS de uma matéria, de qualquer
     ano/caderno -- alimenta o modo 'Praticar por matéria', que mistura
     anos de propósito (o oposto do cartão-resposta de prova única, que
     nunca mistura). Só questão 'classificado' entra, mesma regra do
     resto do sistema: matéria de questão pendente é só um placeholder,
-    não um assunto de verdade pra praticar."""
+    não um assunto de verdade pra praticar.
+
+    Mistura questão real do ENEM ('enem_oficial') com questão do banco
+    de prática ('banco_pratica') por padrão (origem=None) -- de
+    propósito: as duas alimentam o MESMO pipeline de estudo (Leitner,
+    prioridade), então a mesma tela que já mistura ano deve misturar
+    origem também. Passe origem='enem_oficial' ou 'banco_pratica' pra
+    restringir a um dos dois quando o usuário quiser praticar só um."""
+    if origem is not None and origem not in ("enem_oficial", "banco_pratica"):
+        raise ValueError(f"origem inválida: '{origem}'")
     grande_area_norm = normalizar_texto(grande_area)
     materia_norm = normalizar_texto(materia)
+    clausula_origem = "AND origem = ?" if origem else ""
+    parametros = (grande_area_norm, materia_norm) + ((origem,) if origem else ())
     with _conectar() as conn:
         linhas = conn.execute(
             f"""
             SELECT {_COLUNAS_QUESTAO_GRADE}
             FROM questoes
-            WHERE grande_area = ? AND materia = ? AND status_classificacao = 'classificado'
+            WHERE grande_area = ? AND materia = ? AND status_classificacao = 'classificado' {clausula_origem}
             ORDER BY ano DESC, numero_questao
             """,
-            (grande_area_norm, materia_norm),
+            parametros,
         ).fetchall()
     return [_linha_para_questao_grade(r) for r in linhas]
 
@@ -1241,11 +1594,367 @@ def prioridade_de_estudo(grande_area: str, peso_recorrencia: float = 0.5) -> dic
             "total_tentativas": d["total_tentativas"],
             "amostra_pequena": d["total_tentativas"] < MIN_AMOSTRA_CONFIAVEL,
             "score_prioridade": round(score, 1),
+            # Camada de explicabilidade: os dois termos que somam pro score
+            # acima, já calculados -- pra UI poder responder "por que essa
+            # prioridade" mostrando a conta em vez de só o número final.
+            # Chave nova, não quebra nenhum caller que só lia as chaves de
+            # cima (reconstruir_base.py incluso).
+            "explicacao": {
+                "peso_recorrencia": peso_recorrencia,
+                "contribuicao_recorrencia": round(peso_recorrencia * r["percentual"], 1),
+                "contribuicao_taxa_erro": round((1 - peso_recorrencia) * taxa_erro_pct, 1),
+            },
         })
 
     ranking.sort(key=lambda x: x["score_prioridade"], reverse=True)
     sem_dados.sort(key=lambda x: x["percentual_recorrencia"], reverse=True)
     return {"ranking": ranking, "sem_dados": sem_dados}
+
+
+# ============================================================
+# CONFIANÇA RECENTE (recência, separado de taxa de acerto acumulada)
+# ============================================================
+
+LIMIAR_CONFIANCA_ALTA = 0.8   # >= 80% das últimas tentativas certas
+LIMIAR_CONFIANCA_BAIXA = 0.2  # <= 20% das últimas tentativas certas -- entre os dois, "media"
+
+
+def confianca_recente_por_materia(grande_area: str, janela: int = 5) -> list[dict]:
+    """Complementa taxa_acerto_por_materia() (média histórica, desde
+    sempre) com um sinal de RECÊNCIA: como foram as últimas `janela`
+    tentativas de cada matéria, não a média acumulada inteira. Existe pra
+    separar dois perfis que uma taxa de acerto sozinha não distingue --
+    50% de acerto esconde tanto "sempre errei, últimas 5 eu acertei 4"
+    quanto "sempre acertei, últimas 5 eu errei 4"; olhar só a média
+    histórica trata os dois como o mesmo caso, quando o segundo é
+    claramente mais urgente.
+
+    Mesma regra de sempre: só questão 'classificado' entra. `janela` é o
+    tamanho da amostra recente considerada (padrão 5, sem justificativa
+    estatística formal por trás do número — é "o suficiente pra ver um
+    padrão sem exigir tanto dado que a matéria nunca acumule confiança
+    nenhuma", mesmo espírito de MIN_AMOSTRA_CONFIAVEL).
+    """
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT q.materia, t.resultado
+            FROM tentativas_usuario t
+            JOIN questoes q ON q.id_questao = t.id_questao
+            WHERE q.status_classificacao = 'classificado' AND q.grande_area = ?
+            ORDER BY q.materia, t.data_tentativa
+            """,
+            (grande_area_norm,),
+        ).fetchall()
+
+    por_materia: dict[str, list[str]] = {}
+    for materia, resultado in linhas:
+        por_materia.setdefault(materia, []).append(resultado)
+
+    ordem_confianca = {"baixa": 0, "media": 1, "alta": 2}
+    resultado_final = []
+    for materia, historico in por_materia.items():
+        recentes = historico[-janela:]
+        acertos_recentes = recentes.count("acertou")
+        fracao = acertos_recentes / len(recentes)
+        if fracao >= LIMIAR_CONFIANCA_ALTA:
+            confianca = "alta"
+        elif fracao <= LIMIAR_CONFIANCA_BAIXA:
+            confianca = "baixa"
+        else:
+            confianca = "media"
+        resultado_final.append({
+            "materia": materia,
+            "sequencia_recente": ["✓" if r == "acertou" else "✗" for r in recentes],
+            "acertos_recentes": acertos_recentes,
+            "tentativas_consideradas": len(recentes),
+            "confianca": confianca,
+            "amostra_pequena": len(historico) < janela,
+        })
+
+    resultado_final.sort(key=lambda r: (ordem_confianca[r["confianca"]], r["materia"]))
+    return resultado_final
+
+
+# ============================================================
+# EVOLUÇÃO SEMANAL (tendência, não só o placar de hoje)
+# ============================================================
+
+LIMIAR_ESTAGNACAO_PCT = 60.0  # abaixo disso E parado, vale sinalizar; parado em 95% não é problema
+
+
+def evolucao_semanal_por_materia(grande_area: str, n_semanas: int = 4) -> dict:
+    """Compara a metade mais ANTIGA contra a metade mais RECENTE das
+    últimas `n_semanas` com atividade real na área (não semana de
+    calendário vazia -- se você não estudou numa semana, ela simplesmente
+    não conta como uma das N). Metade a metade em vez de só o primeiro e o
+    último ponto isolados, porque uma única semana com pouquíssima
+    tentativa sozinha seria ruído demais pra virar "tendência".
+
+    Só entra na comparação de uma matéria quem tem tentativa nas DUAS
+    metades -- sem isso, "caiu de 100% pra 0%" às vezes seria só ausência
+    de dado numa metade, não piora de verdade.
+
+    Devolve as 3 leituras que a UI mostra prontas: maior_evolucao (maior
+    ganho positivo), maior_risco (maior queda), estagnado (menor variação
+    entre quem ainda está abaixo de LIMIAR_ESTAGNACAO_PCT — parado longe
+    do topo é o caso que precisa de atenção; parado já dominando não).
+    Qualquer um dos três pode vir None se não houver candidato real.
+    """
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT strftime('%Y-%W', t.data_tentativa) AS semana, q.materia, t.resultado
+            FROM tentativas_usuario t
+            JOIN questoes q ON q.id_questao = t.id_questao
+            WHERE q.status_classificacao = 'classificado' AND q.grande_area = ?
+            ORDER BY t.data_tentativa
+            """,
+            (grande_area_norm,),
+        ).fetchall()
+
+    vazio = {"semanas": [], "por_materia": {}, "maior_evolucao": None, "maior_risco": None, "estagnado": None}
+    if not linhas:
+        return vazio
+
+    semanas_ordenadas = sorted({semana for semana, _, _ in linhas})
+    janela = semanas_ordenadas[-n_semanas:]
+    if len(janela) < 2:
+        # não dá pra comparar "antes x depois" com só 1 semana de atividade
+        return {**vazio, "semanas": janela}
+
+    corte = len(janela) // 2
+    metade_1 = set(janela[:corte])
+    metade_2 = set(janela[corte:])
+
+    stats: dict[str, dict[str, list[int]]] = {}
+    for semana, materia, resultado in linhas:
+        if semana not in janela:
+            continue
+        chave_metade = "m1" if semana in metade_1 else "m2"
+        registro = stats.setdefault(materia, {"m1": [0, 0], "m2": [0, 0]})
+        registro[chave_metade][0] += 1
+        if resultado == "acertou":
+            registro[chave_metade][1] += 1
+
+    por_materia = {}
+    candidatos_delta = []
+    for materia, r in stats.items():
+        total_1, acertos_1 = r["m1"]
+        total_2, acertos_2 = r["m2"]
+        entrada = {
+            "inicio_pct": round(acertos_1 / total_1 * 100, 1) if total_1 else None,
+            "fim_pct": round(acertos_2 / total_2 * 100, 1) if total_2 else None,
+            "total_inicio": total_1,
+            "total_fim": total_2,
+        }
+        por_materia[materia] = entrada
+        if total_1 and total_2:
+            delta = entrada["fim_pct"] - entrada["inicio_pct"]
+            candidatos_delta.append((materia, delta, entrada))
+
+    # As 3 chamadas de destaque só saem de candidato com amostra confiável
+    # NAS DUAS metades (mesmo MIN_AMOSTRA_CONFIAVEL usado em todo o resto
+    # do arquivo) -- sem esse filtro, um 1-vs-1 (1 tentativa errada numa
+    # semana, 1 certa na outra) sempre "vence" como maior evolução/risco,
+    # porque delta de amostra minúscula é sempre o mais extremo possível
+    # (0% ou 100%). `por_materia` continua com TODO mundo, filtrado ou não
+    # -- é só o destaque que precisa de confiança, a tabela completa não.
+    candidatos_confiaveis = [
+        c for c in candidatos_delta
+        if c[2]["total_inicio"] >= MIN_AMOSTRA_CONFIAVEL and c[2]["total_fim"] >= MIN_AMOSTRA_CONFIAVEL
+    ]
+
+    maior_evolucao = maior_risco = estagnado = None
+    if candidatos_confiaveis:
+        materia_evo, delta_evo, entrada_evo = max(candidatos_confiaveis, key=lambda c: c[1])
+        if delta_evo > 0:
+            maior_evolucao = {"materia": materia_evo, "delta_pct": round(delta_evo, 1), **entrada_evo}
+
+        materia_risco, delta_risco, entrada_risco = min(candidatos_confiaveis, key=lambda c: c[1])
+        if delta_risco < 0:
+            maior_risco = {"materia": materia_risco, "delta_pct": round(delta_risco, 1), **entrada_risco}
+
+        estagnados = [c for c in candidatos_confiaveis if c[2]["fim_pct"] < LIMIAR_ESTAGNACAO_PCT]
+        if estagnados:
+            materia_estag, delta_estag, entrada_estag = min(estagnados, key=lambda c: abs(c[1]))
+            estagnado = {"materia": materia_estag, "delta_pct": round(delta_estag, 1), **entrada_estag}
+
+    return {
+        "semanas": janela, "por_materia": por_materia,
+        "maior_evolucao": maior_evolucao, "maior_risco": maior_risco, "estagnado": estagnado,
+    }
+
+
+# ============================================================
+# PLANO DE ESTUDO (motor de decisão: transforma prioridade em tempo)
+# ============================================================
+
+MINUTOS_TOTAIS_PADRAO = 120
+MINUTOS_POR_QUESTAO_REVISAO = 2   # revisão Leitner é reconhecimento rápido, não resolução do zero
+MINUTOS_POR_QUESTAO_PRATICA = 3   # prática nova/prioritária demora mais que revisão
+FRACAO_REVISAO_VENCIDA = 0.25     # teto do tempo total reservado pra fila atrasada
+FRACAO_FOCO_FRAQUEZA = 0.20       # teto do tempo total reservado pro bloco de foco isolado
+MINUTOS_REDACAO_SUGERIDO = 20
+DIAS_SEM_REDACAO_PARA_SUGERIR = 7
+
+
+def _dias_desde_ultima_redacao() -> int | None:
+    """None se nenhuma redação foi registrada ainda -- usado só por
+    gerar_plano_de_estudo() pra decidir se sugere um bloco de redação."""
+    redacoes = listar_redacoes()
+    if not redacoes:
+        return None
+    ultima = date.fromisoformat(redacoes[0]["data_escrita"])
+    return (date.today() - ultima).days
+
+
+def _tipo_erro_predominante(grande_area: str, materia: str) -> str | None:
+    """O tipo_erro mais frequente pra uma matéria específica, via
+    analise_por_tipo_erro() -- usado só pra explicar o bloco de foco do
+    plano de estudo (dá pra dizer POR QUE focar, não só QUANTO tempo).
+    None sem dado suficiente, pra não inventar um motivo que não existe."""
+    por_erro = [r for r in analise_por_tipo_erro(grande_area) if r["materia"] == materia]
+    if not por_erro:
+        return None
+    return max(por_erro, key=lambda r: r["quantidade"])["tipo_erro"]
+
+
+def gerar_plano_de_estudo(minutos_totais: int = MINUTOS_TOTAIS_PADRAO) -> dict:
+    """Divide minutos_totais em blocos de estudo, nesta ordem: revisões
+    vencidas (Leitner, sensível a tempo -- quanto mais atrasa, mais a
+    memória decai) -> prática geral por área (mais tempo pra área onde
+    você mais erra) -> foco isolado na matéria de maior prioridade de
+    qualquer área -> redação, se estiver atrasada.
+
+    Todo bloco carrega um "motivo" em texto -- é a camada de
+    explicabilidade do plano: nenhum bloco aparece só dizendo QUANTO
+    tempo, sempre também POR QUE esse tempo foi pra ali. O bloco de foco
+    ainda cita o tipo de erro predominante quando existe dado (ver
+    _tipo_erro_predominante()) -- "maioria erro de conteúdo" pede Modo
+    Aula Base antes de mais questão; "maioria erro de conta/pegadinha"
+    pede só mais prática cronometrada, é uma orientação bem diferente pro
+    mesmo score de prioridade, e o campo `tipo_erro` já existia no banco
+    sem nenhuma função de planejamento usar ele até agora.
+
+    Não persiste nada -- recalculado do zero a cada chamada, igual toda
+    outra função analítica de db.py, então reflete a tentativa mais
+    recente sem precisar de um botão de "recalcular". `minutos_alocados`
+    no retorno pode ser menor que `minutos_totais` quando não há dado
+    suficiente pra preencher tudo (ex: banco vazio) -- reportado explícito
+    em vez de forçar um bloco a esticar pra fechar a conta.
+    """
+    if minutos_totais <= 0:
+        raise ValueError("minutos_totais precisa ser positivo.")
+
+    blocos_iniciais = []
+    blocos_area = []
+    bloco_foco = None
+    bloco_redacao = None
+    restante = minutos_totais
+
+    # 1. Revisões vencidas
+    fila_revisao = questoes_para_revisar()
+    if fila_revisao and restante > 0:
+        minutos_necessarios = len(fila_revisao) * MINUTOS_POR_QUESTAO_REVISAO
+        minutos_bloco = min(minutos_necessarios, round(minutos_totais * FRACAO_REVISAO_VENCIDA), restante)
+        if minutos_bloco > 0:
+            blocos_iniciais.append({
+                "titulo": "Revisões vencidas",
+                "minutos": minutos_bloco,
+                "questoes_sugeridas": max(1, minutos_bloco // MINUTOS_POR_QUESTAO_REVISAO),
+                "motivo": (
+                    f"{len(fila_revisao)} questão(ões) já passaram da data de revisão (Leitner) -- "
+                    "quanto mais atrasa, mais a memória decai."
+                ),
+            })
+            restante -= minutos_bloco
+
+    # 2. Foco isolado na maior fraqueza (uma matéria só, de qualquer área)
+    candidatos_foco = []
+    for area in ("matematica", "ciencias_natureza"):
+        ranking = prioridade_de_estudo(area)["ranking"]
+        if ranking:
+            candidatos_foco.append((area, ranking[0]))
+    if candidatos_foco and restante > 0:
+        area_foco, materia_foco = max(candidatos_foco, key=lambda par: par[1]["score_prioridade"])
+        minutos_bloco = min(round(minutos_totais * FRACAO_FOCO_FRAQUEZA), restante)
+        if minutos_bloco > 0:
+            motivo = (
+                f"prioridade {materia_foco['score_prioridade']}/100 "
+                f"({materia_foco['percentual_recorrencia']}% de recorrência x "
+                f"{materia_foco['taxa_acerto_pct']}% de acerto)."
+            )
+            tipo_erro_top = _tipo_erro_predominante(area_foco, materia_foco["materia"])
+            if tipo_erro_top:
+                motivo += f" Maioria dos erros classificados aqui: {TIPOS_ERRO[tipo_erro_top].lower()}."
+                if tipo_erro_top == "erro_de_conteudo":
+                    motivo += " Sinal de lacuna de base -- Modo Aula Base antes de mais questão."
+            bloco_foco = {
+                "titulo": f"Foco na maior fraqueza — {materia_foco['materia']}",
+                "area": area_foco,
+                "materia": materia_foco["materia"],
+                "minutos": minutos_bloco,
+                "motivo": motivo,
+            }
+            restante -= minutos_bloco
+
+    # 3. Redação, se atrasada (ou nunca escrita)
+    dias_redacao = _dias_desde_ultima_redacao()
+    redacao_devida = dias_redacao is None or dias_redacao >= DIAS_SEM_REDACAO_PARA_SUGERIR
+    if redacao_devida and restante > 0:
+        minutos_bloco = min(MINUTOS_REDACAO_SUGERIDO, restante)
+        if minutos_bloco > 0:
+            motivo = (
+                "nenhuma redação registrada ainda." if dias_redacao is None
+                else f"{dias_redacao} dias desde a última redação registrada."
+            )
+            bloco_redacao = {"titulo": "Redação", "minutos": minutos_bloco, "motivo": motivo}
+            restante -= minutos_bloco
+
+    # 4. O que sobrar: prática geral, dividida entre as áreas proporcional
+    # a qual delas você mais erra (mais erro = mais tempo) -- só entre
+    # área que já tem tentativa suficiente pra medir isso.
+    if restante > 0:
+        pesos_erro = {}
+        for area in ("matematica", "ciencias_natureza"):
+            desempenho = taxa_acerto_por_materia(area)
+            total = sum(d["total_tentativas"] for d in desempenho)
+            acertos = sum(d["acertos"] for d in desempenho)
+            if total > 0:
+                pesos_erro[area] = 100 - (acertos / total * 100)
+        soma_pesos = sum(pesos_erro.values())
+        for area, peso in pesos_erro.items():
+            fracao = (peso / soma_pesos) if soma_pesos else (1 / len(pesos_erro))
+            minutos_bloco = round(restante * fracao)
+            if minutos_bloco <= 0:
+                continue
+            materias_sugeridas = [r["materia"] for r in prioridade_de_estudo(area)["ranking"][:2]]
+            blocos_area.append({
+                "titulo": "Prática geral",
+                "area": area,
+                "minutos": minutos_bloco,
+                "questoes_sugeridas": max(1, minutos_bloco // MINUTOS_POR_QUESTAO_PRATICA),
+                "materias_sugeridas": materias_sugeridas,
+                "motivo": (
+                    f"{round(peso)}% de taxa de erro geral na área -- prioridades do momento: "
+                    + (", ".join(materias_sugeridas) or "sem dado suficiente ainda") + "."
+                ),
+            })
+
+    blocos = blocos_iniciais + blocos_area
+    if bloco_foco:
+        blocos.append(bloco_foco)
+    if bloco_redacao:
+        blocos.append(bloco_redacao)
+
+    return {
+        "minutos_totais": minutos_totais,
+        "minutos_alocados": sum(b["minutos"] for b in blocos),
+        "blocos": blocos,
+    }
 
 
 def questoes_para_revisar(hoje: date | None = None) -> list[str]:
@@ -1298,6 +2007,46 @@ def taxa_acerto_por_materia(grande_area: str) -> list[dict]:
             "taxa_acerto": round(acertos / total, 3) if total else None,
         }
         for materia, total, acertos in linhas
+    ]
+
+
+def explorar_materias(grande_area: str) -> list[dict]:
+    """Lista TODAS as matérias válidas da área (não só as que já têm
+    tentativa, diferente de taxa_acerto_por_materia) com contagem de
+    questões disponíveis (ENEM oficial + banco de prática somados) e
+    taxa de acerto -- base da tela "Explore" do app, que precisa
+    mostrar toda matéria da taxonomia, inclusive a que ainda não foi
+    praticada nenhuma vez (taxa_acerto None, total_questoes podendo
+    ser 0 -- é esse total_questoes==0 que a tela usa pra marcar a
+    matéria como bloqueada, não uma condição de progresso)."""
+    grande_area_norm = normalizar_texto(grande_area)
+    materias = materias_validas(grande_area_norm)
+    with _conectar() as conn:
+        contagens = dict(conn.execute(
+            "SELECT materia, COUNT(*) FROM questoes WHERE grande_area = ? GROUP BY materia",
+            (grande_area_norm,),
+        ).fetchall())
+        taxas = {
+            materia: (total, acertos)
+            for materia, total, acertos in conn.execute(
+                """
+                SELECT q.materia, COUNT(*), SUM(CASE WHEN t.resultado = 'acertou' THEN 1 ELSE 0 END)
+                FROM tentativas_usuario t
+                JOIN questoes q ON q.id_questao = t.id_questao
+                WHERE q.grande_area = ?
+                GROUP BY q.materia
+                """,
+                (grande_area_norm,),
+            ).fetchall()
+        }
+    return [
+        {
+            "materia": materia,
+            "total_questoes": contagens.get(materia, 0),
+            "total_tentativas": taxas.get(materia, (0, 0))[0],
+            "taxa_acerto": round(taxas[materia][1] / taxas[materia][0], 3) if taxas.get(materia, (0,))[0] else None,
+        }
+        for materia in materias
     ]
 
 
@@ -1644,11 +2393,16 @@ def simulados_feitos() -> list[dict]:
     distinta (responder a prova de novo depois de já ter respondido
     vira 'tentativa 2' automaticamente, sem precisar de tabela de
     sessão) -- aqui só agrupamos isso por prova e aplicamos o nome
-    customizado quando existe."""
+    customizado quando existe.
+
+    Filtra origem='enem_oficial' pelo mesmo motivo de listar_provas()
+    -- tentativa em questão do banco de prática não deve virar uma
+    "prova fantasma" aqui."""
     with _conectar() as conn:
         provas = conn.execute(
             "SELECT DISTINCT q.ano, q.caderno, q.grande_area "
             "FROM questoes q JOIN tentativas_usuario t ON t.id_questao = q.id_questao "
+            "WHERE q.origem = 'enem_oficial' "
             "ORDER BY q.ano DESC, q.caderno, q.grande_area"
         ).fetchall()
 
@@ -1741,12 +2495,16 @@ def definir_configuracao(chave: str, valor: str) -> None:
         )
 
 
-META_DIARIA_PADRAO = 20
+META_DIARIA_PADRAO = 5
 
 
 def progresso_meta_diaria() -> dict:
     """Quantas tentativas de hoje contra a meta diária configurada
-    (padrão 20, editável na tela Admin). Conta TENTATIVA, não questão
+    (padrão 5, editável na tela Admin). Baixo de propósito -- mesmo
+    princípio do Duolingo mostrar 'ganhe 10 XP' em vez de 500: a meta
+    diária só cria hábito se for batível em poucos minutos; uma meta
+    alta demais vira fricção em vez de gatilho de hábito (era 20 antes,
+    baixado a pedido do usuário). Conta TENTATIVA, não questão
     distinta -- responder a mesma questão de novo ainda é prática,
     mesma lógica de calcular_ofensiva() pra 'teve atividade hoje'."""
     meta = int(obter_configuracao("meta_diaria", str(META_DIARIA_PADRAO)))
@@ -1914,10 +2672,96 @@ def calcular_nivel_jogador() -> dict:
     }
 
 
+ALVO_MISSAO_FOCO = 10
+
+
+def missoes_do_dia() -> list[dict]:
+    """Missões do dia estilo Duolingo, mas SEM tabela nova e SEM
+    bloquear nada -- reforço positivo puro (mesmo princípio de
+    calcular_ofensiva/calcular_nivel_jogador: derivado ao vivo de
+    tentativas_usuario, nunca persistido, então não tem "reset diário"
+    pra implementar -- o dia troca sozinho porque date.today() troca
+    sozinho). Decisão deliberada de NÃO ter uma missão que trava o
+    progresso (tipo 'vidas' do Duolingo) -- bloquear prática logo
+    quando o usuário mais precisa repetir uma questão errada trabalha
+    contra o objetivo real (fixar conteúdo antes da prova).
+
+    Duas missões:
+    1) Meta diária -- reaproveita progresso_meta_diaria() como está,
+       sem duplicar a lógica de contagem.
+    2) Foco na matéria de maior prioridade do momento (o topo do
+       ranking de prioridade_de_estudo(), cruzando as duas áreas) --
+       quantas tentativas de HOJE já foram nessa matéria específica.
+       Sem tentativa nenhuma na base ainda, essa missão não aparece
+       (não tem prioridade calculável sem dado)."""
+    missoes = []
+
+    meta = progresso_meta_diaria()
+    missoes.append({
+        "id": "meta_diaria",
+        "titulo": "Complete sua meta diária",
+        "descricao": f"{meta['feitas_hoje']}/{meta['meta']} questão(ões) hoje",
+        "progresso_atual": meta["feitas_hoje"],
+        "progresso_meta": meta["meta"],
+        "concluida": meta["atingida"],
+    })
+
+    candidatos = []
+    for area in ("matematica", "ciencias_natureza"):
+        ranking = prioridade_de_estudo(area)["ranking"]
+        if ranking:
+            topo = ranking[0]
+            candidatos.append((topo["score_prioridade"], area, topo["materia"]))
+    if candidatos:
+        candidatos.sort(key=lambda c: c[0], reverse=True)
+        _, area_foco, materia_foco = candidatos[0]
+        hoje = date.today().isoformat()
+        with _conectar() as conn:
+            feitas_hoje_materia = conn.execute(
+                """
+                SELECT COUNT(*) FROM tentativas_usuario t
+                JOIN questoes q ON q.id_questao = t.id_questao
+                WHERE date(t.data_tentativa) = ? AND q.grande_area = ? AND q.materia = ?
+                """,
+                (hoje, area_foco, materia_foco),
+            ).fetchone()[0]
+        missoes.append({
+            "id": "foco_prioridade",
+            "titulo": f"Foco em {materia_foco}",
+            "descricao": f"Pratique {materia_foco} hoje — é sua maior prioridade agora",
+            "progresso_atual": min(feitas_hoje_materia, ALVO_MISSAO_FOCO),
+            "progresso_meta": ALVO_MISSAO_FOCO,
+            "concluida": feitas_hoje_materia >= ALVO_MISSAO_FOCO,
+        })
+
+    return missoes
+
+
 def materias_validas(grande_area: str = "matematica") -> list[str]:
     """Lista ordenada de matérias válidas pra uma grande área — alimenta
     o seletor da tela de triagem manual."""
     return sorted(materia for area, materia in TAXONOMIA_VALIDA if area == grande_area)
+
+
+def materias_com_banco_pratica(grande_area: str) -> list[str]:
+    """Matérias da área que já têm ao menos uma questão de banco de
+    prática (origem='banco_pratica'), ordenadas da com MAIS questões pra
+    com menos. Existe pra dar um padrão sensato ao seletor de matéria da
+    Home (`_renderizar_home_banco_pratica`) -- antes ele caía sempre na
+    1a matéria em ordem alfabética de `materias_validas()` (a lista
+    completa da taxonomia fechada, a maioria sem NENHUMA questão de
+    prática ainda), o que é essencialmente aleatório e frequentemente
+    mostra "nenhuma questão ainda" na primeira renderização."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT materia, COUNT(*) as n FROM questoes
+            WHERE origem = 'banco_pratica' AND grande_area = ?
+            GROUP BY materia ORDER BY n DESC, materia
+            """,
+            (grande_area,),
+        ).fetchall()
+    return [r[0] for r in linhas]
 
 
 def questoes_pendentes_classificacao() -> list[dict]:
@@ -1950,18 +2794,25 @@ def recorrencia_por_materia(grande_area: str) -> list[dict]:
     também é filtrado -- é quantas provas TÊM matemática (ou
     ciências) carregada, não o total de provas da base toda (senão
     o percentual de matemática ficaria artificialmente baixo em anos
-    que só têm ciências carregada, e vice-versa)."""
+    que só têm ciências carregada, e vice-versa).
+
+    Filtra também origem='enem_oficial' -- isto mede recorrência em
+    PROVA REAL do ENEM; sem esse filtro, praticar 40 questões de um
+    assunto no banco de prática inflaria artificialmente a recorrência
+    dele (pareceria "cair sempre" quando na verdade é só muito
+    praticado), corrompendo exatamente o insight que TRI coherence /
+    manual_prioridade_de_estudo.md usa pra priorizar tema recorrente."""
     grande_area_norm = normalizar_texto(grande_area)
     with _conectar() as conn:
         total_provas = conn.execute(
-            "SELECT COUNT(DISTINCT ano || '_' || caderno) FROM questoes WHERE grande_area = ?",
+            "SELECT COUNT(DISTINCT ano || '_' || caderno) FROM questoes WHERE grande_area = ? AND origem = 'enem_oficial'",
             (grande_area_norm,),
         ).fetchone()[0]
         linhas = conn.execute(
             """
             SELECT materia, COUNT(DISTINCT ano || '_' || caderno) AS provas_com_materia
             FROM questoes
-            WHERE status_classificacao = 'classificado' AND grande_area = ?
+            WHERE status_classificacao = 'classificado' AND grande_area = ? AND origem = 'enem_oficial'
             GROUP BY materia
             ORDER BY provas_com_materia DESC
             """,

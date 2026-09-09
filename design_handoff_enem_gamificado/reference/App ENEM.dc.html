@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="./image-slot.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; background: #06070A; }
+    body { font-family: 'Nunito', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #6EE12B; text-decoration: none; }
+    a:hover { color: #8CEE58; }
+  </style>
+</helmet>
+
+<section style="display:flex;flex-direction:column;gap:36px;padding:64px 72px 96px;background:#06070A;border-bottom:1px solid #232733">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:800 12px 'Nunito';letter-spacing:.18em;color:#5B6472">TURNO 2 — CARTÃO-RESPOSTA</div>
+    <div style="font:800 34px 'Baloo 2';color:#F2F4F7">Onde as provas ficam</div>
+    <div style="font:600 15px 'Nunito';color:#8B93A7;max-width:780px;text-wrap:pretty">O cartão atual tem 90 controles de peso visual idêntico e nenhuma noção de progresso: não se vê o que já foi respondido sem ler linha por linha. Proposta em <a href="#2a">2a</a> — grade de blocos escaneável, barra fixa com contagem e correção, e os três acordeões de configuração recolhidos num toolbar. O modo foco fica em <a href="#2b">2b</a>.</div>
+  </div>
+
+  <div id="2a" style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="font:800 14px 'Nunito';letter-spacing:.06em;color:#0D2705;background:#6EE12B;box-shadow:0 3px 0 #3F8F14;border-radius:10px;padding:6px 12px">2a</div>
+      <div style="font:800 24px 'Baloo 2';color:#F2F4F7">Modo cartão — grade de blocos</div>
+      <div style="font:600 14px 'Nunito';color:#7C8494">para quem responde a prova inteira de uma vez</div>
+    </div>
+
+    <div style="width:1440px;height:900px;background:#0A0C10;border:1px solid #232733;border-radius:20px;overflow:hidden;display:flex;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+      <div style="width:76px;flex:0 0 auto;background:#12151C;border-right:1px solid #232733;padding:18px 0;display:flex;flex-direction:column;align-items:center;gap:14px">
+        <div style="width:40px;height:40px;border-radius:14px;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="#F1EEFF"><path d="M12 2l1.9 6.3L20 10l-6.1 1.7L12 18l-1.9-6.3L4 10l6.1-1.7z"/></svg></div>
+        <div style="width:40px;height:40px;border-radius:13px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#0D2705" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg></div>
+        <div style="width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></div>
+        <div style="width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round"><path d="M4 20V9M10 20V4M16 20v-7M22 20v-4"/></svg></div>
+        <div style="width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 11h18"/></svg></div>
+        <div style="margin-top:auto;width:40px;height:40px;border-radius:13px;display:flex;align-items:center;justify-content:center"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg></div>
+      </div>
+
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+        <div style="flex:0 0 auto;padding:20px 28px;border-bottom:1px solid #1D222B;background:#0F1218;display:flex;align-items:center;gap:18px">
+          <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px">
+            <div style="font:800 11.5px 'Nunito';letter-spacing:.12em;color:#5B6472">CIÊNCIAS DA NATUREZA · CADERNO AZUL</div>
+            <div style="font:800 24px 'Baloo 2';color:#F2F4F7">ENEM 2025</div>
+          </div>
+          <div style="width:1px;height:40px;background:#232733;flex:0 0 auto"></div>
+          <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:baseline;gap:8px">
+              <div style="font:800 17px 'Baloo 2';color:#F2F4F7">18</div>
+              <div style="font:700 13px 'Nunito';color:#8B93A7">de 43 respondidas</div>
+              <div style="font:700 13px 'Nunito';color:#5B6472;margin-left:auto">25 em branco</div>
+            </div>
+            <div style="height:12px;border-radius:999px;background:#232936;overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.3)"><div style="width:42%;height:100%;border-radius:999px;background:#6EE12B;box-shadow:inset 0 3px 0 rgba(255,255,255,.32)"></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;padding:10px 15px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 15px 'Nunito';color:#F2F4F7;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg>1:42:08</div>
+          <div style="background:#6EE12B;box-shadow:0 5px 0 #3F8F14;border-radius:16px;padding:13px 26px;font:800 16px 'Baloo 2';color:#0D2705;flex:0 0 auto" style-active="transform:translateY(3px);box-shadow:0 2px 0 #3F8F14">CORRIGIR</div>
+        </div>
+
+        <div style="flex:0 0 auto;padding:14px 28px;border-bottom:1px solid #1D222B;display:flex;align-items:center;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 3px 0 #14181F;font:800 13px 'Nunito';color:#8B93A7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>Gabarito (CSV)</div>
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 3px 0 #14181F;font:800 13px 'Nunito';color:#8B93A7"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 19V5a2 2 0 0 1 2-2h9l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>Enunciados<span style="background:#2A2210;color:#FFC42E;border-radius:6px;padding:2px 6px;font-size:10.5px">43</span></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:14px;background:#241A3A;border:1px solid #7C5CFF;box-shadow:0 3px 0 #4E33C4;font:800 13px 'Nunito';color:#B4A3FF"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 2L4 14h6l-1 8 8-12h-6z"/></svg>Colar sequência</div>
+          <div style="margin-left:auto;display:flex;gap:6px;background:#171B24;border:1px solid #262C39;border-radius:14px;padding:5px">
+            <div style="padding:7px 14px;border-radius:10px;background:#6EE12B;box-shadow:0 2px 0 #3F8F14;font:800 12.5px 'Nunito';color:#0D2705">Cartão</div>
+            <div style="padding:7px 14px;border-radius:10px;font:800 12.5px 'Nunito';color:#5B6472">Foco</div>
+          </div>
+        </div>
+
+        <div style="flex:1;min-height:0;padding:20px 28px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font:800 11.5px 'Nunito';letter-spacing:.12em;color:#5B6472">QUESTÕES 91–120</div>
+            <div style="flex:1;height:1px;background:#1D222B"></div>
+            <div style="display:flex;align-items:center;gap:14px;font:700 11.5px 'Nunito';color:#5B6472">
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:4px;background:#6EE12B"></div>respondida</div>
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:4px;background:#1F2531;border:1px solid #2C3342"></div>em branco</div>
+              <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:4px;background:#2A2210;border:1px solid #4A3B10"></div>marcada p/ revisão</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 14px">
+            <sc-for list="{{ blocos }}" as="b" hint-placeholder-count="24">
+              <div style="{{ b.wrap }}">
+                <div style="{{ b.num }}">{{ b.n }}</div>
+                <div style="{{ b.a }}">A</div>
+                <div style="{{ b.b }}">B</div>
+                <div style="{{ b.c }}">C</div>
+                <div style="{{ b.d }}">D</div>
+                <div style="{{ b.e }}">E</div>
+                <div style="{{ b.flag }}"></div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:auto;display:flex;align-items:center;gap:16px;background:#0F1218;border:1px solid #1D222B;border-radius:20px;padding:14px 20px">
+            <dc-import name="Mascote" scene="estudo" mood="happy" size="0.62" pattern="tuxedo" patch="#3A4152" hint-size="66px,66px"></dc-import>
+            <div style="flex:1;font:600 14px 'Nunito';color:#8B93A7;line-height:1.5">“Faltam 25. Dá pra digitar direto: <span style="font-weight:800;color:#F2F4F7">A</span>–<span style="font-weight:800;color:#F2F4F7">E</span> preenche e pula pra próxima.” — <span style="color:#6EE12B;font-weight:800">Pipoco</span></div>
+            <div style="display:flex;gap:8px;flex:0 0 auto">
+              <div style="width:34px;height:34px;border-radius:10px;background:#1F2531;border:1px solid #2C3342;box-shadow:0 3px 0 #14181F;display:flex;align-items:center;justify-content:center;font:800 13px 'Nunito';color:#8B93A7">A</div>
+              <div style="width:34px;height:34px;border-radius:10px;background:#1F2531;border:1px solid #2C3342;box-shadow:0 3px 0 #14181F;display:flex;align-items:center;justify-content:center;font:800 13px 'Nunito';color:#8B93A7">B</div>
+              <div style="width:34px;height:34px;border-radius:10px;background:#1F2531;border:1px solid #2C3342;box-shadow:0 3px 0 #14181F;display:flex;align-items:center;justify-content:center;font:800 13px 'Nunito';color:#8B93A7">C</div>
+              <div style="width:34px;height:34px;border-radius:10px;background:#1F2531;border:1px solid #2C3342;box-shadow:0 3px 0 #14181F;display:flex;align-items:center;justify-content:center;font:800 13px 'Nunito';color:#8B93A7">D</div>
+              <div style="width:34px;height:34px;border-radius:10px;background:#1F2531;border:1px solid #2C3342;box-shadow:0 3px 0 #14181F;display:flex;align-items:center;justify-content:center;font:800 13px 'Nunito';color:#8B93A7">E</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:312px;flex:0 0 auto;border-left:1px solid #232733;background:#12151C;padding:24px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden">
+        <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+          <div style="font:700 16.5px 'Baloo 2';color:#F2F4F7">Por matéria</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font:700 13px 'Nunito';color:#8B93A7"><span>Física</span><span style="color:#F2F4F7">8/14</span></div><div style="height:9px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:57%;height:100%;background:#6EE12B"></div></div></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font:700 13px 'Nunito';color:#8B93A7"><span>Química</span><span style="color:#F2F4F7">6/15</span></div><div style="height:9px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:40%;height:100%;background:#7C5CFF"></div></div></div>
+            <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font:700 13px 'Nunito';color:#8B93A7"><span>Biologia</span><span style="color:#F2F4F7">4/14</span></div><div style="height:9px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:28%;height:100%;background:#FFC42E"></div></div></div>
+          </div>
+        </div>
+
+        <div style="background:#2A2210;border:1px solid #4A3B10;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:11px">
+            <div style="width:38px;height:38px;border-radius:13px;background:#FFC42E;box-shadow:0 4px 0 #C08A00;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="19" height="19" viewBox="0 0 24 24" fill="#3A2A00"><path d="M11 2L4 14h6l-1 8 8-12h-6z"/></svg></div>
+            <div style="flex:1;font:700 15px 'Baloo 2';color:#FFD98A">+120 XP na correção</div>
+          </div>
+          <div style="font:600 13px 'Nunito';color:#B08A2A;line-height:1.45">Prova completa vale 3× o XP de um nó. Conta pro ofensivo de hoje.</div>
+        </div>
+
+        <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="font:700 16.5px 'Baloo 2';color:#F2F4F7">Marcadas p/ revisão</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <div style="padding:7px 12px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 12.5px 'Nunito';color:#FFC42E">Q97</div>
+            <div style="padding:7px 12px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 12.5px 'Nunito';color:#FFC42E">Q103</div>
+            <div style="padding:7px 12px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 12.5px 'Nunito';color:#FFC42E">Q111</div>
+          </div>
+        </div>
+
+        <div style="margin-top:auto;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px;text-align:center;font:800 15px 'Baloo 2';color:#8B93A7">SALVAR E SAIR</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="2b" style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="font:800 14px 'Nunito';letter-spacing:.06em;color:#F1EEFF;background:#7C5CFF;box-shadow:0 3px 0 #4E33C4;border-radius:10px;padding:6px 12px">2b</div>
+      <div style="font:800 24px 'Baloo 2';color:#F2F4F7">Modo foco — uma por vez</div>
+      <div style="font:600 14px 'Nunito';color:#7C8494">mesmo cartão, mesma sessão; só o enquadramento muda</div>
+    </div>
+
+    <div style="width:940px;background:#0A0C10;border:1px solid #232733;border-radius:24px;padding:26px 30px 30px;display:flex;flex-direction:column;gap:20px;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font:800 11.5px 'Nunito';letter-spacing:.12em;color:#7C5CFF;flex:0 0 auto">ENEM 2025 · AZUL · Q104</div>
+        <div style="flex:1;height:12px;border-radius:999px;background:#232936;overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.3)"><div style="width:42%;height:100%;border-radius:999px;background:#6EE12B;box-shadow:inset 0 3px 0 rgba(255,255,255,.32)"></div></div>
+        <div style="font:700 13px 'Nunito';color:#8B93A7;flex:0 0 auto">18/43</div>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 14px 'Nunito';color:#F2F4F7;flex:0 0 auto"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg>1:42:08</div>
+        <div style="display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 13px 'Nunito';color:#FFC42E;flex:0 0 auto"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 3v18l7-5 7 5V3z"/></svg>Revisar</div>
+      </div>
+
+      <div style="display:flex;gap:26px">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:18px">
+          <div style="font:700 20px 'Nunito';color:#F2F4F7;line-height:1.45;text-wrap:pretty">Um feixe de luz monocromática passa do ar para um bloco de vidro de índice de refração 1,5, formando um ângulo de 60° com a normal na face de entrada. O ângulo de refração dentro do vidro é aproximadamente:</div>
+          <div style="display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">A</div><div style="font:700 16px 'Nunito';color:#F2F4F7">19°</div></div>
+            <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">B</div><div style="font:700 16px 'Nunito';color:#F2F4F7">28°</div></div>
+            <div style="display:flex;align-items:center;gap:14px;background:#241A3A;border:2px solid #7C5CFF;box-shadow:0 4px 0 #4E33C4;border-radius:18px;padding:14px 15px"><div style="width:32px;height:32px;border-radius:10px;background:#7C5CFF;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#F1EEFF;flex:0 0 auto">C</div><div style="font:700 16px 'Nunito';color:#F2F4F7">35°</div></div>
+            <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">D</div><div style="font:700 16px 'Nunito';color:#F2F4F7">42°</div></div>
+            <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">E</div><div style="font:700 16px 'Nunito';color:#F2F4F7">60°</div></div>
+          </div>
+        </div>
+
+        <div style="width:212px;flex:0 0 auto;display:flex;flex-direction:column;gap:12px">
+          <div style="font:800 11.5px 'Nunito';letter-spacing:.12em;color:#5B6472">SALTAR PARA</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:7px">
+            <sc-for list="{{ saltos }}" as="s" hint-placeholder-count="25">
+              <div style="{{ s.style }}">{{ s.n }}</div>
+            </sc-for>
+          </div>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:12px;background:#171B24;border:1px solid #232733;border-radius:18px;padding:12px">
+            <dc-import name="Mascote" scene="novelo" mood="happy" size="0.5" collar="#6EE12B" hint-size="54px,54px"></dc-import>
+            <div style="flex:1;font:600 12px 'Nunito';color:#8B93A7;line-height:1.45">Sem cronômetro? Dá pra pausar.</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;padding-top:6px;border-top:1px solid #1D222B">
+        <div style="background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 24px;font:800 15px 'Baloo 2';color:#8B93A7">ANTERIOR</div>
+        <div style="flex:1;font:700 12.5px 'Nunito';color:#5B6472;text-align:center">Teclado: A–E responde · ← → navega · Espaço marca p/ revisão</div>
+        <div style="background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:18px;padding:16px 34px;font:800 17px 'Baloo 2';color:#0D2705" style-active="transform:translateY(4px);box-shadow:0 2px 0 #3F8F14">PRÓXIMA</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:36px;padding:64px 72px 96px;background:#06070A">
+  <div style="display:flex;flex-direction:column;gap:8px">
+    <div style="font:800 12px 'Nunito';letter-spacing:.18em;color:#5B6472">TURNO 1 — CAMADA VISUAL</div>
+    <div style="font:800 34px 'Baloo 2';color:#F2F4F7">Redesign gamificado · mesma estrutura de tela</div>
+    <div style="font:600 15px 'Nunito';color:#8B93A7;max-width:720px;text-wrap:pretty">Duas paletas sobre a mesma arquitetura dos prints: streak, rank/XP, missões do dia, trilha com nós bloqueados e abas inferiores. Mascote original em rascunho geométrico, com slot para trocar pela arte final. Compare <a href="#1a">1a</a> e <a href="#1b">1b</a>.</div>
+  </div>
+
+  <div style="display:flex;flex-wrap:wrap;gap:80px;align-items:flex-start">
+
+    <div id="1a" style="display:flex;flex-direction:column;gap:28px">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="font:800 14px 'Nunito';letter-spacing:.06em;color:#0D2705;background:#6EE12B;box-shadow:0 3px 0 #3F8F14;border-radius:10px;padding:6px 12px">1a</div>
+        <div style="font:800 24px 'Baloo 2';color:#F2F4F7">Grafite &amp; Lima</div>
+        <div style="font:600 14px 'Nunito';color:#7C8494">lima como ação, violeta como progresso, âmbar como recompensa</div>
+      </div>
+
+      <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:stretch;background:#12151C;border:1px solid #232733;border-radius:26px;padding:22px 24px">
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:280px">
+          <div style="font:800 18px 'Baloo 2';color:#F2F4F7">Pipoco — o companheiro</div>
+          <div style="font:600 13.5px 'Nunito';color:#8B93A7;max-width:300px;line-height:1.5;text-wrap:pretty">Gato branco de corpo único: orelhas triangulares, bigodes e cauda em pill. Reage ao progresso — comemora nó concluído, cochila em dia sem estudo, desanima quando o ofensivo cai. A variante (manchas, coleira) destrava conforme o aluno evolui.</div>
+          <div style="display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+              <dc-import name="Mascote" mood="happy" size="0.8" hint-size="90px,90px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">neutro</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+              <dc-import name="Mascote" mood="cheer" size="0.8" hint-size="90px,90px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">comemora</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+              <dc-import name="Mascote" mood="sad" size="0.8" hint-size="90px,90px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">desanimado</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+              <dc-import name="Mascote" mood="sleep" size="0.8" hint-size="90px,90px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">cochilando</div>
+            </div>
+          </div>
+          <div style="height:1px;background:#232733;margin:4px 0"></div>
+          <div style="font:800 18px 'Baloo 2';color:#F2F4F7">Cenários de bolso</div>
+          <div style="font:600 13.5px 'Nunito';color:#8B93A7;max-width:300px;line-height:1.5;text-wrap:pretty">Cada seção do app ganha um Pipoco diferente — mesma silhueta, adereço e pelagem trocados. Serve de assinatura visual da seção e de recompensa colecionável.</div>
+          <div style="display:grid;grid-template-columns:repeat(4,110px);gap:26px 18px;padding-top:6px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="novelo" mood="cheer" size="0.62" collar="#6EE12B" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">novelo</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="fogueira" mood="happy" size="0.62" color="#F5C98A" patch="#E0A05C" pattern="patches" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">fogueira</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="casinha" mood="happy" size="0.62" color="#F0E4D4" pattern="tabby" patch="#C9A98A" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">casinha</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="estudo" mood="happy" size="0.62" pattern="tuxedo" patch="#3A4152" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">estudo</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="noite" mood="sleep" size="0.62" color="#3A4152" shadow="#232A38" nose="#8B93A7" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">noite</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="trofeu" mood="cheer" size="0.62" collar="#FFC42E" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">troféu</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="cochilo" mood="sleep" size="0.62" color="#F0E4D4" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">soneca</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:34px">
+              <dc-import name="Mascote" scene="novelo" mood="happy" size="0.62" color="#3A4152" shadow="#232A38" pattern="patches" patch="#F2F4F7" collar="#7C5CFF" hint-size="70px,70px"></dc-import>
+              <div style="font:700 11.5px 'Nunito';color:#5B6472">preto · novelo</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font:700 11.5px 'Nunito';letter-spacing:.1em;color:#5B6472">SLOT TROCÁVEL</div>
+          <image-slot id="mascote-final-a" style="width:150px;height:150px" shape="rounded" radius="24" placeholder="arte final do mascote · PNG 512×512"></image-slot>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:30px">
+
+        <div data-screen-label="Home" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:46px;height:46px;border-radius:16px;background:#7C5CFF;box-shadow:0 5px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="#EFECFF"><path d="M12 2l1.9 6.3L20 10l-6.1 1.7L12 18l-1.9-6.3L4 10l6.1-1.7z"/></svg></div>
+              <div style="flex:1;font:800 21px 'Baloo 2';color:#F2F4F7">Banco de Questões</div>
+              <div style="width:40px;height:40px;border-radius:14px;background:#1B2029;border:1px solid #262C39;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 14px 'Nunito';color:#5B6472"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-2.5 2 1 3 3 3 5.5a5 5 0 0 1-10 0c0-5 3-6 5-12z"/></svg>0</div>
+              <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 14px 'Nunito';color:#FFC42E"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>S-Rank · 4564 XP</div>
+            </div>
+
+            <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                <div style="width:30px;height:30px;border-radius:10px;background:#3A1F14;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF8A5C" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="#FF8A5C"/></svg></div>
+                <div style="flex:1;font:700 16.5px 'Baloo 2';color:#F2F4F7">Missões de hoje</div>
+                <div style="font:800 12px 'Nunito';letter-spacing:.06em;color:#6EE12B">VER TODAS</div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="display:flex;gap:12px">
+                  <div style="width:22px;height:22px;border-radius:8px;border:2px solid #3A4152;flex:0 0 auto;margin-top:2px"></div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                    <div style="font:700 14.5px 'Nunito';color:#F2F4F7">Complete sua meta diária</div>
+                    <div style="font:600 12.5px 'Nunito';color:#7C8494">0/20 questão(ões) hoje</div>
+                    <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;border-radius:999px;background:#6EE12B"></div></div>
+                  </div>
+                </div>
+                <div style="display:flex;gap:12px">
+                  <div style="width:22px;height:22px;border-radius:8px;border:2px solid #3A4152;flex:0 0 auto;margin-top:2px"></div>
+                  <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                    <div style="font:700 14.5px 'Nunito';color:#F2F4F7">Foco em geometria_espacial</div>
+                    <div style="font:600 12.5px 'Nunito';color:#7C8494;line-height:1.4">Pratique geometria_espacial hoje — é sua maior prioridade agora</div>
+                    <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;border-radius:999px;background:#7C5CFF"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;background:#171B24;border:1px solid #232733;border-radius:18px;padding:13px 15px">
+                <div style="width:32px;height:32px;border-radius:11px;background:#12233A;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4FA6FF" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div>
+                <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#6B7385">Área</div><div style="font:700 14.5px 'Nunito';color:#F2F4F7">Ciências da Natureza</div></div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;background:#171B24;border:1px solid #232733;border-radius:18px;padding:13px 15px">
+                <div style="width:32px;height:32px;border-radius:11px;background:#0F241F;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3ED9B0" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg></div>
+                <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#6B7385">Matéria</div><div style="font:700 14.5px 'Nunito';color:#8B93A7">Escolha uma matéria</div></div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;background:#171B24;border:1px solid #232733;border-radius:18px;padding:13px 15px">
+                <div style="width:32px;height:32px;border-radius:11px;background:#241A3A;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B4A3FF" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"/></svg></div>
+                <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#6B7385">Fonte</div><div style="font:700 14.5px 'Nunito';color:#F2F4F7">Todas</div></div>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+              </div>
+            </div>
+
+            <div style="background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:20px;padding:17px;text-align:center;font:800 17px 'Baloo 2';letter-spacing:.02em;color:#0D2705" style-active="transform:translateY(4px);box-shadow:0 2px 0 #3F8F14">COMEÇAR SESSÃO</div>
+          </div>
+          <div style="padding:8px 20px 20px">
+            <div style="display:flex;gap:8px;background:#171B24;border:1px solid #232733;border-radius:999px;padding:8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#F1EEFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-screen-label="Trilha" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;align-items:center;gap:14px;background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:22px;padding:16px 18px">
+              <div style="flex:1">
+                <div style="font:800 12px 'Nunito';letter-spacing:.12em;color:#2A5A10">CIÊNCIAS DA NATUREZA</div>
+                <div style="font:800 24px 'Baloo 2';color:#0D2705">Óptica</div>
+              </div>
+              <div style="width:48px;height:48px;border-radius:50%;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F1EEFF" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="flex:1;height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:2%;height:100%;background:#6EE12B;border-radius:999px"></div></div>
+              <div style="font:700 12.5px 'Nunito';color:#8B93A7">0 de 9 nó(s)</div>
+            </div>
+
+            <div style="position:relative;height:522px;margin-top:0">
+              <svg width="350" height="522" viewBox="0 0 350 522" fill="none" style="position:absolute;left:0;top:0">
+                <path d="M175 50 C 175 105, 258 115, 258 158 C 258 212, 175 222, 175 266 C 175 320, 95 330, 95 374 C 95 428, 150 438, 150 482" stroke="#232936" stroke-width="12" stroke-linecap="round" stroke-dasharray="1 26"/>
+              </svg>
+              <div style="position:absolute;left:175px;top:50px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="background:#F2F4F7;box-shadow:0 3px 0 #A6AEBD;border-radius:12px;padding:6px 14px;font:800 13px 'Baloo 2';color:#0A0C10;margin-bottom:2px">COMEÇAR</div>
+                <div style="width:78px;height:78px;border-radius:50%;background:#6EE12B;box-shadow:0 8px 0 #3F8F14;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(5px);box-shadow:0 3px 0 #3F8F14"><svg width="32" height="32" viewBox="0 0 24 24" fill="#0D2705"><path d="M8 5v14l11-7z"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#8B93A7">Nó 1 · 5q</div>
+              </div>
+              <div style="position:absolute;left:258px;top:158px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:70px;height:70px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#6B7385">Nó 2 · 5q</div>
+              </div>
+              <div style="position:absolute;left:175px;top:266px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:70px;height:70px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#6B7385">Nó 3 · 5q</div>
+              </div>
+              <div style="position:absolute;left:95px;top:374px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:70px;height:70px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#6B7385">Nó 4 · 5q</div>
+              </div>
+              <div style="position:absolute;left:150px;top:482px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:70px;height:70px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+              </div>
+              <div style="position:absolute;right:-6px;top:196px;display:flex;flex-direction:column;align-items:center;gap:8px">
+                <dc-import name="Mascote" mood="happy" size="0.78" hint-size="82px,82px"></dc-import>
+                <div style="font:700 11px 'Nunito';color:#8B93A7;background:#171B24;border:1px solid #262C39;border-radius:999px;padding:4px 10px">Pipoco</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 20px 20px">
+            <div style="display:flex;gap:8px;background:#171B24;border:1px solid #232733;border-radius:999px;padding:8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#F1EEFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-screen-label="Missões" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <div style="width:40px;height:40px;border-radius:14px;background:#1B2029;border:1px solid #262C39;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2.4" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></div>
+              <div style="flex:1;font:800 22px 'Baloo 2';color:#F2F4F7">Missões do dia</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 13px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 13px 'Nunito';color:#FFC42E">18h restantes</div>
+            </div>
+
+            <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between"><div style="font:700 15px 'Baloo 2';color:#F2F4F7">Ofensivo</div><div style="font:800 13px 'Nunito';color:#5B6472">0 dias</div></div>
+              <div style="display:flex;gap:7px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px solid #2C3342"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">S</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px solid #2C3342"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">T</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px solid #2C3342"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">Q</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px solid #2C3342"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">Q</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px solid #2C3342"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">S</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#6EE12B;box-shadow:0 3px 0 #3F8F14"></div><div style="font:800 10.5px 'Nunito';color:#6EE12B">HOJE</div></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="width:100%;aspect-ratio:1;border-radius:12px;background:#232936;border:1px dashed #3A4152"></div><div style="font:700 10.5px 'Nunito';color:#5B6472">D</div></div>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px;display:flex;gap:14px">
+                <div style="width:44px;height:44px;border-radius:15px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="#0D2705"><path d="M11 2L4 14h6l-1 8 8-12h-6z"/></svg></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 15px 'Nunito';color:#F2F4F7">Complete sua meta diária</div><div style="font:800 12px 'Nunito';color:#FFC42E">+30 XP</div></div>
+                  <div style="font:600 12.5px 'Nunito';color:#7C8494">0/20 questão(ões) hoje</div>
+                  <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;background:#6EE12B;border-radius:999px"></div></div>
+                </div>
+              </div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px;display:flex;gap:14px">
+                <div style="width:44px;height:44px;border-radius:15px;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F1EEFF" stroke-width="2.2"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 15px 'Nunito';color:#F2F4F7">Foco em geometria_espacial</div><div style="font:800 12px 'Nunito';color:#FFC42E">+40 XP</div></div>
+                  <div style="font:600 12.5px 'Nunito';color:#7C8494;line-height:1.4">Pratique geometria_espacial hoje — é sua maior prioridade agora</div>
+                  <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;background:#7C5CFF;border-radius:999px"></div></div>
+                </div>
+              </div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px;display:flex;gap:14px">
+                <div style="width:44px;height:44px;border-radius:15px;background:#FF6B4A;box-shadow:0 4px 0 #C33F22;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A0C04" stroke-width="2.4" stroke-linecap="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-2.5 2 1 3 3 3 5.5a5 5 0 0 1-10 0c0-5 3-6 5-12z"/></svg></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 15px 'Nunito';color:#F2F4F7">Mantenha o ofensivo</div><div style="font:800 12px 'Nunito';color:#FFC42E">+15 XP</div></div>
+                  <div style="font:600 12.5px 'Nunito';color:#7C8494">Conclua 1 nó hoje</div>
+                  <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:0%;height:100%;background:#FF6B4A;border-radius:999px"></div></div>
+                </div>
+              </div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px;display:flex;gap:14px">
+                <div style="width:44px;height:44px;border-radius:15px;background:#232936;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2.2" stroke-linecap="round"><path d="M12 7v5l4 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 15px 'Nunito';color:#F2F4F7">Revisão espaçada</div><div style="font:800 12px 'Nunito';color:#FFC42E">+20 XP</div></div>
+                  <div style="font:600 12.5px 'Nunito';color:#7C8494">6 questões voltando hoje</div>
+                  <div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:50%;height:100%;background:#8B93A7;border-radius:999px"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 20px 20px">
+            <div style="display:flex;gap:8px;background:#171B24;border:1px solid #232733;border-radius:999px;padding:8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#F1EEFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-screen-label="Questão" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;align-items:center;gap:12px">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.6" stroke-linecap="round" style="flex:0 0 auto"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              <div style="flex:1;height:14px;border-radius:999px;background:#232936;overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.3)"><div style="width:40%;height:100%;background:#6EE12B;border-radius:999px;box-shadow:inset 0 3px 0 rgba(255,255,255,.35)"></div></div>
+              <div style="display:flex;align-items:center;gap:5px;font:800 15px 'Nunito';color:#FF6B4A;flex:0 0 auto"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></svg>5</div>
+            </div>
+            <div style="font:800 12px 'Nunito';letter-spacing:.1em;color:#7C5CFF">ÓPTICA · NÓ 1 · QUESTÃO 2 DE 5</div>
+            <div style="font:700 20px 'Nunito';color:#F2F4F7;line-height:1.42;text-wrap:pretty">Um objeto é colocado a 30 cm de um espelho esférico côncavo cujo raio de curvatura mede 40 cm. A que distância do espelho se forma a imagem?</div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">A</div><div style="font:700 16px 'Nunito';color:#F2F4F7">12 cm</div></div>
+              <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">B</div><div style="font:700 16px 'Nunito';color:#F2F4F7">15 cm</div></div>
+              <div style="display:flex;align-items:center;gap:14px;background:#241A3A;border:2px solid #7C5CFF;box-shadow:0 4px 0 #4E33C4;border-radius:18px;padding:14px 15px"><div style="width:32px;height:32px;border-radius:10px;background:#7C5CFF;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#F1EEFF;flex:0 0 auto">C</div><div style="font:700 16px 'Nunito';color:#F2F4F7">20 cm</div></div>
+              <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">D</div><div style="font:700 16px 'Nunito';color:#F2F4F7">30 cm</div></div>
+              <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:18px;padding:15px 16px"><div style="width:32px;height:32px;border-radius:10px;background:#232936;display:flex;align-items:center;justify-content:center;font:800 15px 'Baloo 2';color:#8B93A7;flex:0 0 auto">E</div><div style="font:700 16px 'Nunito';color:#F2F4F7">60 cm</div></div>
+            </div>
+          </div>
+          <div style="padding:14px 20px 26px;display:flex;flex-direction:column;gap:12px">
+            <div style="font:700 12.5px 'Nunito';color:#5B6472;text-align:center">Dica custa 10 XP</div>
+            <div style="background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:20px;padding:18px;text-align:center;font:800 18px 'Baloo 2';color:#0D2705" style-active="transform:translateY(4px);box-shadow:0 2px 0 #3F8F14">CONFIRMAR</div>
+          </div>
+        </div>
+
+        <div data-screen-label="Resultado" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:24px 20px 0;display:flex;flex-direction:column;align-items:center;gap:20px">
+            <dc-import name="Mascote" scene="trofeu" mood="cheer" size="1.5" collar="#FFC42E" hint-size="160px,160px"></dc-import>
+            <div style="text-align:center;display:flex;flex-direction:column;gap:6px;margin-top:14px">
+              <div style="font:800 30px 'Baloo 2';color:#6EE12B">Nó 1 concluído!</div>
+              <div style="font:600 15px 'Nunito';color:#8B93A7">Óptica · você destravou o Nó 2</div>
+            </div>
+            <div style="display:flex;gap:10px;width:100%;margin-top:6px">
+              <div style="flex:1;background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font:800 24px 'Baloo 2';color:#F2F4F7">4/5</div><div style="font:700 11.5px 'Nunito';letter-spacing:.05em;color:#6B7385">ACERTOS</div></div>
+              <div style="flex:1;background:#2A2210;border:1px solid #4A3B10;border-radius:20px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font:800 24px 'Baloo 2';color:#FFC42E">+25</div><div style="font:700 11.5px 'Nunito';letter-spacing:.05em;color:#B08A2A">XP</div></div>
+              <div style="flex:1;background:#171B24;border:1px solid #232733;border-radius:20px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:6px"><div style="font:800 24px 'Baloo 2';color:#F2F4F7">3:12</div><div style="font:700 11.5px 'Nunito';letter-spacing:.05em;color:#6B7385">TEMPO</div></div>
+            </div>
+            <div style="width:100%;background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:10px;margin-top:4px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font:700 15px 'Baloo 2';color:#F2F4F7">Ofensivo</div><div style="font:800 13px 'Nunito';color:#FF6B4A">1 dia</div></div>
+              <div style="font:600 13px 'Nunito';color:#7C8494;line-height:1.45">Volte amanhã para manter a sequência. Pipoco fica de olho.</div>
+            </div>
+          </div>
+          <div style="padding:14px 20px 26px;display:flex;flex-direction:column;gap:11px">
+            <div style="background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:20px;padding:18px;text-align:center;font:800 18px 'Baloo 2';color:#0D2705" style-active="transform:translateY(4px);box-shadow:0 2px 0 #3F8F14">CONTINUAR</div>
+            <div style="background:#171B24;border:1px solid #262C39;box-shadow:0 4px 0 #14181F;border-radius:20px;padding:16px;text-align:center;font:800 16px 'Baloo 2';color:#8B93A7">REVER OS ERROS</div>
+          </div>
+        </div>
+
+        <div data-screen-label="Explore" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <div style="font:800 22px 'Baloo 2';color:#F2F4F7">Explore</div>
+            <div style="display:flex;align-items:center;gap:11px;background:#171B24;border:1px solid #262C39;border-radius:18px;padding:12px 15px"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg><div style="font:700 15px 'Nunito';color:#5B6472">Buscar matéria ou tópico</div></div>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <div style="padding:9px 16px;border-radius:999px;background:#6EE12B;box-shadow:0 3px 0 #3F8F14;font:800 13.5px 'Nunito';color:#0D2705">Naturezas</div>
+              <div style="padding:9px 16px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 13.5px 'Nunito';color:#8B93A7">Humanas</div>
+              <div style="padding:9px 16px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 13.5px 'Nunito';color:#8B93A7">Linguagens</div>
+              <div style="padding:9px 16px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 13.5px 'Nunito';color:#8B93A7">Matemática</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:11px 16px;display:flex;align-items:center;gap:14px"><div style="width:46px;height:46px;border-radius:16px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0D2705" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 16px 'Nunito';color:#F2F4F7">Óptica</div><div style="font:600 12.5px 'Nunito';color:#7C8494">Física · 9 nós · 45 questões</div><div style="height:8px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:2%;height:100%;background:#6EE12B"></div></div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg></div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:11px 16px;display:flex;align-items:center;gap:14px"><div style="width:46px;height:46px;border-radius:16px;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F1EEFF" stroke-width="2.2"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16M9 4v16"/></svg></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 16px 'Nunito';color:#F2F4F7">Geometria espacial</div><div style="font:600 12.5px 'Nunito';color:#7C8494">Matemática · 12 nós · prioridade alta</div><div style="height:8px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:18%;height:100%;background:#7C5CFF"></div></div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg></div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:11px 16px;display:flex;align-items:center;gap:14px"><div style="width:46px;height:46px;border-radius:16px;background:#FFC42E;box-shadow:0 4px 0 #C08A00;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3A2A00" stroke-width="2.4" stroke-linecap="round"><path d="M4 18L10 8l4 6 2-3 4 7z"/></svg></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 16px 'Nunito';color:#F2F4F7">Termodinâmica</div><div style="font:600 12.5px 'Nunito';color:#7C8494">Física · 8 nós · 40 questões</div><div style="height:8px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:62%;height:100%;background:#FFC42E"></div></div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg></div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:11px 16px;display:flex;align-items:center;gap:14px"><div style="width:46px;height:46px;border-radius:16px;background:#FF6B4A;box-shadow:0 4px 0 #C33F22;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2A0C04" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 16px 'Nunito';color:#F2F4F7">Análise combinatória</div><div style="font:600 12.5px 'Nunito';color:#7C8494">Matemática · 7 nós · sem banco ainda</div><div style="height:8px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:0%;height:100%;background:#FF6B4A"></div></div></div><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.5" stroke-linecap="round" style="flex:0 0 auto"><path d="M9 6l6 6-6 6"/></svg></div>
+              <div style="background:#171B24;border:1px solid #232733;border-radius:20px;padding:11px 16px;display:flex;align-items:center;gap:14px"><div style="width:46px;height:46px;border-radius:16px;background:#232936;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="font:700 16px 'Nunito';color:#8B93A7">Ecologia</div><div style="font:600 12.5px 'Nunito';color:#5B6472">Destrava com 3 nós concluídos</div></div></div>
+            </div>
+          </div>
+          <div style="padding:8px 20px 20px">
+            <div style="display:flex;gap:8px;background:#171B24;border:1px solid #232733;border-radius:999px;padding:8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#F1EEFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+            </div>
+          </div>
+        </div>
+
+        <div data-screen-label="Perfil e ligas" style="width:390px;height:812px;background:#0A0C10;border:10px solid #16191F;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#F2F4F7"><span>17:00</span><span style="color:#8B93A7">▮▮▮ 42</span></div>
+          <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:16px">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="width:64px;height:64px;border-radius:22px;background:#7C5CFF;box-shadow:0 5px 0 #4E33C4;display:flex;align-items:center;justify-content:center;font:800 26px 'Baloo 2';color:#F1EEFF;flex:0 0 auto">G</div>
+              <div style="flex:1"><div style="font:800 22px 'Baloo 2';color:#F2F4F7">Gabriel</div><div style="font:800 13px 'Nunito';color:#FFC42E">S-Rank · 4564 XP</div></div>
+              <div style="width:40px;height:40px;border-radius:14px;background:#1B2029;border:1px solid #262C39;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8B93A7" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <div style="flex:1;background:#171B24;border:1px solid #232733;border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="font:800 21px 'Baloo 2';color:#F2F4F7">61</div><div style="font:700 10.5px 'Nunito';color:#6B7385;text-align:center">DIAS P/ ENEM</div></div>
+              <div style="flex:1;background:#171B24;border:1px solid #232733;border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="font:800 21px 'Baloo 2';color:#F2F4F7">1240</div><div style="font:700 10.5px 'Nunito';color:#6B7385;text-align:center">QUESTÕES</div></div>
+              <div style="flex:1;background:#171B24;border:1px solid #232733;border-radius:18px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="font:800 21px 'Baloo 2';color:#6EE12B">78%</div><div style="font:700 10.5px 'Nunito';color:#6B7385;text-align:center">ACERTO</div></div>
+            </div>
+
+            <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <div style="width:38px;height:38px;border-radius:13px;background:#12233A;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="20" height="20" viewBox="0 0 24 24" fill="#4FA6FF"><path d="M12 2l7 4v6c0 5-3 8-7 10-4-2-7-5-7-10V6z"/></svg></div>
+                <div style="flex:1"><div style="font:700 17px 'Baloo 2';color:#F2F4F7">Liga Diamante</div><div style="font:600 12.5px 'Nunito';color:#7C8494">Top 5 sobem · faltam 3 dias</div></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#1F2531"><div style="width:24px;font:800 14px 'Baloo 2';color:#FFC42E">1</div><div style="width:30px;height:30px;border-radius:10px;background:#FF6B4A;flex:0 0 auto"></div><div style="flex:1;font:700 14.5px 'Nunito';color:#F2F4F7">Marina S.</div><div style="font:800 13.5px 'Nunito';color:#8B93A7">6120</div></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#1F2531"><div style="width:24px;font:800 14px 'Baloo 2';color:#8B93A7">2</div><div style="width:30px;height:30px;border-radius:10px;background:#3ED9B0;flex:0 0 auto"></div><div style="flex:1;font:700 14.5px 'Nunito';color:#F2F4F7">Caio R.</div><div style="font:800 13.5px 'Nunito';color:#8B93A7">5480</div></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14"><div style="width:24px;font:800 14px 'Baloo 2';color:#0D2705">3</div><div style="width:30px;height:30px;border-radius:10px;background:#7C5CFF;flex:0 0 auto"></div><div style="flex:1;font:800 14.5px 'Nunito';color:#0D2705">Você</div><div style="font:800 13.5px 'Nunito';color:#0D2705">4564</div></div>
+              </div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:14px;background:#171B24;border:1px solid #232733;border-radius:22px;padding:14px 18px">
+              <dc-import name="Mascote" scene="cochilo" mood="sleep" size="0.6" color="#F0E4D4" hint-size="64px,64px"></dc-import>
+              <div style="flex:1;font:600 13px 'Nunito';color:#8B93A7;line-height:1.45">Pipoco está cochilando. Conclua um nó hoje para acordá-lo.</div>
+            </div>
+          </div>
+          <div style="padding:8px 20px 20px">
+            <div style="display:flex;gap:8px;background:#171B24;border:1px solid #232733;border-radius:999px;padding:8px">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#5B6472"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#F1EEFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <sc-if value="{{ mostrarLight }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:18px;margin-top:10px">
+        <div style="font:800 12px 'Nunito';letter-spacing:.14em;color:#5B6472">MESMA PALETA, TEMA CLARO</div>
+        <div style="display:flex;flex-wrap:wrap;gap:30px">
+          <div data-screen-label="Home claro" style="width:390px;height:812px;background:#F4F6F8;border:10px solid #DDE3E9;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.5)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#131722"><span>17:00</span><span style="color:#5D6675">▮▮▮ 42</span></div>
+            <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:12px">
+                <div style="width:46px;height:46px;border-radius:16px;background:#7C5CFF;box-shadow:0 5px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="#F1EEFF"><path d="M12 2l1.9 6.3L20 10l-6.1 1.7L12 18l-1.9-6.3L4 10l6.1-1.7z"/></svg></div>
+                <div style="flex:1;font:800 21px 'Baloo 2';color:#131722">Banco de Questões</div>
+                <div style="width:40px;height:40px;border-radius:14px;background:#FFFFFF;border:1px solid #E2E7ED;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#5D6675" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#FFFFFF;border:1px solid #E2E7ED;font:800 14px 'Nunito';color:#8A93A2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-2.5 2 1 3 3 3 5.5a5 5 0 0 1-10 0c0-5 3-6 5-12z"/></svg>0</div>
+                <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#FFF4D6;border:1px solid #F0DCA0;font:800 14px 'Nunito';color:#8A6300"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>S-Rank · 4564 XP</div>
+              </div>
+              <div style="background:#FFFFFF;border:1px solid #E2E7ED;border-radius:22px;padding:18px;box-shadow:0 3px 0 #E7ECF1">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+                  <div style="width:30px;height:30px;border-radius:10px;background:#FFEDE5;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D9531F" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/></svg></div>
+                  <div style="flex:1;font:700 16.5px 'Baloo 2';color:#131722">Missões de hoje</div>
+                  <div style="font:800 12px 'Nunito';letter-spacing:.06em;color:#3F8F14">VER TODAS</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="display:flex;gap:12px">
+                    <div style="width:22px;height:22px;border-radius:8px;border:2px solid #C7CFD9;flex:0 0 auto;margin-top:2px"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                      <div style="font:700 14.5px 'Nunito';color:#131722">Complete sua meta diária</div>
+                      <div style="font:600 12.5px 'Nunito';color:#5D6675">0/20 questão(ões) hoje</div>
+                      <div style="height:10px;border-radius:999px;background:#EAEEF3;overflow:hidden"><div style="width:3%;height:100%;background:#57C114;border-radius:999px"></div></div>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:12px">
+                    <div style="width:22px;height:22px;border-radius:8px;border:2px solid #C7CFD9;flex:0 0 auto;margin-top:2px"></div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+                      <div style="font:700 14.5px 'Nunito';color:#131722">Foco em geometria_espacial</div>
+                      <div style="font:600 12.5px 'Nunito';color:#5D6675;line-height:1.4">Pratique geometria_espacial hoje — é sua maior prioridade agora</div>
+                      <div style="height:10px;border-radius:999px;background:#EAEEF3;overflow:hidden"><div style="width:3%;height:100%;background:#7C5CFF;border-radius:999px"></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:18px;padding:13px 15px">
+                  <div style="width:32px;height:32px;border-radius:11px;background:#E4F0FF;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E6FC4" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div>
+                  <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#7A8494">Área</div><div style="font:700 14.5px 'Nunito';color:#131722">Ciências da Natureza</div></div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:18px;padding:13px 15px">
+                  <div style="width:32px;height:32px;border-radius:11px;background:#DDF6EE;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0E8A6B" stroke-width="2"><path d="M4 19V5a2 2 0 0 1 2-2h10l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg></div>
+                  <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#7A8494">Matéria</div><div style="font:700 14.5px 'Nunito';color:#7A8494">Escolha uma matéria</div></div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:18px;padding:13px 15px">
+                  <div style="width:32px;height:32px;border-radius:11px;background:#EBE5FF;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5B3FD1" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="4"/></svg></div>
+                  <div style="flex:1"><div style="font:700 11.5px 'Nunito';color:#7A8494">Fonte</div><div style="font:700 14.5px 'Nunito';color:#131722">Todas</div></div>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div style="background:#57C114;box-shadow:0 6px 0 #35800A;border-radius:20px;padding:17px;text-align:center;font:800 17px 'Baloo 2';color:#FFFFFF">COMEÇAR SESSÃO</div>
+            </div>
+            <div style="padding:8px 20px 20px">
+              <div style="display:flex;gap:8px;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:999px;padding:8px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#FFFFFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#8A93A2"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#8A93A2"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+              </div>
+            </div>
+          </div>
+
+          <div data-screen-label="Trilha claro" style="width:390px;height:812px;background:#F4F6F8;border:10px solid #DDE3E9;border-radius:48px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 70px rgba(0,0,0,.5)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 26px 6px;font:800 14px 'Nunito';color:#131722"><span>17:00</span><span style="color:#5D6675">▮▮▮ 42</span></div>
+            <div style="flex:1;overflow:hidden;padding:14px 20px 0;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:14px;background:#57C114;box-shadow:0 6px 0 #35800A;border-radius:22px;padding:16px 18px">
+                <div style="flex:1">
+                  <div style="font:800 12px 'Nunito';letter-spacing:.12em;color:#E3F7D0">CIÊNCIAS DA NATUREZA</div>
+                  <div style="font:800 24px 'Baloo 2';color:#FFFFFF">Óptica</div>
+                </div>
+                <div style="width:48px;height:48px;border-radius:50%;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F1EEFF" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px">
+                <div style="flex:1;height:10px;border-radius:999px;background:#E4E9EF;overflow:hidden"><div style="width:2%;height:100%;background:#57C114;border-radius:999px"></div></div>
+                <div style="font:700 12.5px 'Nunito';color:#5D6675">0 de 9 nó(s)</div>
+              </div>
+              <div style="position:relative;height:522px;margin-top:0">
+                <svg width="350" height="522" viewBox="0 0 350 522" fill="none" style="position:absolute;left:0;top:0">
+                  <path d="M175 50 C 175 105, 258 115, 258 158 C 258 212, 175 222, 175 266 C 175 320, 95 330, 95 374 C 95 428, 150 438, 150 482" stroke="#E0E6ED" stroke-width="12" stroke-linecap="round" stroke-dasharray="1 26"/>
+                </svg>
+                <div style="position:absolute;left:175px;top:50px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="background:#FFFFFF;box-shadow:0 3px 0 #D3DAE2;border-radius:12px;padding:6px 14px;font:800 13px 'Baloo 2';color:#131722;margin-bottom:2px">COMEÇAR</div>
+                  <div style="width:78px;height:78px;border-radius:50%;background:#57C114;box-shadow:0 8px 0 #35800A;display:flex;align-items:center;justify-content:center"><svg width="32" height="32" viewBox="0 0 24 24" fill="#FFFFFF"><path d="M8 5v14l11-7z"/></svg></div>
+                  <div style="font:700 12.5px 'Nunito';color:#5D6675">Nó 1 · 5q</div>
+                </div>
+                <div style="position:absolute;left:258px;top:158px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="width:70px;height:70px;border-radius:50%;background:#E8EDF3;box-shadow:0 7px 0 #D3DAE2;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                  <div style="font:700 12.5px 'Nunito';color:#7A8494">Nó 2 · 5q</div>
+                </div>
+                <div style="position:absolute;left:175px;top:266px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="width:70px;height:70px;border-radius:50%;background:#E8EDF3;box-shadow:0 7px 0 #D3DAE2;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                  <div style="font:700 12.5px 'Nunito';color:#7A8494">Nó 3 · 5q</div>
+                </div>
+                <div style="position:absolute;left:95px;top:374px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="width:70px;height:70px;border-radius:50%;background:#E8EDF3;box-shadow:0 7px 0 #D3DAE2;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                  <div style="font:700 12.5px 'Nunito';color:#7A8494">Nó 4 · 5q</div>
+                </div>
+                <div style="position:absolute;left:150px;top:482px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <div style="width:70px;height:70px;border-radius:50%;background:#E8EDF3;box-shadow:0 7px 0 #D3DAE2;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A3ACB9" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                </div>
+                <div style="position:absolute;right:-6px;top:196px;display:flex;flex-direction:column;align-items:center;gap:8px">
+                  <dc-import name="Mascote" mood="happy" size="0.78" hint-size="82px,82px"></dc-import>
+                  <div style="font:700 11px 'Nunito';color:#5D6675;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:999px;padding:4px 10px">Pipoco</div>
+                </div>
+              </div>
+            </div>
+            <div style="padding:8px 20px 20px">
+              <div style="display:flex;gap:8px;background:#FFFFFF;border:1px solid #E2E7ED;border-radius:999px;padding:8px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;background:#7C5CFF;font:800 11.5px 'Nunito';color:#FFFFFF"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#8A93A2"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-2 6-6 2 2-6z"/></svg>Explore</div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0;border-radius:999px;font:800 11.5px 'Nunito';color:#8A93A2"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="3.4"/><path d="M5 20c1.5-3.4 4-5 7-5s5.5 1.6 7 5"/></svg>Perfil</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </sc-if>
+
+      <div style="display:flex;flex-direction:column;gap:18px;margin-top:10px">
+        <div style="font:800 12px 'Nunito';letter-spacing:.14em;color:#5B6472">DESKTOP · 1440</div>
+        <div data-screen-label="Desktop" style="width:1440px;height:900px;background:#0A0C10;border:1px solid #232733;border-radius:20px;overflow:hidden;display:flex;box-shadow:0 30px 70px rgba(0,0,0,.6)">
+          <div style="width:268px;flex:0 0 auto;background:#12151C;border-right:1px solid #232733;padding:22px 16px;display:flex;flex-direction:column;gap:20px">
+            <div style="display:flex;align-items:center;gap:11px;padding:0 6px">
+              <div style="width:38px;height:38px;border-radius:13px;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="19" height="19" viewBox="0 0 24 24" fill="#F1EEFF"><path d="M12 2l1.9 6.3L20 10l-6.1 1.7L12 18l-1.9-6.3L4 10l6.1-1.7z"/></svg></div>
+              <div style="font:800 18px 'Baloo 2';color:#F2F4F7">Trilha ENEM</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Cartão-resposta</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14;font:800 14px 'Nunito';color:#0D2705">Banco de Questões</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Minha análise</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Simulados já feitos</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Prova com enunciado <span style="font:800 10px 'Nunito';background:#241A3A;color:#B4A3FF;border-radius:6px;padding:2px 6px">BETA</span></div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Calendário</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Objetivos</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Redação</div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:14px;font:700 14px 'Nunito';color:#8B93A7">Guia do Estudante</div>
+            </div>
+            <div style="margin-top:auto;background:#171B24;border:1px solid #232733;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <div style="font:700 13px 'Nunito';color:#8B93A7">61 dias até o ENEM</div>
+              <div style="height:9px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:38%;height:100%;background:#FFC42E"></div></div>
+            </div>
+          </div>
+
+          <div style="flex:1;min-width:0;padding:26px 30px;display:flex;flex-direction:column;gap:22px;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:14px">
+              <div style="flex:1;font:800 28px 'Baloo 2';color:#F2F4F7">Óptica</div>
+              <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#171B24;border:1px solid #262C39;font:800 14px 'Nunito';color:#5B6472"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2c1 4-3 5-3 9a3 3 0 0 0 6 0c0-1-.5-2-1-2.5 2 1 3 3 3 5.5a5 5 0 0 1-10 0c0-5 3-6 5-12z"/></svg>0</div>
+              <div style="display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:999px;background:#2A2210;border:1px solid #4A3B10;font:800 14px 'Nunito';color:#FFC42E"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.6-5.2 4.6 1.6 6.8L12 16.9 5.8 20.3l1.6-6.8L2.2 8.9l6.9-.6z"/></svg>S-Rank · 4564 XP</div>
+              <div style="width:42px;height:42px;border-radius:14px;background:#7C5CFF;box-shadow:0 4px 0 #4E33C4;display:flex;align-items:center;justify-content:center;font:800 17px 'Baloo 2';color:#F1EEFF;flex:0 0 auto">G</div>
+            </div>
+
+            <div style="display:flex;align-items:center;gap:18px;background:#6EE12B;box-shadow:0 6px 0 #3F8F14;border-radius:24px;padding:20px 24px">
+              <div style="flex:1">
+                <div style="font:800 12px 'Nunito';letter-spacing:.12em;color:#2A5A10">CIÊNCIAS DA NATUREZA · 0 DE 9 NÓ(S) CONCLUÍDO(S)</div>
+                <div style="font:800 26px 'Baloo 2';color:#0D2705">Continue de onde parou — Nó 1</div>
+              </div>
+              <div style="background:#0D2705;border-radius:16px;padding:14px 26px;font:800 16px 'Baloo 2';color:#B9F58C">COMEÇAR</div>
+            </div>
+
+            <div style="flex:1;position:relative;background:#0F1218;border:1px solid #1D222B;border-radius:24px;overflow:hidden">
+              <svg width="760" height="430" viewBox="0 0 760 430" fill="none" style="position:absolute;left:24px;top:22px">
+                <path d="M80 60 C 200 60, 190 170, 300 170 C 410 170, 400 60, 520 60 C 640 60, 640 170, 700 200" stroke="#232936" stroke-width="12" stroke-linecap="round" stroke-dasharray="1 26"/>
+              </svg>
+              <div style="position:absolute;left:104px;top:82px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="background:#F2F4F7;box-shadow:0 3px 0 #A6AEBD;border-radius:12px;padding:5px 13px;font:800 12.5px 'Baloo 2';color:#0A0C10">COMEÇAR</div>
+                <div style="width:76px;height:76px;border-radius:50%;background:#6EE12B;box-shadow:0 8px 0 #3F8F14;display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="#0D2705"><path d="M8 5v14l11-7z"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#8B93A7">Nó 1 · 5q</div>
+              </div>
+              <div style="position:absolute;left:324px;top:192px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:68px;height:68px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#6B7385">Nó 2 · 5q</div>
+              </div>
+              <div style="position:absolute;left:544px;top:82px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px">
+                <div style="width:68px;height:68px;border-radius:50%;background:#1F2531;box-shadow:0 7px 0 #14181F;border:1px solid #2C3342;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#4B5364" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+                <div style="font:700 12.5px 'Nunito';color:#6B7385">Nó 3 · 5q</div>
+              </div>
+              <div style="position:absolute;left:120px;top:300px;display:flex;align-items:center;gap:16px;background:#171B24;border:1px solid #232733;border-radius:22px;padding:14px 20px 14px 14px">
+                <dc-import name="Mascote" scene="fogueira" mood="happy" size="0.7" color="#F5C98A" pattern="patches" patch="#E0A05C" hint-size="74px,74px"></dc-import>
+                <div style="max-width:330px;font:600 14px 'Nunito';color:#8B93A7;line-height:1.5">“Cinco questões e o Nó 2 abre. Vamos?” — <span style="color:#6EE12B;font-weight:800">Pipoco</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:340px;flex:0 0 auto;border-left:1px solid #232733;background:#12151C;padding:26px 22px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+            <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:16px">
+              <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:700 16.5px 'Baloo 2';color:#F2F4F7">Missões de hoje</div><div style="font:800 12px 'Nunito';color:#6EE12B">VER TODAS</div></div>
+              <div style="display:flex;gap:12px">
+                <div style="width:22px;height:22px;border-radius:8px;border:2px solid #3A4152;flex:0 0 auto;margin-top:2px"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 14.5px 'Nunito';color:#F2F4F7">Complete sua meta diária</div><div style="font:600 12.5px 'Nunito';color:#7C8494">0/20 questão(ões) hoje</div><div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;background:#6EE12B"></div></div></div>
+              </div>
+              <div style="display:flex;gap:12px">
+                <div style="width:22px;height:22px;border-radius:8px;border:2px solid #3A4152;flex:0 0 auto;margin-top:2px"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="font:700 14.5px 'Nunito';color:#F2F4F7">Foco em geometria_espacial</div><div style="font:600 12.5px 'Nunito';color:#7C8494;line-height:1.4">Pratique geometria_espacial hoje — é sua maior prioridade agora</div><div style="height:10px;border-radius:999px;background:#232936;overflow:hidden"><div style="width:3%;height:100%;background:#7C5CFF"></div></div></div>
+              </div>
+            </div>
+            <div style="background:#171B24;border:1px solid #232733;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+              <div style="font:700 16.5px 'Baloo 2';color:#F2F4F7">Liga Diamante</div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:14px;background:#1F2531"><div style="width:22px;font:800 13.5px 'Baloo 2';color:#FFC42E">1</div><div style="flex:1;font:700 14px 'Nunito';color:#F2F4F7">Marina S.</div><div style="font:800 13px 'Nunito';color:#8B93A7">6120</div></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:14px;background:#1F2531"><div style="width:22px;font:800 13.5px 'Baloo 2';color:#8B93A7">2</div><div style="flex:1;font:700 14px 'Nunito';color:#F2F4F7">Caio R.</div><div style="font:800 13px 'Nunito';color:#8B93A7">5480</div></div>
+                <div style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:16px;background:#6EE12B;box-shadow:0 4px 0 #3F8F14"><div style="width:22px;font:800 13.5px 'Baloo 2';color:#0D2705">3</div><div style="flex:1;font:800 14px 'Nunito';color:#0D2705">Você</div><div style="font:800 13px 'Nunito';color:#0D2705">4564</div></div>
+              </div>
+            </div>
+            <div style="background:#2A2210;border:1px solid #4A3B10;border-radius:22px;padding:18px;display:flex;align-items:center;gap:14px">
+              <div style="width:44px;height:44px;border-radius:15px;background:#FFC42E;box-shadow:0 4px 0 #C08A00;display:flex;align-items:center;justify-content:center;flex:0 0 auto"><svg width="22" height="22" viewBox="0 0 24 24" fill="#3A2A00"><path d="M11 2L4 14h6l-1 8 8-12h-6z"/></svg></div>
+              <div style="flex:1;font:700 13.5px 'Nunito';color:#FFD98A;line-height:1.45">Baú de 50 XP abre em 3 nós</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;mostrarLight&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Escopo&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    // Estado de exemplo do cartão: 91..114, respondidas e marcadas espalhadas.
+    const respostas = { 91: "C", 92: "A", 93: "E", 94: "B", 95: "D", 96: "A", 97: "B", 99: "C", 100: "E", 102: "A", 103: "D", 104: "C", 106: "B", 108: "E", 109: "A", 111: "C", 112: "D", 114: "B" };
+    const revisao = [97, 103, 111];
+
+    const cell = (letra, sel) => sel
+      ? { width: "30px", height: "30px", borderRadius: "9px", background: "#6EE12B", boxShadow: "0 3px 0 #3F8F14", display: "flex", alignItems: "center", justifyContent: "center", font: "800 13px 'Nunito'", color: "#0D2705", flex: "0 0 auto" }
+      : { width: "30px", height: "30px", borderRadius: "9px", background: "#1F2531", border: "1px solid #2C3342", display: "flex", alignItems: "center", justifyContent: "center", font: "800 13px 'Nunito'", color: "#5B6472", flex: "0 0 auto" };
+
+    const blocos = [];
+    for (let n = 91; n <= 114; n++) {
+      const r = respostas[n];
+      const mark = revisao.indexOf(n) >= 0;
+      blocos.push({
+        n: n,
+        wrap: {
+          display: "flex", alignItems: "center", gap: "6px", position: "relative",
+          background: mark ? "#2A2210" : "#171B24",
+          border: "1px solid " + (mark ? "#4A3B10" : "#232733"),
+          borderRadius: "16px", padding: "10px 12px"
+        },
+        num: { width: "36px", flex: "0 0 auto", font: "800 13px 'Nunito'", color: r ? "#F2F4F7" : "#5B6472" },
+        a: cell("A", r === "A"), b: cell("B", r === "B"), c: cell("C", r === "C"),
+        d: cell("D", r === "D"), e: cell("E", r === "E"),
+        flag: mark
+          ? { position: "absolute", right: "-3px", top: "-3px", width: "10px", height: "10px", borderRadius: "50%", background: "#FFC42E" }
+          : { display: "none" }
+      });
+    }
+
+    const saltos = [];
+    for (let n = 91; n <= 115; n++) {
+      const r = respostas[n];
+      const atual = n === 104;
+      saltos.push({
+        n: n - 90,
+        style: atual
+          ? { aspectRatio: "1", borderRadius: "9px", background: "#7C5CFF", boxShadow: "0 3px 0 #4E33C4", display: "flex", alignItems: "center", justifyContent: "center", font: "800 11.5px 'Nunito'", color: "#F1EEFF" }
+          : r
+            ? { aspectRatio: "1", borderRadius: "9px", background: "#6EE12B", display: "flex", alignItems: "center", justifyContent: "center", font: "800 11.5px 'Nunito'", color: "#0D2705" }
+            : { aspectRatio: "1", borderRadius: "9px", background: "#1F2531", border: "1px solid #2C3342", display: "flex", alignItems: "center", justifyContent: "center", font: "800 11.5px 'Nunito'", color: "#5B6472" }
+      });
+    }
+
+    return { mostrarLight: this.props.mostrarLight ?? true, blocos: blocos, saltos: saltos };
+  }
+}
+</script>
+</body>
+</html>

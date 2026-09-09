@@ -36,17 +36,43 @@ CREATE TABLE IF NOT EXISTS questoes (
     alternativa_correta    TEXT NOT NULL CHECK(alternativa_correta IN ('A','B','C','D','E')),
     status_classificacao   TEXT NOT NULL DEFAULT 'classificado'
                             CHECK(status_classificacao IN ('classificado','nao_classificado')),
-    criado_em               TEXT NOT NULL DEFAULT (datetime('now'))
+    origem                  TEXT NOT NULL DEFAULT 'enem_oficial'
+                            CHECK(origem IN ('enem_oficial','banco_pratica')),
+    fonte                   TEXT,
+    criado_em               TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     -- Sem FOREIGN KEY pra topicos_validos de propósito: uma questão
     -- com matéria fora da taxonomia precisa ser GRAVADA (com
     -- status_classificacao='nao_classificado' pra triagem), não
     -- rejeitada pelo banco. A validação é feita em db.py, antes do
     -- insert; o schema só garante que status_classificacao reflita
     -- o veredito.
+    --
+    -- origem distingue questão real de prova ENEM ('enem_oficial',
+    -- default -- ano/caderno/numero_questao são a identidade real de
+    -- uma prova) de questão do banco de prática ('banco_pratica' --
+    -- ex: trazida de uma sessão de estudo com IA sobre um assunto
+    -- específico). Questão de banco_pratica usa ano=0/caderno=
+    -- 'banco_pratica' como sentinela (nunca colide com ano real de
+    -- prova) só pra satisfazer as colunas NOT NULL -- ela não é uma
+    -- prova de verdade, então fica de fora de toda função que
+    -- enumera/agrupa "provas" (listar_provas, simulados_feitos,
+    -- recorrencia_por_materia etc., ver db.py) pra não virar um
+    -- simulado fantasma nem inflar a recorrência real de um tema.
+    -- Ainda assim passa pelas MESMAS tentativas_usuario/estado_revisao/
+    -- Leitner/prioridade_de_estudo que questão real -- só a
+    -- identidade de "prova" é diferente, o pipeline de estudo é o
+    -- mesmo, de propósito (decisão do usuário: quer que errar uma
+    -- questão de prática agende revisão igual e conte na prioridade
+    -- por matéria).
+    --
+    -- fonte é texto livre, só relevante quando origem='banco_pratica'
+    -- (ex: 'gemini', 'chatgpt', 'autoral') -- filtro auxiliar dentro
+    -- do banco de prática, não faz parte da identidade da questão.
 );
 
 CREATE INDEX IF NOT EXISTS idx_questoes_materia ON questoes(materia);
 CREATE INDEX IF NOT EXISTS idx_questoes_status ON questoes(status_classificacao);
+CREATE INDEX IF NOT EXISTS idx_questoes_origem ON questoes(origem);
 
 -- Resoluções: 1 questão -> N resoluções (vídeo e/ou texto, quantas
 -- forem). Essa era a limitação principal do CSV antigo (uma linha =
@@ -57,7 +83,7 @@ CREATE TABLE IF NOT EXISTS resolucoes (
     tipo         TEXT NOT NULL CHECK(tipo IN ('video', 'texto')),
     conteudo     TEXT NOT NULL,  -- URL do vídeo OU o texto da resolução
     canal        TEXT,
-    criado_em    TEXT NOT NULL DEFAULT (datetime('now'))
+    criado_em    TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_resolucoes_questao ON resolucoes(id_questao);
@@ -69,10 +95,19 @@ CREATE INDEX IF NOT EXISTS idx_resolucoes_questao ON resolucoes(id_questao);
 -- fica de fora da conta) -- não deixar em branco simplesmente não
 -- registrar nada escondia isso de toda estatística baseada nesta
 -- tabela (taxa de acerto, prioridade de estudo, Leitner).
+-- 'localtime' em todo DEFAULT de data/hora deste arquivo (não só aqui) é
+-- deliberado, não estilo: sqlite datetime('now')/date('now') sem esse
+-- modificador retorna UTC, enquanto todo o Python do projeto usa
+-- date.today()/datetime.now() (hora LOCAL). Usuário em UTC-3: das ~21h às
+-- 23h59 locais, UTC já virou o dia seguinte -- uma tentativa registrada
+-- nesse intervalo gravava com data_tentativa de AMANHÃ (UTC) enquanto
+-- toda comparação "hoje" no Python (meta diária, missão do dia, streak)
+-- usava HOJE (local), fazendo elas nunca baterem -- bug real, achado
+-- rodando os testes à noite, não uma correção cosmética.
 CREATE TABLE IF NOT EXISTS tentativas_usuario (
     id_tentativa        INTEGER PRIMARY KEY AUTOINCREMENT,
     id_questao          TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
-    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now')),
+    data_tentativa       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     resposta_escolhida  TEXT CHECK(resposta_escolhida IN ('A','B','C','D','E') OR resposta_escolhida IS NULL),
     resultado           TEXT NOT NULL CHECK(resultado IN ('acertou','errou')),
     intervalo_dias      INTEGER NOT NULL,
@@ -109,7 +144,7 @@ CREATE TABLE IF NOT EXISTS historico_alteracoes (
     campo                    TEXT NOT NULL,
     valor_antigo             TEXT,
     valor_novo               TEXT,
-    data_alteracao           TEXT NOT NULL DEFAULT (datetime('now')),
+    data_alteracao           TEXT NOT NULL DEFAULT (datetime('now','localtime')),
     tentativas_recalculadas  INTEGER NOT NULL DEFAULT 0
 );
 
@@ -131,14 +166,14 @@ CREATE TABLE IF NOT EXISTS configuracoes (
 CREATE TABLE IF NOT EXISTS redacoes (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     tema                TEXT NOT NULL,
-    data_escrita        TEXT NOT NULL DEFAULT (date('now')),
+    data_escrita        TEXT NOT NULL DEFAULT (date('now','localtime')),
     texto               TEXT,
     arquivo_path        TEXT,
     nota                INTEGER,
     erros_ortograficos  INTEGER,
     fonte_correcao      TEXT CHECK(fonte_correcao IN ('propria', 'externa', 'oficial') OR fonte_correcao IS NULL),
     observacoes         TEXT,
-    criado_em           TEXT NOT NULL DEFAULT (datetime('now'))
+    criado_em           TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_redacoes_data ON redacoes(data_escrita);

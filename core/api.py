@@ -1,0 +1,137 @@
+"""
+api.py — API HTTP pro app de celular (Expo/React Native), envolvendo db.py.
+
+Camada fina de propósito: não duplica NENHUMA regra de negócio (Leitner,
+prioridade, trilha etc.) -- tudo isso já mora em db.py, testado em
+test_db.py. Este módulo só traduz chamada HTTP em chamada de função Python
+e devolve o resultado como JSON. Mesma regra de camadas do resto de core/:
+importa de db.py, nunca o contrário (ver CLAUDE.md).
+
+Cresce endpoint por endpoint junto com cada fase do app de celular (ver
+plano em C:\\Users\\WIN\\.claude\\plans\\validated-leaping-umbrella.md) --
+não expõe todo o db.py de uma vez, só o que a fase atual do app usa.
+
+Rodar (de dentro de core/, ou da raiz do projeto -- ver o --app-dir abaixo):
+    uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+--host 0.0.0.0 é o que permite o celular na mesma wifi alcançar (não só
+localhost). Depois de rodar, o terminal mostra o IP da máquina, ou descubra
+com `ipconfig` (Windows) -- é esse IP que o app no celular usa, não
+"localhost" (que no celular apontaria pra ele mesmo).
+"""
+from __future__ import annotations
+
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+import db
+
+app = FastAPI(title="ENEM GI API")
+
+# CORS liberado geral: uso pessoal/local (mesma wifi de casa), sem usuário
+# de terceiros nem dado sensível exposto pra internet -- não é uma API
+# pública. Reavaliar se algum dia isso for hospedado fora da rede local.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("startup")
+def _inicializar() -> None:
+    db.inicializar_banco()
+
+
+@app.get("/health")
+def health() -> dict:
+    """Endpoint de teste da Fase 0 -- só confirma que o celular conseguiu
+    alcançar o backend pela rede, antes de existir qualquer tela de
+    verdade no app. Não faz nada com o banco."""
+    return {"status": "ok"}
+
+
+# ============================================================
+# FASE 1 — Banco de Questões / trilha (ver render_banco_pratica em
+# core/cartao_resposta.py, a versão Streamlit já validada desta mesma
+# tela -- estes endpoints só expõem as MESMAS funções de db.py que
+# aquela tela já usa, nenhuma regra nova).
+# ============================================================
+
+@app.get("/materias")
+def materias(grande_area: str) -> list[str]:
+    return db.materias_validas(grande_area)
+
+
+@app.get("/fontes-banco-pratica")
+def fontes_banco_pratica() -> list[str]:
+    return db.fontes_banco_pratica()
+
+
+@app.get("/trilha")
+def trilha(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
+    return db.trilha_banco_pratica(grande_area, materia, fonte=fonte)
+
+
+class TentativaRequest(BaseModel):
+    id_questao: str
+    resposta_escolhida: str | None = None
+
+
+@app.post("/tentativas")
+def registrar_tentativa(corpo: TentativaRequest) -> dict:
+    try:
+        return db.registrar_tentativa(corpo.id_questao, corpo.resposta_escolhida)
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+
+
+# ============================================================
+# FASE 1.5 — Header de status (streak, XP/rank, missões do dia).
+# Expõe sistemas que JÁ EXISTIAM em db.py (calcular_ofensiva,
+# calcular_nivel_jogador -- já usados na versão Streamlit, "Minha
+# análise") + missoes_do_dia (novo, mas também derivado ao vivo, sem
+# tabela nova). Nenhum dos três bloqueia o usuário -- decisão
+# deliberada, ver docstring de missoes_do_dia em db.py: um sistema
+# tipo "vidas" que trava o progresso ao errar trabalha contra o
+# objetivo de fixar conteúdo antes da prova.
+# ============================================================
+
+@app.get("/streak")
+def streak() -> dict:
+    return db.calcular_ofensiva()
+
+
+@app.get("/nivel")
+def nivel() -> dict:
+    return db.calcular_nivel_jogador()
+
+
+@app.get("/missoes-do-dia")
+def missoes_do_dia() -> list[dict]:
+    return db.missoes_do_dia()
+
+
+# ============================================================
+# FASE 2 — Explore e Perfil (ver plano de implementação das 8 telas do
+# design_handoff em C:\Users\WIN\.claude\plans\validated-leaping-umbrella.md).
+# Mesma regra das fases anteriores: só expõe função que já existe em
+# db.py, exceto explorar_materias (nova, mas pura leitura agregada,
+# sem regra de negócio nova).
+# ============================================================
+
+@app.get("/dias-ate-prova")
+def dias_ate_prova() -> dict:
+    return db.dias_ate_prova()
+
+
+@app.get("/resumo-geral")
+def resumo_geral() -> dict:
+    return db.resumo_geral_desempenho()
+
+
+@app.get("/explorar")
+def explorar(grande_area: str) -> list[dict]:
+    return db.explorar_materias(grande_area)
