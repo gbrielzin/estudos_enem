@@ -1,0 +1,248 @@
+/* Tema ENEM gamificado — Streamlit
+   Injetar UMA vez por página, no topo, via enem_theme.inject().
+   Todos os valores vêm do README do handoff. */
+
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap');
+
+:root {
+  /* Diz pro Chromium que esta página JÁ é escura de propósito -- sem
+     isso, o "Auto Dark Mode" do navegador (liga sozinho no Windows com
+     tema escuro) reprocessa as cores por cima com um algoritmo de
+     inversão perceptual, e é exatamente esse reprocessamento que
+     transforma lima (#6EE12B) em oliva escuro e âmbar (#FFC42E) em
+     marrom -- nenhuma regra de opacity/alpha/color-mix existe neste
+     arquivo (bug #1 do relatório), o esmaecimento acontecia no
+     navegador, depois do CSS. */
+  color-scheme: dark;
+  --bg: #0A0C10;
+  --surface: #171B24;
+  --surface-2: #1F2531;
+  --surface-3: #232936;
+  --border: #232733;
+  --border-2: #262C39;
+  --ink: #F2F4F7;
+  --ink-2: #8B93A7;
+  --ink-3: #5B6472;
+  --lime: #6EE12B;
+  --lime-sh: #3F8F14;
+  --on-lime: #0D2705;
+  --violet: #7C5CFF;
+  --violet-sh: #4E33C4;
+  --on-violet: #F1EEFF;
+  --amber: #FFC42E;
+  --amber-sh: #C08A00;
+  --amber-bg: #2A2210;
+  --amber-bd: #4A3B10;
+  --coral: #FF6B4A;
+  --coral-sh: #C33F22;
+  --r-card: 22px;
+  --r-ctl: 18px;
+  --r-btn: 20px;
+}
+
+/* ---------- 1. Casca: largura, fundo, tipografia ---------- */
+
+.stApp, [data-testid="stAppViewContainer"] { background: var(--bg); }
+
+/* Streamlit abre em ~1700px. O design é de coluna única. */
+.block-container {
+  max-width: 720px !important;
+  padding: 28px 20px 96px !important;
+}
+
+html, body, [class*="css"], .stMarkdown, .stApp {
+  font-family: 'Nunito', system-ui, sans-serif;
+  color: var(--ink);
+}
+h1, h2, h3, h4 { font-family: 'Baloo 2', system-ui, sans-serif !important; font-weight: 800 !important; color: var(--ink) !important; letter-spacing: 0 !important; }
+h1 { font-size: 26px !important; }
+h2 { font-size: 21px !important; }
+h3 { font-size: 16.5px !important; font-weight: 700 !important; }
+
+/* Esconde o cabeçalho/rodapé do Streamlit — o app tem header próprio */
+[data-testid="stHeader"] { background: transparent; height: 0; }
+footer, #MainMenu { display: none; }
+
+/* ---------- 2. Sidebar ---------- */
+
+[data-testid="stSidebar"] {
+  background: #12151C;
+  border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] a {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink-2);
+  border-radius: 14px;
+  padding: 11px 12px;
+}
+
+/* ---------- 3. Botões: profundidade tátil ---------- */
+
+.stButton > button, .stFormSubmitButton > button {
+  font-family: 'Baloo 2', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 17px !important;
+  letter-spacing: .02em;
+  background: var(--lime) !important;
+  color: var(--on-lime) !important;
+  border: none !important;
+  border-radius: var(--r-btn) !important;
+  padding: 15px 22px !important;
+  box-shadow: 0 6px 0 var(--lime-sh) !important;
+  transition: transform 80ms ease-out, box-shadow 80ms ease-out;
+}
+.stButton > button:hover, .stFormSubmitButton > button:hover {
+  background: #7DEB3E !important;
+  color: var(--on-lime) !important;
+}
+.stButton > button:active, .stFormSubmitButton > button:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--lime-sh) !important;
+}
+.stButton > button:focus-visible { outline: 3px solid var(--violet); outline-offset: 3px; }
+.stButton > button:disabled { opacity: .45; box-shadow: 0 6px 0 var(--lime-sh) !important; }
+
+/* Variante secundária: st.button(..., type="secondary") */
+.stButton > button[kind="secondary"] {
+  background: var(--surface) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid var(--border-2) !important;
+  box-shadow: 0 4px 0 #14181F !important;
+}
+.stButton > button[kind="secondary"]:active { box-shadow: 0 1px 0 #14181F !important; }
+
+/* ---------- 4. Selectbox ---------- */
+
+[data-testid="stSelectbox"] label, [data-testid="stTextInput"] label {
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  color: var(--ink-3) !important;
+  text-transform: none;
+}
+[data-baseweb="select"] > div {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-ctl) !important;
+  min-height: 54px;
+  padding: 6px 6px 6px 12px;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--ink) !important;
+}
+[data-baseweb="select"] svg { color: var(--ink-3) !important; }
+[data-baseweb="popover"] [role="listbox"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-2) !important;
+  border-radius: 16px !important;
+}
+[data-baseweb="popover"] li:hover { background: var(--surface-2) !important; }
+
+/* ---------- 5. Radio horizontal como chips ---------- */
+/* Use st.radio(..., horizontal=True) */
+
+[data-testid="stRadio"] > label { display: none; }
+[data-testid="stRadio"] [role="radiogroup"] { gap: 9px; flex-wrap: wrap; }
+[data-testid="stRadio"] [role="radiogroup"] > label {
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  padding: 9px 16px;
+  margin: 0;
+  font-weight: 800;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
+  background: var(--lime);
+  border-color: var(--lime);
+  color: var(--on-lime);
+  box-shadow: 0 3px 0 var(--lime-sh);
+}
+[data-testid="stRadio"] [role="radiogroup"] > label > div:first-child { display: none; }
+
+/* ---------- 6. Alertas ---------- */
+
+[data-testid="stAlert"] {
+  background: var(--surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-card) !important;
+  color: var(--ink-2) !important;
+  font-weight: 600;
+}
+
+/* ---------- 7. Blocos próprios (helpers do enem_theme.py) ---------- */
+
+.ex-row { display: flex; align-items: center; gap: 12px; }
+.ex-pills { display: flex; gap: 10px; margin: 6px 0 18px; }
+.ex-pill {
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 15px; border-radius: 999px;
+  font-weight: 800; font-size: 14px;
+  background: var(--surface); border: 1px solid var(--border-2); color: var(--ink-3);
+}
+.ex-pill.on { background: var(--amber-bg); border-color: var(--amber-bd); color: var(--amber); }
+
+.ex-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-card); padding: 18px; margin-bottom: 16px;
+}
+.ex-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.ex-card-title { flex: 1; font-family: 'Baloo 2', sans-serif; font-weight: 700; font-size: 16.5px; color: var(--ink); }
+.ex-link { font-weight: 800; font-size: 12px; letter-spacing: .06em; color: var(--lime); }
+
+.ex-badge { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto; font-size: 15px; }
+
+.ex-mission { display: flex; gap: 12px; margin-bottom: 16px; }
+.ex-mission:last-child { margin-bottom: 0; }
+.ex-check { width: 22px; height: 22px; border-radius: 8px; border: 2px solid #3A4152; flex: 0 0 auto; margin-top: 2px; }
+.ex-check.done { background: var(--lime); border-color: var(--lime); box-shadow: 0 3px 0 var(--lime-sh); }
+.ex-mission-body { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.ex-mission-title { font-weight: 700; font-size: 14.5px; color: var(--ink); }
+.ex-mission-sub { font-weight: 600; font-size: 12.5px; color: #7C8494; line-height: 1.4; }
+
+.ex-track { height: 10px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.ex-fill { height: 100%; border-radius: 999px; }
+
+/* Trilha */
+.ex-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--lime); box-shadow: 0 6px 0 var(--lime-sh);
+  border-radius: var(--r-card); padding: 16px 18px; margin-bottom: 18px;
+}
+.ex-banner-kicker { font-weight: 800; font-size: 12px; letter-spacing: .12em; color: #2A5A10; }
+.ex-banner-title { font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 24px; color: var(--on-lime); }
+
+.ex-path { position: relative; width: 350px; margin: 0 auto; }
+.ex-node-col { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ex-node { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 1px solid #2C3342; box-shadow: 0 7px 0 #14181F; color: var(--ink-3); font-size: 22px; }
+.ex-node.current { width: 78px; height: 78px; background: var(--lime); border: none; box-shadow: 0 8px 0 var(--lime-sh); color: var(--on-lime); font-size: 28px; }
+.ex-node.done { background: var(--amber); border: none; box-shadow: 0 7px 0 var(--amber-sh); color: #3A2A00; }
+.ex-node-label { font-weight: 700; font-size: 12.5px; color: var(--ink-2); }
+.ex-flag { background: var(--ink); box-shadow: 0 3px 0 #A6AEBD; border-radius: 12px; padding: 6px 14px;
+  font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 13px; color: var(--bg); }
+
+/* ---------- 8. Responsivo da tela Trilha (layout desktop 2 colunas) ----------
+   Marcador ".ex-desktop-cols" é um <div> vazio renderizado imediatamente
+   antes do st.columns([2,1]) da trilha (ver _renderizar_mapa_trilha em
+   cartao_resposta.py) -- os dois viram irmãos diretos no DOM do
+   Streamlit, o que deixa o combinador "+" mirar SÓ aquele
+   stHorizontalBlock específico, sem afetar st.columns(...) de outras
+   páginas (ex: Simulados já feitos também usa 2 colunas). NÃO
+   verificado visualmente nesta sessão (sem acesso à extensão do
+   Chrome) -- os test-ids abaixo são os do Streamlit 1.61 instalado
+   (requirements.txt), confirme numa tela estreita de verdade. */
+@media (max-width: 1099px) {
+  .ex-desktop-cols + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:nth-of-type(2) {
+    display: none;
+  }
+}
+@media (max-width: 759px) {
+  .ex-desktop-cols + div[data-testid="stHorizontalBlock"] { flex-direction: column; }
+  .ex-desktop-cols + div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
+    width: 100% !important; flex: 1 1 100% !important;
+  }
+}
