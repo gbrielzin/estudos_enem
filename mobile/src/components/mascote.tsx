@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 
 export type MascoteMood = 'happy' | 'cheer' | 'sad' | 'sleep';
+export type MascotePattern = 'solido' | 'tuxedo' | 'patches';
 
 export interface MascoteProps {
   color?: string;
@@ -9,6 +10,16 @@ export interface MascoteProps {
   beak?: string;
   mood?: MascoteMood;
   size?: number;
+  /** Pelagem: 'solido' (padrão) = cor única; 'tuxedo' tinge as orelhas
+   * e um "capuz" no topo do corpo com `patch`; 'patches' espalha duas
+   * manchas assimétricas de `patch` pelo corpo. Ver docstring da seção
+   * "Variações" abaixo pro porquê disso existir. */
+  pattern?: MascotePattern;
+  /** Cor da mancha/capuz -- só importa quando `pattern` não é 'solido'. */
+  patch?: string;
+  /** Cor de uma coleira opcional (banda + fivela no pescoço). Sem
+   * relação com `pattern` -- pode combinar os dois. */
+  collar?: string;
 }
 
 /**
@@ -54,6 +65,21 @@ export interface MascoteProps {
  * da versão atual em vez de reaproveitar suposição antiga, foi
  * exatamente isso que essa checagem evitou aqui). Usado direto no
  * corpo, na cauda e no contorno interno do olho.
+ *
+ * Variações (`pattern`/`patch`/`collar`) -- pedido explícito do
+ * usuário: conforme a matéria/tela muda, o gatinho muda de "roupa"
+ * junto (ex: um Pipoco cor de areia com `pattern="patches"` na trilha
+ * de uma matéria, um tuxedo cinza na tela de Apresentação -- ver
+ * trilha-path.tsx e app/index.tsx). Vem do projeto de design do
+ * usuário (Mascote.dc.html, atributos `pattern`/`patch`/`scene` do
+ * componente `dc-import`) -- só que `dc-import` é um custom element
+ * fechado da própria ferramenta de design, sem HTML/CSS inspecionável
+ * por trás, então isto aqui é uma aproximação fiel ao NOME de cada
+ * variação (tuxedo = capuz escuro sobre corpo claro, patches = manchas
+ * assimétricas), não um pixel-a-pixel do original. `scene` (o terceiro
+ * atributo que aparece no design, ex: "estudo"/"fogueira") não virou
+ * prop -- é só um nome de contexto pro humano, a aparência real já
+ * está inteira em `color`/`pattern`/`patch`.
  */
 export function Mascote({
   color = '#FDFEFF',
@@ -61,6 +87,9 @@ export function Mascote({
   beak: nose = '#FF8FA3',
   mood = 'happy',
   size = 1,
+  pattern = 'solido',
+  patch,
+  collar,
 }: MascoteProps) {
   const tilt = mood === 'cheer' ? '-7deg' : mood === 'sad' ? '5deg' : '0deg';
   const pupilY = mood === 'sad' ? 4 : mood === 'cheer' ? -2 : 0;
@@ -70,6 +99,7 @@ export function Mascote({
   const earTilt = mood === 'sad' ? 32 : mood === 'cheer' ? -4 : 7;
   const tailTop = mood === 'cheer' ? 40 : 62;
   const tailRotate = mood === 'cheer' ? '-54deg' : '-16deg';
+  const corOrelha = pattern === 'tuxedo' && patch ? patch : color;
 
   return (
     <View style={{ width: 104, height: 104, transform: [{ scale: size }, { rotate: tilt }] }}>
@@ -82,9 +112,11 @@ export function Mascote({
         }}
       />
 
-      {/* orelhas triangulares (truque de borda, ver docstring) */}
-      <Orelha lado="left" tilt={earTilt} color={color} nose={nose} />
-      <Orelha lado="right" tilt={earTilt} color={color} nose={nose} />
+      {/* orelhas triangulares (truque de borda, ver docstring) -- tuxedo
+          tinge a orelha inteira com `patch` (o "capuz" continua até a
+          ponta da orelha), patches deixa a orelha na cor base. */}
+      <Orelha lado="left" tilt={earTilt} color={corOrelha} nose={nose} />
+      <Orelha lado="right" tilt={earTilt} color={corOrelha} nose={nose} />
 
       {/* corpo -- 88x84, raio aproximado do valor elíptico original, sombra sólida embaixo */}
       <View
@@ -94,8 +126,28 @@ export function Mascote({
           borderBottomLeftRadius: 39, borderBottomRightRadius: 39,
           backgroundColor: color, boxShadow: `0 8px 0 ${shadow}`, overflow: 'hidden',
         }}>
+        {pattern === 'tuxedo' && patch && (
+          // "Capuz": cobre só o terço de cima do corpo, mesmo raio do
+          // corpo em cima -- lê como uma pelagem escura na cabeça/costas
+          // sobre um corpo claro, sem precisar de clip-path (RN não tem).
+          <View style={{ position: 'absolute', left: 0, top: 0, right: 0, height: 32, backgroundColor: patch, borderTopLeftRadius: 46, borderTopRightRadius: 46 }} />
+        )}
+        {pattern === 'patches' && patch && (
+          <>
+            <View style={{ position: 'absolute', left: -6, top: -4, width: 34, height: 30, borderRadius: 16, backgroundColor: patch, transform: [{ rotate: '-12deg' }] }} />
+            <View style={{ position: 'absolute', right: -8, bottom: -6, width: 30, height: 26, borderRadius: 14, backgroundColor: patch, transform: [{ rotate: '10deg' }] }} />
+          </>
+        )}
         <View style={{ position: 'absolute', left: 18, top: 26, width: 52, height: 38, borderRadius: 26, backgroundColor: 'rgba(255,255,255,0.5)' }} />
       </View>
+
+      {collar && (
+        // Coleira -- banda + fivela, INDEPENDENTE de pattern (não fica
+        // clipada pelo overflow do corpo, fica por cima, no colo).
+        <View style={{ position: 'absolute', left: 22, top: 60, width: 60, height: 11, borderRadius: 6, backgroundColor: collar, zIndex: 2 }}>
+          <View style={{ position: 'absolute', left: '50%', top: 1.5, marginLeft: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.85)' }} />
+        </View>
+      )}
 
       {/* olhos -- contorno via boxShadow inset em vez de borda dupla */}
       <Olho lado="left" fechado={fechado} pupilY={pupilY} pupilWidth={pupilWidth} corPalpebra={color} corSombraPalpebra={shadow} alturaPalpebra={alturaPalpebra} />

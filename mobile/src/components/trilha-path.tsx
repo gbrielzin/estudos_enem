@@ -4,7 +4,8 @@ import { Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimension
 import Svg, { Path } from 'react-native-svg';
 
 import { Mascote } from '@/components/mascote';
-import { Brand, Fontes } from '@/constants/brand';
+import { Brand, Fontes, RaioCard } from '@/constants/brand';
+import { ResumoTrilha } from '@/constants/resumos-trilha';
 import { Spacing } from '@/constants/theme';
 import { NoTrilha } from '@/lib/api';
 
@@ -17,7 +18,9 @@ const PADDING_TOPO = 50;
 
 interface TrilhaPathProps {
   trilha: NoTrilha[];
+  resumo?: ResumoTrilha;
   onAbrirNo: (no: NoTrilha) => void;
+  onAbrirResumo?: () => void;
 }
 
 /**
@@ -32,7 +35,7 @@ interface TrilhaPathProps {
  * Mascote.dc.html) flutuando ao lado -- substituindo o placeholder
  * anterior.
  */
-export function TrilhaPath({ trilha, onAbrirNo }: TrilhaPathProps) {
+export function TrilhaPath({ trilha, resumo, onAbrirNo, onAbrirResumo }: TrilhaPathProps) {
   const { width: larguraTela } = useWindowDimensions();
   const larguraContainer = larguraTela - Spacing.four * 2;
   const centroX = larguraContainer / 2;
@@ -59,40 +62,89 @@ export function TrilhaPath({ trilha, onAbrirNo }: TrilhaPathProps) {
   const pontoMascote = pontos[indiceMascote];
 
   return (
-    <View style={[styles.container, { width: larguraContainer, height: alturaTotal }]}>
-      <Svg style={StyleSheet.absoluteFill} width={larguraContainer} height={alturaTotal}>
-        <Path d={caminhoD} stroke={Brand.bordaForte} strokeWidth={12} fill="none" strokeLinecap="round" strokeDasharray="1 26" />
-      </Svg>
+    <View style={{ width: larguraContainer, alignSelf: 'center', gap: 14 }}>
+      {resumo && onAbrirResumo && <CardApresentacao resumo={resumo} onPress={onAbrirResumo} />}
 
-      {pontoMascote && (
-        <View style={[styles.mascoteSlot, { left: Math.min(larguraContainer - 82, pontoMascote.x + 70), top: pontoMascote.y - 30 }]}>
-          <Mascote color={Brand.branco} shadow={Brand.brancoEscuro} beak={Brand.rosa} mood="happy" size={0.78} />
-          <Text style={styles.mascoteTag}>Pipo</Text>
-        </View>
-      )}
+      <View style={[styles.container, { width: larguraContainer, height: alturaTotal }]}>
+        {/* pointerEvents="none": decorativo, cobre o container inteiro
+            (StyleSheet.absoluteFill) por cima dos nós -- sem isto, o
+            <svg> real que react-native-web renderiza intercepta o
+            clique no react-native-web (mesmo com os nós vindo depois
+            no JSX), suspeito nº1 do "os botões não vão no site, só no
+            celular" (RN nativo não tem esse problema de hit-testing de
+            DOM, só a versão web). */}
+        <Svg style={StyleSheet.absoluteFill} width={larguraContainer} height={alturaTotal} pointerEvents="none">
+          <Path d={caminhoD} stroke={Brand.bordaForte} strokeWidth={12} fill="none" strokeLinecap="round" strokeDasharray="1 26" />
+        </Svg>
 
-      {trilha.map((no, i) => {
-        const { x, y } = pontos[i];
-        const ehAtual = i === indiceAtual;
-        const diametro = ehAtual ? DIAMETRO_NO_ATUAL : DIAMETRO_NO_PADRAO;
-        const jaComecou = no.questoes.some((q) => q.ja_respondida);
-        const rotuloAtual = no.concluido ? 'REPETIR' : jaComecou ? 'CONTINUAR' : 'COMEÇAR';
-
-        return (
-          <View key={no.indice} style={[styles.no, { left: x - diametro / 2, top: y - diametro / 2, width: diametro }]}>
-            {ehAtual && (
-              <View style={styles.flag}>
-                <Text style={styles.flagTexto}>{rotuloAtual}</Text>
-              </View>
-            )}
-            <NoCirculo no={no} ehAtual={ehAtual} diametro={diametro} onPress={() => onAbrirNo(no)} />
-            <Text style={styles.legenda}>
-              Nó {no.indice + 1} · {no.questoes.length}q
-            </Text>
+        {pontoMascote && (
+          <View style={[styles.mascoteSlot, { left: Math.min(larguraContainer - 82, pontoMascote.x + 70), top: pontoMascote.y - 30 }]}>
+            {/* Pipoco "areia" com manchas -- variação da tela Trilha do
+                projeto de design (dc-import scene="fogueira" pattern=
+                "patches"), substituindo o Pipoco branco liso genérico
+                daqui. Pedido explícito do usuário: o gatinho muda de
+                cara conforme a matéria/tela, não é sempre o mesmo. */}
+            <Mascote
+              color={Brand.gatoAreia}
+              shadow={Brand.gatoAreiaSombra}
+              beak={Brand.rosa}
+              mood="happy"
+              size={0.78}
+              pattern="patches"
+              patch={Brand.gatoAreiaMancha}
+            />
+            <Text style={styles.mascoteTag}>Pipoco</Text>
           </View>
-        );
-      })}
+        )}
+
+        {trilha.map((no, i) => {
+          const { x, y } = pontos[i];
+          const ehAtual = i === indiceAtual;
+          const diametro = ehAtual ? DIAMETRO_NO_ATUAL : DIAMETRO_NO_PADRAO;
+          const jaComecou = no.questoes.some((q) => q.ja_respondida);
+          const rotuloAtual = no.concluido ? 'REPETIR' : jaComecou ? 'CONTINUAR' : 'COMEÇAR';
+
+          return (
+            <View key={no.indice} style={[styles.no, { left: x - diametro / 2, top: y - diametro / 2, width: diametro }]}>
+              {ehAtual && (
+                <View style={styles.flag}>
+                  <Text style={styles.flagTexto}>{rotuloAtual}</Text>
+                </View>
+              )}
+              <NoCirculo no={no} ehAtual={ehAtual} diametro={diametro} onPress={() => onAbrirNo(no)} />
+            </View>
+          );
+        })}
+      </View>
     </View>
+  );
+}
+
+/**
+ * Card "Apresentação" -- resumo de conceitos que abre a trilha ANTES
+ * do Nó 1 (ver constants/resumos-trilha.ts pro porquê). Visual
+ * importado do projeto de design, tela "Trilha": card roxo-escuro
+ * full-width com ícone de livro, acima da serpentina, distinto de
+ * propósito dos nós circulares de questão -- não é um nó de prática,
+ * é uma parada de leitura.
+ */
+function CardApresentacao({ resumo, onPress }: { resumo: ResumoTrilha; onPress: () => void }) {
+  return (
+    <Pressable style={styles.cardApresentacao} onPress={onPress}>
+      <View style={styles.cardApresentacaoIcone}>
+        <Ionicons name="book" size={22} color={Brand.roxoClaro} />
+      </View>
+      <View style={styles.cardApresentacaoTextos}>
+        <Text style={styles.cardApresentacaoRotulo}>
+          APRESENTAÇÃO · {resumo.minutos} MIN
+        </Text>
+        <Text style={styles.cardApresentacaoTitulo}>{resumo.titulo}</Text>
+        <Text style={styles.cardApresentacaoSubtitulo}>Bata o olho antes de começar os nós</Text>
+      </View>
+      <View style={styles.cardApresentacaoBotao}>
+        <Text style={styles.cardApresentacaoBotaoTexto}>VER</Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -161,12 +213,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Brand.bordaForte,
   },
-  legenda: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 12,
-    color: Brand.textoSuave,
-    marginTop: ALTURA_SOMBRA,
-  },
   flag: {
     backgroundColor: Brand.texto,
     paddingHorizontal: 14,
@@ -194,5 +240,56 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
+  },
+  cardApresentacao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Brand.roxoBgEscuro,
+    borderWidth: 1.5,
+    borderColor: Brand.roxoBordaEscura,
+    borderRadius: RaioCard,
+    padding: 14,
+  },
+  cardApresentacaoIcone: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: Brand.roxo,
+    boxShadow: `0 4px 0 ${Brand.roxoEscuro}`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardApresentacaoTextos: {
+    flex: 1,
+    gap: 2,
+  },
+  cardApresentacaoRotulo: {
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: Brand.roxoTextoEscuro,
+  },
+  cardApresentacaoTitulo: {
+    fontFamily: Fontes.titulo,
+    fontSize: 17,
+    color: Brand.texto,
+  },
+  cardApresentacaoSubtitulo: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 11.5,
+    color: Brand.textoSuave,
+  },
+  cardApresentacaoBotao: {
+    backgroundColor: Brand.texto,
+    boxShadow: '0 3px 0 #A6AEBD',
+    borderRadius: 11,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+  },
+  cardApresentacaoBotaoTexto: {
+    fontFamily: Fontes.titulo,
+    fontSize: 12,
+    color: Brand.bg,
   },
 });
