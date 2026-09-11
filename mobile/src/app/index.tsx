@@ -9,6 +9,7 @@ import { Seletor } from '@/components/seletor';
 import { StatusHeader } from '@/components/status-header';
 import { TrilhaPath } from '@/components/trilha-path';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
+import { RESUMOS_TRILHA, ResumoTrilha, TopicoResumo } from '@/constants/resumos-trilha';
 import {
   GrandeArea,
   MissaoDoDia,
@@ -18,6 +19,7 @@ import {
   Streak,
   getFontesBancoPratica,
   getMaterias,
+  getMateriasComBancoPratica,
   getMissoesDoDia,
   getNivel,
   getStreak,
@@ -33,7 +35,7 @@ const ROTULO_AREA: Record<GrandeArea, string> = {
 const AREAS: GrandeArea[] = ['matematica', 'ciencias_natureza'];
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 
-type Tela = { tipo: 'mapa' } | { tipo: 'exercicio'; noIndice: number; posicao: number };
+type Tela = { tipo: 'mapa' } | { tipo: 'apresentacao' } | { tipo: 'exercicio'; noIndice: number; posicao: number };
 
 /**
  * Fase 1 do plano de app nativo: Banco de Questões / trilha estilo
@@ -69,6 +71,18 @@ export default function TrilhaScreen() {
   // reabrir o seletor de Matéria sem precisar rolar a tela até o topo.
   const [abrirMateriaSinal, setAbrirMateriaSinal] = useState(0);
 
+  // "Home" (cabeçalho genérico + status + missões + seletores de Área/
+  // Matéria/Fonte) só aparece quando pedida -- pedido explícito do
+  // usuário, mesma mudança que a versão Streamlit já tinha
+  // (_renderizar_tela_trilha entra direto na trilha, Home só existe
+  // pra quem quer trocar de matéria via "⬅️ Trocar matéria"). Aqui é
+  // um toggle em vez de duas telas separadas porque tudo já vive no
+  // mesmo componente. Começa false: o efeito de [area] abaixo tenta
+  // escolher uma matéria padrão sozinho: só vira true se não tiver
+  // nenhuma matéria pra escolher, ou quando o usuário toca no banner
+  // "trocar matéria" da trilha.
+  const [mostrarHome, setMostrarHome] = useState(false);
+
   // Estatísticas da rodada atual do nó (tela "Resultado") -- zeradas
   // toda vez que um nó é aberto, acumuladas conforme cada questão é
   // respondida. XP mostrado usa a MESMA fórmula de
@@ -89,9 +103,25 @@ export default function TrilhaScreen() {
   useEffect(() => {
     setMateria(null);
     setTrilha(null);
-    getMaterias(area)
-      .then(setMaterias)
-      .catch((e) => setErro(e instanceof Error ? e.message : String(e)));
+    // Mesmo padrão de db._padrao_materia_banco_pratica() (Streamlit):
+    // prefere a matéria com MAIS questão de banco de prática já
+    // cadastrada, não a 1a em ordem alfabética da taxonomia inteira
+    // (a maioria sem nenhuma questão ainda) -- é o que permite entrar
+    // direto na trilha sem escolha manual.
+    Promise.all([getMaterias(area), getMateriasComBancoPratica(area)])
+      .then(([todas, comPratica]) => {
+        setMaterias(todas);
+        const padrao = comPratica[0] ?? todas[0] ?? null;
+        if (padrao) {
+          setMateria(padrao);
+        } else {
+          setMostrarHome(true);
+        }
+      })
+      .catch((e) => {
+        setErro(e instanceof Error ? e.message : String(e));
+        setMostrarHome(true);
+      });
   }, [area]);
 
   useEffect(() => {
@@ -107,6 +137,7 @@ export default function TrilhaScreen() {
     try {
       const dados = await getTrilha(area, materia, fonte);
       setTrilha(dados);
+      if (dados.length > 0) setMostrarHome(false);
     } catch (e) {
       setErro(e instanceof Error ? e.message : String(e));
       setTrilha(null);
@@ -166,75 +197,81 @@ export default function TrilhaScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.headerRow}>
-            <View style={styles.appIcone}>
-              <Ionicons name="sparkles" size={20} color={Brand.roxoClaro} />
-            </View>
-            <Text style={styles.appTitulo}>Banco de Questões</Text>
-            <View style={styles.gearBtn}>
-              <Feather name="settings" size={18} color={Brand.textoApagado} />
-            </View>
-          </View>
-
-          {/* Indicador de "curso" -- placeholder pro dia em que existir
-              mais de um vestibular pra escolher (mesmo espaço que o
-              Duolingo usa pra bandeira do idioma). Sem lógica de troca
-              por enquanto, só o elemento visual no lugar certo. */}
-          <View style={styles.cursoPill}>
-            <Text style={styles.cursoPillTexto}>🎓 ENEM</Text>
-          </View>
-
-          <StatusHeader streak={streak} nivel={nivel} />
-
-          <MissoesCard missoes={missoes} />
-
           {erro && (
             <View style={styles.avisoErro}>
               <Text style={styles.avisoErroTexto}>⚠️ {erro}</Text>
             </View>
           )}
 
-          <Seletor
-            rotulo="Área"
-            valor={area}
-            opcoes={AREAS.map((a) => ({ valor: a, texto: ROTULO_AREA[a] }))}
-            aoSelecionar={(v) => setArea(v as GrandeArea)}
-            icone="crosshair"
-            corIcone={Brand.azul}
-            fundoIcone={Brand.azulBg}
-          />
-          <Seletor
-            rotulo="Matéria"
-            valor={materia}
-            placeholder="Escolha uma matéria"
-            opcoes={materias.map((m) => ({ valor: m, texto: m }))}
-            aoSelecionar={setMateria}
-            icone="file-text"
-            corIcone={Brand.teal}
-            fundoIcone={Brand.tealBg}
-            abrirSinal={abrirMateriaSinal}
-          />
-          {fontes.length > 0 && (
-            <Seletor
-              rotulo="Fonte"
-              valor={fonte}
-              placeholder="Todas"
-              opcoes={[{ valor: '', texto: 'Todas' }, ...fontes.map((f) => ({ valor: f, texto: f }))]}
-              aoSelecionar={(v) => setFonte(v || null)}
-              icone="circle"
-              corIcone={Brand.roxoClaro}
-              fundoIcone={Brand.roxoBg}
-            />
+          {mostrarHome && (
+            <>
+              <View style={styles.headerRow}>
+                <View style={styles.appIcone}>
+                  <Ionicons name="sparkles" size={20} color={Brand.roxoClaro} />
+                </View>
+                <Text style={styles.appTitulo}>Banco de Questões</Text>
+                <View style={styles.gearBtn}>
+                  <Feather name="settings" size={18} color={Brand.textoApagado} />
+                </View>
+              </View>
+
+              {/* Indicador de "curso" -- placeholder pro dia em que existir
+                  mais de um vestibular pra escolher (mesmo espaço que o
+                  Duolingo usa pra bandeira do idioma). Sem lógica de troca
+                  por enquanto, só o elemento visual no lugar certo. */}
+              <View style={styles.cursoPill}>
+                <Text style={styles.cursoPillTexto}>🎓 ENEM</Text>
+              </View>
+
+              <StatusHeader streak={streak} nivel={nivel} />
+
+              <MissoesCard missoes={missoes} />
+
+              <Seletor
+                rotulo="Área"
+                valor={area}
+                opcoes={AREAS.map((a) => ({ valor: a, texto: ROTULO_AREA[a] }))}
+                aoSelecionar={(v) => setArea(v as GrandeArea)}
+                icone="crosshair"
+                corIcone={Brand.azul}
+                fundoIcone={Brand.azulBg}
+              />
+              <Seletor
+                rotulo="Matéria"
+                valor={materia}
+                placeholder="Escolha uma matéria"
+                opcoes={materias.map((m) => ({ valor: m, texto: m }))}
+                aoSelecionar={setMateria}
+                icone="file-text"
+                corIcone={Brand.teal}
+                fundoIcone={Brand.tealBg}
+                abrirSinal={abrirMateriaSinal}
+              />
+              {fontes.length > 0 && (
+                <Seletor
+                  rotulo="Fonte"
+                  valor={fonte}
+                  placeholder="Todas"
+                  opcoes={[{ valor: '', texto: 'Todas' }, ...fontes.map((f) => ({ valor: f, texto: f }))]}
+                  aoSelecionar={(v) => setFonte(v || null)}
+                  icone="circle"
+                  corIcone={Brand.roxoClaro}
+                  fundoIcone={Brand.roxoBg}
+                />
+              )}
+
+              {carregando && <ActivityIndicator style={styles.espaco} color={Brand.verde} />}
+
+              {!carregando && materia && trilha !== null && trilha.length === 0 && (
+                <Text style={[styles.textoSuave, styles.espaco]}>
+                  Nenhuma questão do banco de prática ainda em &quot;{materia}&quot;. Adicione em Admin → 🧠 Banco
+                  de prática (no app web).
+                </Text>
+              )}
+            </>
           )}
 
-          {carregando && <ActivityIndicator style={styles.espaco} color={Brand.verde} />}
-
-          {!carregando && materia && trilha !== null && trilha.length === 0 && (
-            <Text style={[styles.textoSuave, styles.espaco]}>
-              Nenhuma questão do banco de prática ainda em &quot;{materia}&quot;. Adicione em Admin → 🧠 Banco
-              de prática (no app web).
-            </Text>
-          )}
+          {!mostrarHome && carregando && <ActivityIndicator style={styles.espaco} color={Brand.verde} />}
 
           {trilha && trilha.length > 0 && tela.tipo === 'mapa' && (
             <View style={styles.espaco}>
@@ -242,8 +279,16 @@ export default function TrilhaScreen() {
                   projeto de design: reforça o dropdown "Matéria" de cima
                   em vez de substituí-lo -- toca aqui (ou no círculo) e
                   reabre o mesmo seletor, sem precisar rolar a tela pro
-                  topo. */}
-              <Pressable style={styles.bannerMateria} onPress={() => setAbrirMateriaSinal((n) => n + 1)}>
+                  topo. Também é o único jeito de voltar pra Home agora
+                  que ela não é mais a tela inicial (pedido explícito do
+                  usuário, mesma mudança que a versão Streamlit já
+                  tinha). */}
+              <Pressable
+                style={styles.bannerMateria}
+                onPress={() => {
+                  setMostrarHome(true);
+                  setAbrirMateriaSinal((n) => n + 1);
+                }}>
                 <View style={styles.bannerMateriaTextos}>
                   <Text style={styles.bannerMateriaLabel}>{ROTULO_AREA[area].toUpperCase()}</Text>
                   <Text style={styles.bannerMateriaTexto}>{materia}</Text>
@@ -255,8 +300,22 @@ export default function TrilhaScreen() {
               <Text style={styles.progressoTexto}>
                 {trilha.filter((n) => n.concluido).length} de {trilha.length} nó(s) concluído(s)
               </Text>
-              <TrilhaPath trilha={trilha} onAbrirNo={abrirNo} />
+              <TrilhaPath
+                trilha={trilha}
+                resumo={materia ? RESUMOS_TRILHA[materia] : undefined}
+                onAbrirNo={abrirNo}
+                onAbrirResumo={() => setTela({ tipo: 'apresentacao' })}
+              />
             </View>
+          )}
+
+          {trilha && trilha.length > 0 && tela.tipo === 'apresentacao' && materia && RESUMOS_TRILHA[materia] && (
+            <TelaApresentacao
+              resumo={RESUMOS_TRILHA[materia]}
+              materia={materia}
+              onComecar={() => abrirNo(trilha[0])}
+              onVoltar={() => setTela({ tipo: 'mapa' })}
+            />
           )}
 
           {trilha && trilha.length > 0 && tela.tipo === 'exercicio' && (
@@ -360,6 +419,106 @@ function formatarTempo(ms: number): string {
   return `${minutos}:${String(segundos).padStart(2, '0')}`;
 }
 
+const CORES_FREQUENCIA: Record<TopicoResumo['frequencia'], { bgIcone: string; cor: string }> = {
+  alta: { bgIcone: '#1F2937', cor: Brand.verde },
+  media: { bgIcone: Brand.ouroBg, cor: Brand.ouro },
+  baixa: { bgIcone: Brand.bgCardEscuro, cor: Brand.textoSuave },
+};
+
+/**
+ * Tela "Apresentação" -- resumo de conceitos que abre a trilha ANTES
+ * do Nó 1, pedido explícito do usuário: dar uma base pro aluno antes
+ * de jogar ele direto numa "porrada de questão" -- ele lê isto, ganha
+ * o vocabulário mínimo (ex: "índice de refração", "Lei de Snell"), e
+ * só DEPOIS entra na repetição de verdade dos nós, que continua sendo
+ * o grosso do trabalho (a apresentação é 1 tela, não substitui a
+ * prática). Conteúdo vem de RESUMOS_TRILHA (constants/resumos-trilha.ts)
+ * -- curado à mão por matéria, não derivado do banco. Visual importado
+ * do projeto de design do usuário (App ENEM.dc.html, tela
+ * "Apresentação").
+ */
+function TelaApresentacao({
+  resumo,
+  materia,
+  onComecar,
+  onVoltar,
+}: {
+  resumo: ResumoTrilha;
+  materia: string;
+  onComecar: () => void;
+  onVoltar: () => void;
+}) {
+  return (
+    <View style={styles.espaco}>
+      <View style={styles.apresentacaoPainel}>
+        <View style={styles.apresentacaoHeaderRow}>
+          <Pressable style={styles.apresentacaoVoltarBtn} onPress={onVoltar}>
+            <Feather name="chevron-left" size={18} color={Brand.roxoTextoEscuro} />
+          </Pressable>
+          <Text style={styles.apresentacaoRotulo}>
+            APRESENTAÇÃO · {materia.toUpperCase()}
+          </Text>
+          <View style={styles.apresentacaoMinutosPill}>
+            <Text style={styles.apresentacaoMinutosTexto}>{resumo.minutos} min</Text>
+          </View>
+        </View>
+
+        <View style={styles.apresentacaoTituloRow}>
+          <View style={styles.apresentacaoTituloTextos}>
+            <Text style={styles.apresentacaoTitulo}>{resumo.titulo}</Text>
+            <Text style={styles.apresentacaoSubtitulo}>{resumo.subtitulo}</Text>
+          </View>
+          {/* Pipoco de tuxedo -- variação da tela Apresentação do
+              projeto de design (dc-import scene="estudo" pattern=
+              "tuxedo"), corpo continua branco, só o "capuz" muda. */}
+          <Mascote
+            color={Brand.branco}
+            shadow={Brand.brancoEscuro}
+            beak={Brand.rosa}
+            mood="happy"
+            size={0.66}
+            pattern="tuxedo"
+            patch={Brand.mascoteTuxedoMancha}
+          />
+        </View>
+      </View>
+
+      <View style={styles.apresentacaoSecaoTitulo}>
+        <Text style={styles.apresentacaoSecaoTexto}>O QUE MAIS CAI NA PROVA</Text>
+        <View style={styles.apresentacaoSecaoLinha} />
+      </View>
+
+      {resumo.topicos.map((topico) => {
+        const cores = CORES_FREQUENCIA[topico.frequencia];
+        return (
+          <View key={topico.titulo} style={styles.apresentacaoTopicoCard}>
+            <View style={[styles.apresentacaoTopicoIcone, { backgroundColor: cores.bgIcone }]}>
+              <Ionicons name="ellipse" size={12} color={cores.cor} />
+            </View>
+            <View style={styles.apresentacaoTopicoTextos}>
+              <Text style={styles.apresentacaoTopicoTitulo}>{topico.titulo}</Text>
+              <Text style={styles.textoSuave}>{topico.descricao}</Text>
+            </View>
+            <Text style={[styles.apresentacaoTopicoFrequencia, { color: cores.cor }]}>{topico.frequencia}</Text>
+          </View>
+        );
+      })}
+
+      <View style={styles.apresentacaoEstatistica}>
+        <Text style={styles.apresentacaoEstatisticaNumero}>{resumo.estatisticaNumero}</Text>
+        <Text style={styles.apresentacaoEstatisticaTexto}>{resumo.estatisticaTexto}</Text>
+      </View>
+
+      <Pressable style={styles.botao} onPress={onComecar}>
+        <Text style={styles.botaoTexto}>Entendi, começar o Nó 1</Text>
+      </Pressable>
+      <Pressable style={styles.apresentacaoReverLink} onPress={onVoltar}>
+        <Text style={styles.apresentacaoReverTexto}>Rever depois</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 /**
  * Tela "Resultado" -- importada do projeto de design do usuário
  * (App ENEM.dc.html, tela "Resultado"): mascote comemorando, 3
@@ -429,7 +588,7 @@ function TelaResultado({
                 {streak.atual} dia{streak.atual === 1 ? '' : 's'}
               </Text>
             </View>
-            <Text style={styles.textoSuave}>Volte amanhã para manter a sequência. Pipo fica de olho.</Text>
+            <Text style={styles.textoSuave}>Volte amanhã para manter a sequência. Pipoco fica de olho.</Text>
           </View>
         )}
 
@@ -806,5 +965,147 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.titulo,
     fontSize: 15,
     color: '#10230A',
+  },
+  apresentacaoPainel: {
+    backgroundColor: Brand.roxoBgEscuro,
+    borderWidth: 1.5,
+    borderColor: Brand.roxoBordaEscura,
+    borderRadius: RaioCard,
+    padding: 16,
+    gap: 14,
+  },
+  apresentacaoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  apresentacaoVoltarBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 11,
+    backgroundColor: Brand.roxoBg,
+    borderWidth: 1,
+    borderColor: Brand.roxoBordaEscura,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  apresentacaoRotulo: {
+    flex: 1,
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: Brand.roxoTextoEscuro,
+  },
+  apresentacaoMinutosPill: {
+    backgroundColor: Brand.roxoBg,
+    borderWidth: 1,
+    borderColor: Brand.roxoBordaEscura,
+    borderRadius: 999,
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+  },
+  apresentacaoMinutosTexto: {
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 12,
+    color: Brand.roxoTextoEscuro,
+  },
+  apresentacaoTituloRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  apresentacaoTituloTextos: {
+    flex: 1,
+    gap: 5,
+  },
+  apresentacaoTitulo: {
+    fontFamily: Fontes.titulo,
+    fontSize: 24,
+    color: Brand.texto,
+    lineHeight: 28,
+  },
+  apresentacaoSubtitulo: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 13,
+    color: Brand.roxoTextoSuave,
+    lineHeight: 18,
+  },
+  apresentacaoSecaoTitulo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  apresentacaoSecaoTexto: {
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    color: Brand.textoApagado,
+  },
+  apresentacaoSecaoLinha: {
+    flex: 1,
+    height: 1,
+    backgroundColor: Brand.borda,
+  },
+  apresentacaoTopicoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Brand.bgCard,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    borderRadius: 18,
+    padding: 13,
+  },
+  apresentacaoTopicoIcone: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  apresentacaoTopicoTextos: {
+    flex: 1,
+    gap: 2,
+  },
+  apresentacaoTopicoTitulo: {
+    fontFamily: Fontes.titulo,
+    fontSize: 15,
+    color: Brand.texto,
+  },
+  apresentacaoTopicoFrequencia: {
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 12.5,
+  },
+  apresentacaoEstatistica: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: Brand.bgCardEscuro,
+    borderWidth: 1,
+    borderColor: Brand.bordaForte,
+    borderStyle: 'dashed',
+    borderRadius: 18,
+    padding: 14,
+  },
+  apresentacaoEstatisticaNumero: {
+    fontFamily: Fontes.titulo,
+    fontSize: 30,
+    color: Brand.roxo,
+  },
+  apresentacaoEstatisticaTexto: {
+    flex: 1,
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 12.5,
+    color: Brand.textoSuave,
+    lineHeight: 18,
+  },
+  apresentacaoReverLink: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  apresentacaoReverTexto: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 13,
+    color: Brand.textoApagado,
   },
 });

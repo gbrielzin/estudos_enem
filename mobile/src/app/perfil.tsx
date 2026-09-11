@@ -90,37 +90,12 @@ export default function PerfilScreen() {
                 </View>
               </View>
 
-              <View style={styles.ligaCard}>
-                <View style={styles.ligaHeader}>
-                  <Feather name="shield" size={18} color={Brand.azul} />
-                  <View style={styles.ligaHeaderTextos}>
-                    <Text style={styles.ligaTitulo}>Liga Diamante</Text>
-                    <Text style={styles.textoSuave}>Ilustrativo por enquanto — vira liga de verdade com mais alunos</Text>
-                  </View>
-                </View>
-                <View style={styles.ligaLinha}>
-                  <Text style={styles.ligaPosicao}>1</Text>
-                  <Text style={styles.ligaNome}>Marina S.</Text>
-                  <Text style={styles.textoSuave}>6120</Text>
-                </View>
-                <View style={styles.ligaLinha}>
-                  <Text style={styles.ligaPosicao}>2</Text>
-                  <Text style={styles.ligaNome}>Caio R.</Text>
-                  <Text style={styles.textoSuave}>5480</Text>
-                </View>
-                <View style={[styles.ligaLinha, styles.ligaLinhaVoce]}>
-                  <Text style={[styles.ligaPosicao, { color: '#0D2705' }]}>3</Text>
-                  <Text style={[styles.ligaNome, { color: '#0D2705' }]}>Você</Text>
-                  <Text style={{ fontFamily: Fontes.corpoExtraNegrito, color: '#0D2705' }}>{nivel!.xp}</Text>
-                </View>
-              </View>
-
               <View style={styles.mascoteCard}>
                 <Mascote color={Brand.branco} shadow={Brand.brancoEscuro} beak={Brand.rosa} mood={moodMascote} size={0.75} />
                 <Text style={styles.mascoteTexto}>
                   {moodMascote === 'sleep'
-                    ? '"Faz tempo que a gente não estuda hoje. Bora?" — Pipo'
-                    : '"Boa, sua sequência tá firme. Continua assim!" — Pipo'}
+                    ? '"Faz tempo que a gente não estuda hoje. Bora?" — Pipoco'
+                    : '"Boa, sua sequência tá firme. Continua assim!" — Pipoco'}
                 </Text>
               </View>
             </>
@@ -215,54 +190,6 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     letterSpacing: 0.5,
     color: Brand.textoApagado,
-  },
-  ligaCard: {
-    backgroundColor: Brand.bgCard,
-    borderWidth: 1,
-    borderColor: Brand.borda,
-    borderRadius: RaioCard,
-    padding: 18,
-    gap: 10,
-  },
-  ligaHeader: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 6,
-  },
-  ligaHeaderTextos: { flex: 1, gap: 2 },
-  ligaTitulo: {
-    fontFamily: Fontes.tituloSemibold,
-    fontSize: 16,
-    color: Brand.texto,
-  },
-  textoSuave: {
-    fontFamily: Fontes.corpo,
-    fontSize: 12,
-    color: Brand.textoSuave,
-  },
-  ligaLinha: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    paddingVertical: 9,
-    paddingHorizontal: 11,
-    borderRadius: 14,
-    backgroundColor: Brand.bgCardEscuro,
-  },
-  ligaLinhaVoce: {
-    backgroundColor: Brand.verde,
-  },
-  ligaPosicao: {
-    width: 20,
-    fontFamily: Fontes.titulo,
-    fontSize: 13,
-    color: Brand.textoApagado,
-  },
-  ligaNome: {
-    flex: 1,
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 14,
-    color: Brand.texto,
   },
   mascoteCard: {
     flexDirection: 'row',

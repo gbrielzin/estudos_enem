@@ -1,44 +1,43 @@
-import Feather from '@expo/vector-icons/Feather';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Tabs, TabList, TabTrigger, TabSlot } from 'expo-router/ui';
+import { View } from 'react-native';
 
-import { Brand } from '@/constants/brand';
+import { CustomTabList, ITENS_NAV, TabButton } from '@/components/tab-bar';
 
-/** Barra de abas nativa (iOS/Android) -- rebrand pra tirar o boilerplate
- * "Expo Starter" (ícones PNG genéricos, cores de constants/theme.ts) e
- * usar os tokens reais do app (constants/brand.ts) + ícones Feather via
- * NativeTabs.Trigger.VectorIcon, a mesma biblioteca já usada em
- * seletor.tsx -- API confirmada lendo
- * node_modules/expo-router/build/native-tabs/common/elements.d.ts antes
- * de escrever isto, já que unstable-native-tabs muda entre versões do
- * Expo (ver mobile/AGENTS.md). 3ª aba "Perfil" -- ver src/app/perfil.tsx. */
+/**
+ * Barra de abas nativa (iOS/Android) -- MESMA barra do site (ver
+ * components/tab-bar.tsx, extraído daqui pra ser a fonte única dos
+ * dois lugares), que por sua vez é o visual do projeto de design do
+ * usuário no Claude Design (App ENEM.dc.html, rodapé das telas do
+ * celular).
+ *
+ * Antes usava `NativeTabs` (chrome de tab bar do sistema operacional
+ * -- Material/iOS nativo) em vez da barra custom que o site já tinha
+ * -- pedido explícito do usuário: quer a MESMA barra do design no
+ * celular, não o chrome nativo do SO. `Tabs`/`TabList`/`TabTrigger`/
+ * `TabSlot` (de `expo-router/ui`, a API de tabs customizável, não a
+ * `NativeTabs` antiga) é multiplataforma de verdade -- já confirmado
+ * funcionando em app-tabs.web.tsx antes desta troca.
+ *
+ * Layout em coluna normal (TabSlot ocupa o espaço restante, a barra
+ * vem depois, sem overflow) -- diferente da 1a versão desta barra
+ * (uma pill flutuante por cima do conteúdo via position:absolute), a
+ * barra atual do design fica ENCOSTADA no fundo, sem flutuar.
+ */
 export default function AppTabs() {
   return (
-    <NativeTabs
-      backgroundColor={Brand.bgCard}
-      tintColor={Brand.roxo}
-      iconColor={Brand.textoApagado}
-      indicatorColor={Brand.roxoBg}
-      labelStyle={{ selected: { color: Brand.texto } }}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={<NativeTabs.Trigger.VectorIcon family={Feather} name="home" />}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="explore">
-        <NativeTabs.Trigger.Label>Explore</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={<NativeTabs.Trigger.VectorIcon family={Feather} name="compass" />}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="perfil">
-        <NativeTabs.Trigger.Label>Perfil</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          src={<NativeTabs.Trigger.VectorIcon family={Feather} name="user" />}
-        />
-      </NativeTabs.Trigger>
-    </NativeTabs>
+    <Tabs style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <TabSlot />
+      </View>
+      <TabList asChild>
+        <CustomTabList>
+          {ITENS_NAV.map((item) => (
+            <TabTrigger key={item.nome} name={item.nome} href={item.href} asChild>
+              <TabButton nome={item.nome} rotulo={item.rotulo} />
+            </TabTrigger>
+          ))}
+        </CustomTabList>
+      </TabList>
+    </Tabs>
   );
 }

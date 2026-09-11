@@ -127,6 +127,44 @@ def _css_widgets_nativos_claro(prefixo: str) -> str:
     color: var(--{p}ink) !important;
 }}
 [data-testid="stCheckbox"] label span:last-child {{ color: var(--{p}ink); }}
+/* stRadio: o texto de cada opção vem num <p>, não num <span> (checado
+   ao vivo no DOM -- label > span(input) + div > div > div(anel) >
+   [div(bolinha), div(texto) > p] -- por isso a regra do checkbox
+   acima, que usa `span:last-child`, nunca bateu aqui). A bolinha
+   INTERNA (marcada/desmarcada) também não vem de --tema-*: quando
+   DESMARCADA, o Streamlit pinta seu miolo com a cor de fundo do tema
+   nativo (`config.toml`'s backgroundColor, travada em modo escuro,
+   ver core/CLAUDE.md) -- no modo claro isso sobra como uma bolinha
+   quase preta sólida flutuando sobre a página agora clara. Quando
+   MARCADA já sai lima/branco (cores do primaryColor, corretas nos
+   dois temas) -- por isso só a variante `:not(:checked)` é tocada
+   aqui, pra não regredir o estado marcado. */
+[data-testid="stRadio"] label p {{ color: var(--{p}ink) !important; }}
+[data-testid="stRadio"] label:has(input:not(:checked)) > div > div > div:first-child {{
+    background: var(--{p}border-2) !important;
+}}
+[data-testid="stRadio"] label:has(input:not(:checked)) > div > div > div:first-child > div {{
+    background: var(--{p}surface) !important;
+}}
+/* st.expander: título e seta de abrir/fechar (mesma raiz de todos os
+   outros -- cor fixa vinda do config.toml nativo, nunca dos tokens
+   --tema-*), confirmado ao vivo no DOM: [data-testid="stExpander"]
+   summary * inteiro sai rgb(242,244,247) (o textColor ESCURO fixo),
+   quase ilegível sobre a página clara. */
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary * {{
+    color: var(--{p}ink) !important;
+}}
+[data-testid="stExpander"] {{
+    background: var(--{p}surface) !important;
+    border-color: var(--{p}border) !important;
+}}
+/* st.caption -- mesmo problema de cor fixa, confirmado ao vivo
+   (stCaptionContainer p saía rgb(242,244,247)). ink-3 (não ink puro)
+   de propósito: caption já É o texto secundário/discreto da página em
+   ambos os temas, mesmo papel visual que teria no escuro. */
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] * {{
+    color: var(--{p}ink-3) !important;
+}}
 [data-testid="stTextInputRootElement"],
 [data-testid="stTextAreaRootElement"] {{
     background: var(--{p}surface) !important;
@@ -329,7 +367,7 @@ def _ancoras(nodes: int) -> list[tuple[float, float]]:
 
 
 def trilha(materia: str, area: str, nodes: int, done: int, current: int,
-           questions_per_node: int = 5, mascote_bloco: str = "") -> None:
+           mascote_bloco: str = "", no_href_base: str | None = None) -> None:
     """Banner da unidade + percurso de nos.
 
     done    = quantos nos ja concluidos
@@ -341,6 +379,15 @@ def trilha(materia: str, area: str, nodes: int, done: int, current: int,
         atual"). Vazio (padrao) = comportamento antigo, so o percurso.
         Quem monta o HTML da fala continua sendo o caller (cartao_
         resposta.py) -- esta funcao so cuida do LAYOUT lado a lado.
+    no_href_base = quando informado (ex: "?pagina=cartao&tema=escuro"),
+        cada bolinha DESBLOQUEADA vira um <a href="{no_href_base}&no=I">
+        de verdade em vez de um <div> decorativo -- pedido explicito do
+        usuario: tocar na bolinha da trilha tem que abrir o no, igual
+        no app mobile, em vez de exigir um botao separado embaixo. Zero
+        JS -- MESMO truque que navegacao_lateral() ja usa pra pagina/
+        tema (link puro), NAO a tentativa com JavaScript que ja falhou
+        antes (ver docstring da gaveta em ui_theme.py). None (padrao) =
+        comportamento antigo, todo no e so decorativo.
 
     O path entre os nos e desenhado com <div> rotacionado via CSS puro,
     nao <svg><path> como no mockup original -- Streamlit nao renderiza
@@ -388,6 +435,7 @@ def trilha(materia: str, area: str, nodes: int, done: int, current: int,
 
     cols = []
     for i, (x, y) in enumerate(ancoras, start=1):
+        desbloqueado = i <= current
         if i < current:
             cls, glyph, flag = "ex-node done", icon("check", 26, "#3A2A00", 3), ""
         elif i == current:
@@ -395,10 +443,13 @@ def trilha(materia: str, area: str, nodes: int, done: int, current: int,
             flag = '<div class="ex-flag">COMEÇAR</div>'
         else:
             cls, glyph, flag = "ex-node", icon("lock", 22, "var(--ink-3)", 2.4), ""
+        if desbloqueado and no_href_base:
+            no_html = f'<a href="{no_href_base}&no={i - 1}" target="_self" class="{cls}">{glyph}</a>'
+        else:
+            no_html = f'<div class="{cls}">{glyph}</div>'
         cols.append(
             f'<div class="ex-node-col" style="left:{x:.0f}px;top:{y:.0f}px">'
-            f'  {flag}<div class="{cls}">{glyph}</div>'
-            f'  <div class="ex-node-label">Nó {i} &middot; {questions_per_node}q</div>'
+            f'  {flag}{no_html}'
             f'</div>'
         )
 

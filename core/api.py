@@ -70,6 +70,19 @@ def fontes_banco_pratica() -> list[str]:
     return db.fontes_banco_pratica()
 
 
+@app.get("/materias-com-banco-pratica")
+def materias_com_banco_pratica(grande_area: str) -> list[str]:
+    """Matérias da área ordenadas da com MAIS questão de banco de
+    prática pra com menos -- mesma função que a versão Streamlit usa
+    pra escolher um padrão sensato (`_padrao_materia_banco_pratica` em
+    cartao_resposta.py) em vez de cair na 1a matéria em ordem
+    alfabética da taxonomia inteira (a maioria sem nenhuma questão
+    ainda). O app mobile usa isto pra entrar direto na trilha (pedido
+    explícito do usuário, mesma mudança que a versão Streamlit já
+    tinha: a "Home"/seletores deixa de ser a tela inicial de fato)."""
+    return db.materias_com_banco_pratica(grande_area)
+
+
 @app.get("/trilha")
 def trilha(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
     return db.trilha_banco_pratica(grande_area, materia, fonte=fonte)
