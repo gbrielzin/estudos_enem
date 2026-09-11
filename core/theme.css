@@ -218,10 +218,10 @@ footer, #MainMenu { display: none; }
 .ex-path { position: relative; width: 350px; margin: 0 auto; }
 .ex-node-col { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .ex-node { width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: var(--surface-2); border: 1px solid #2C3342; box-shadow: 0 7px 0 #14181F; color: var(--ink-3); font-size: 22px; }
+  background: var(--surface-2); border: 1px solid #2C3342; box-shadow: 0 7px 0 #14181F; color: var(--ink-3); font-size: 22px;
+  text-decoration: none; cursor: pointer; }
 .ex-node.current { width: 78px; height: 78px; background: var(--lime); border: none; box-shadow: 0 8px 0 var(--lime-sh); color: var(--on-lime); font-size: 28px; }
 .ex-node.done { background: var(--amber); border: none; box-shadow: 0 7px 0 var(--amber-sh); color: #3A2A00; }
-.ex-node-label { font-weight: 700; font-size: 12.5px; color: var(--ink-2); }
 .ex-flag { background: var(--ink); box-shadow: 0 3px 0 #A6AEBD; border-radius: 12px; padding: 6px 14px;
   font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 13px; color: var(--bg); }
 

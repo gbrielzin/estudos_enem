@@ -118,3 +118,28 @@ Enunciado (`questoes.enunciado_texto` / `enunciado_imagem_path`, updated via `db
 ### `guia_estudante.md` / `prompt_extracao_gabarito.md` / `manual_prioridade_de_estudo.md`
 
 The first two are not documentation about the code — they're copy-pasteable prompts for use in *other* AI chats (a Socratic tutor prompt for Ciências da Natureza review sessions, and a gabarito-extraction prompt for turning a PDF into the CSV format `carregar_gabarito_csv()` expects). `manual_prioridade_de_estudo.md` (added 2026-08-28) is categorically different — it's read in-app, not pasted elsewhere: the mentality/strategy reasoning (TRI coherence, why a recurring-topic-you-can't-eliminate-by-interpretation like eletrodinâmica deserves base study before more simulados) behind why `prioridade_de_estudo()`'s ranking is the intended daily workflow. All three are surfaced read-only in the app's "Guia do Estudante" page (`render_guia_estudante()`, three-way `st.radio`, manual is the default/first tab). Editing any of them changes what's displayed/pasted, not any running code path — but the manual cites live numbers as a dated snapshot ("Retrato de hoje"), so if it's ever revised, update that snapshot and its date rather than leaving it stale indefinitely.
+
+## Current development focus: Frontend
+
+The current priority is frontend/UI development.
+
+When the task is explicitly about the frontend:
+
+- Visual changes are allowed and expected.
+- You may modify React/HTML/CSS/UI components as necessary.
+- Preserve backend behavior and database contracts unless explicitly asked otherwise.
+- Do not redesign backend architecture just to implement a visual change.
+- Do not modify data models, database schemas, grading logic, study algorithms, or APIs unless the requested UI change genuinely requires it.
+- Prefer small, isolated UI changes when possible.
+- When an asset is explicitly specified by the user, use that exact asset rather than creating or selecting another one.
+- Follow the provided Claude Design reference as the source of truth for visual hierarchy, layout, spacing, typography, colors and component appearance.
+- Do not substitute a visual requirement with a technically convenient alternative.
+
+### Scope discipline
+
+For a UI-only request:
+1. Identify the relevant frontend component.
+2. Make the requested visual change.
+3. Preserve existing functionality.
+4. Do not refactor unrelated code.
+5. Do not modify backend/database logic unless necessary.
