@@ -137,6 +137,10 @@ export function getFontesBancoPratica(): Promise<string[]> {
   return buscarJson(`/fontes-banco-pratica`);
 }
 
+export function getMateriasComBancoPratica(grandeArea: GrandeArea): Promise<string[]> {
+  return buscarJson(`/materias-com-banco-pratica?grande_area=${grandeArea}`);
+}
+
 export function getTrilha(grandeArea: GrandeArea, materia: string, fonte: string | null): Promise<NoTrilha[]> {
   const query = new URLSearchParams({ grande_area: grandeArea, materia });
   if (fonte) query.set('fonte', fonte);

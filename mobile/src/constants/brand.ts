@@ -28,6 +28,14 @@ export const Brand = {
   roxoClaro: '#F1EEFF',
   roxoBg: '#241A3A',
 
+  // Painel roxo-escuro do card "Apresentação" da trilha (ver
+  // resumos-trilha.ts) -- tom mais fechado que roxoBg, importado do
+  // mesmo projeto de design, tela "Apresentação".
+  roxoBgEscuro: '#1A1533',
+  roxoBordaEscura: '#3B2E77',
+  roxoTextoEscuro: '#A594FF',
+  roxoTextoSuave: '#B8AEE8',
+
   verde: '#6EE12B',
   verdeEscuro: '#3F8F14',
   verdeClaro: '#EAFBDD',
@@ -45,6 +53,19 @@ export const Brand = {
   branco: '#FDFEFF',
   brancoEscuro: '#C4CFDB',
   rosa: '#FF8FA3',
+
+  // Variações de pelagem (Mascote pattern="tuxedo"/"patches", ver
+  // mascote.tsx) -- cada uma amarrada a um contexto/tela específico do
+  // projeto de design, não a uma matéria ainda (só Óptica tem conteúdo
+  // por enquanto pra justificar variação por matéria de verdade -- ver
+  // constants/resumos-trilha.ts). "areia" é o Pipoco da trilha (tela
+  // Trilha, "cena fogueira" do design); "tuxedoMancha" é só a cor da
+  // mancha do Pipoco de tuxedo da tela Apresentação, corpo continua
+  // branco (`branco`/`brancoEscuro` acima).
+  gatoAreia: '#F5C98A',
+  gatoAreiaSombra: '#C99A5B',
+  gatoAreiaMancha: '#E0A05C',
+  mascoteTuxedoMancha: '#3A4152',
 
   azul: '#4FA6FF',
   azulBg: '#12233A',

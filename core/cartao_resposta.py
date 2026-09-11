@@ -66,6 +66,360 @@ def render_carregar_gabarito() -> None:
 
 RÓTULO_AREA = {"matematica": "Matemática", "ciencias_natureza": "Ciências da Natureza"}
 
+# Limiar de taxa de acerto médio pra decidir se o Pipoco fica feliz ou
+# cabisbaixo numa área, no wizard "Montar prova" (ver _humor_por_area).
+# 1a versão -- valor solto, não tem análise nenhuma por trás além de
+# "50% pra cima é indo bem", ajustar conforme o uso real mostrar que
+# está feliz/triste demais.
+_LIMIAR_HUMOR_AREA = 0.5
+
+
+def _status_provas_por_ano(provas: list[tuple[int, str, str]]) -> dict[int, str]:
+    """"feito" / "parcial" / "nunca" por ano, pro passo "Qual ano" do
+    wizard Montar Prova (App ENEM.dc.html, Turno 3, seções 3a/3b) --
+    não existe função pronta pra isso em db.py, calculado aqui
+    comparando db.simulados_feitos() (o que já foi tentado, com
+    quantas questões respondidas na última rodada) contra
+    "total_questoes" que a própria db.simulados_feitos() já devolve
+    (tamanho real da prova).
+
+    Simplificação deliberada (ver plano): o dot é por ANO, não por
+    caderno -- usa só o caderno "azul" quando existe pra aquele ano
+    (senão o primeiro em ordem alfabética), e combina o status das
+    áreas disponíveis nesse caderno (feito > parcial > nunca). Uma
+    prova real tem várias cores de caderno com o MESMO conteúdo em
+    ordem diferente (ver core/CLAUDE.md, "Múltiplos cadernos") -- pra
+    um indicador rápido de "já treinei esse ano" isso é suficiente,
+    sem precisar mostrar 4+ dots por ano."""
+    feitos = {(f["ano"], f["caderno"], f["grande_area"]): f for f in db.simulados_feitos()}
+    anos = sorted({ano for ano, _, _ in provas})
+    status: dict[int, str] = {}
+    for ano in anos:
+        cadernos_do_ano = sorted({c for a, c, _ in provas if a == ano})
+        caderno_repr = "azul" if "azul" in cadernos_do_ano else cadernos_do_ano[0]
+        areas_do_ano = {area for a, c, area in provas if a == ano and c == caderno_repr}
+        melhor = "nunca"
+        for area in areas_do_ano:
+            f = feitos.get((ano, caderno_repr, area))
+            if f is None:
+                continue
+            total = f["total_questoes"]
+            feito_total = f["rodadas"][-1]["total"] if f["rodadas"] else 0
+            atual = "feito" if total and feito_total >= total else "parcial"
+            if atual == "feito":
+                melhor = "feito"
+                break
+            if melhor == "nunca":
+                melhor = atual
+        status[ano] = melhor
+    return status
+
+
+def _humor_por_area(area: str) -> str:
+    """"happy"/"sad" pro Pipoco do wizard Montar Prova, conforme o
+    desempenho médio na área inteira -- não existe agregação pronta
+    nesse nível (taxa_acerto_por_materia() é por matéria, não por
+    grande_área), então pondera aqui por total_tentativas. Sem
+    tentativa nenhuma ainda = "happy" (neutro/otimista de propósito --
+    não faz sentido o mascote já começar desanimado sem histórico
+    nenhum pra basear isso)."""
+    linhas = db.taxa_acerto_por_materia(area)
+    total_tentativas = sum(r["total_tentativas"] for r in linhas)
+    if total_tentativas == 0:
+        return "happy"
+    acertos = sum(r["acertos"] for r in linhas)
+    return "happy" if (acertos / total_tentativas) >= _LIMIAR_HUMOR_AREA else "sad"
+
+
+def _caderno_padrao(provas: list[tuple[int, str, str]], ano: int, area: str) -> str | None:
+    """Caderno "azul" se existir pra esse (ano, área), senão o primeiro
+    disponível em ordem alfabética -- o wizard escolhe ano+área, não
+    caderno (o mockup também não expõe essa escolha), mas
+    _renderizar_bloco_prova/_renderizar_prova_no_a_no precisam de um
+    caderno de verdade pra buscar as questões."""
+    cadernos = sorted({c for a, c, ar in provas if a == ano and ar == area})
+    if not cadernos:
+        return None
+    return "azul" if "azul" in cadernos else cadernos[0]
+
+
+def _taxa_media_area(area: str) -> float | None:
+    """Taxa de acerto média ponderada por total_tentativas, pra
+    comparar Natureza x Matemática e achar a área mais fraca de
+    verdade (dado real, não hardcoded como o mockup faz) -- None
+    quando não há tentativa nenhuma ainda naquela área."""
+    linhas = db.taxa_acerto_por_materia(area)
+    total = sum(r["total_tentativas"] for r in linhas)
+    if total == 0:
+        return None
+    return sum(r["acertos"] for r in linhas) / total
+
+
+def _formatar_tempo_estimado(minutos: int) -> str:
+    """"1h30"/"3h" (sem "min", sem zero-padding quando exato) -- mesmo
+    formato do bilhete no mockup."""
+    horas, resto = divmod(minutos, 60)
+    return f"{horas}h{resto:02d}" if resto else f"{horas}h"
+
+
+def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, str, str, str] | None:
+    """Wizard "Montar prova" -- versão unificada do App ENEM.dc.html,
+    Turno 4 "Versão computador", seção 4a "Entrada — cenário
+    panorâmico": cena decorativa no topo (mesa, relógio, cadernos,
+    Pipoco) + os 3 passos à esquerda + o "bilhete" (ficha-resumo que
+    se preenche ao vivo) à direita, terminando no mesmo botão
+    "Sentar e começar". Substitui a versão anterior (Turno 3, 3a/3b
+    alternando duas telas cheias) -- o usuário trouxe esta rodada nova
+    do design e pediu pra seguir ELA fielmente em vez de continuar
+    alternando; a ideia de "casca variando" mora agora só na área/
+    matéria em si (cores diferentes por matéria já mudam o visual a
+    cada prova sem precisar de duas telas inteiras diferentes).
+
+    Devolve (ano, caderno, area, modo_resposta) só quando "Sentar e
+    começar" é clicado -- `caderno` vem None quando area == "ambas"
+    (quem chama escolhe um caderno por área via _caderno_padrao).
+    Devolve None enquanto o usuário ainda está escolhendo.
+
+    Tudo dentro de UM st.container(border=True) de propósito: os
+    marcadores-irmão (.ano-pills/.area-cards, mesmo truque do
+    .grade-blocos) usam seletor de irmão GERAL "~", que não para de
+    procurar -- sem um limite, vazariam pra tela de responder a prova
+    (_renderizar_bloco_prova/_renderizar_prova_no_a_no, cheia de
+    st.radio/st.button dela mesma), renderizada logo depois na MESMA
+    página assim que o botão é clicado."""
+    with st.container(border=True):
+        dias = db.dias_ate_prova()
+        total_questoes_banco = sum(db.questoes_totais_da_prova(a, c, ar) for a, c, ar in provas)
+        anos = sorted({ano for ano, _, _ in provas})
+
+        # Cena decorativa (App ENEM.dc.html, 4a) -- mesa + relógio +
+        # cadernos + Pipoco. Ainda estática (sem clique/JS), mas agora
+        # reage aos MESMOS 3 campos que o resto do wizard escolhe --
+        # relógio acende quando "Com cronômetro" já está selecionado,
+        # ícone da área muda com a matéria escolhida -- lendo os valores
+        # de session_state de que os widgets radio/`montar_prova_area_valor`
+        # abaixo vão se servir (Streamlit já preenche session_state ANTES
+        # do script rodar, então ler a chave aqui, antes do widget em si
+        # aparecer mais abaixo no código, reflete a escolha do rerun
+        # anterior -- mesmo padrão já usado noutros lugares deste app).
+        # Sem esses valores ainda (primeiro load da página) cai nos
+        # defaults reais dos radios (index 0 = "cronômetro", primeira
+        # área da lista), nunca inventa um estado que não existe.
+        modo_previa = st.session_state.get("montar_prova_modo", "cronometro")
+        area_previa = st.session_state.get("montar_prova_area_valor")
+        _ICONE_AREA_MESA = {
+            "matematica": ('#8B93A7', '<path d="M5 7h6M8 4v6"/><path d="M13.5 6.5h5.5"/>'
+                            '<path d="M13.5 15h5.5M13.5 18.5h5.5"/><path d="M5.5 15.5l4.5 4.5M10 15.5l-4.5 4.5"/>'),
+            "ciencias_natureza": ('#6EE12B', '<path d="M12 3v4"/><path d="M9 7h6l2.5 10a5.5 5.5 0 0 1-11 0z"/><path d="M7.6 14h8.8"/>'),
+            "ambas": ('#A594FF', '<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>'),
+        }
+        cor_area_mesa, path_area_mesa = _ICONE_AREA_MESA.get(area_previa, ('#5B6472', '<path d="M8 4h8l4 4v12H8z"/><path d="M16 4v4h4"/>'))
+        cor_relogio = "#FFC42E" if modo_previa == "cronometro" else "#5B6472"
+        bg_relogio = "#2A2210" if modo_previa == "cronometro" else "#171B24"
+        borda_relogio = "#4A3A12" if modo_previa == "cronometro" else "#262C39"
+        st.markdown(
+            f'''<div style="position:relative;height:196px;background:#12161E;border-radius:16px;
+                 overflow:hidden;margin-bottom:22px">
+              <div style="position:absolute;left:0;right:0;top:0;height:130px;background:#171C26"></div>
+              <div style="position:absolute;left:0;right:0;top:130px;height:8px;background:#6B4A2F"></div>
+              <div style="position:absolute;left:0;right:0;top:138px;bottom:0;background:#0E1117"></div>
+              <div style="position:absolute;left:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
+              <div style="position:absolute;right:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
+              <div style="position:absolute;left:44px;top:16px;display:flex;flex-direction:column;gap:4px;z-index:2">
+                <div style="font:800 10px 'Nunito';letter-spacing:.16em;color:#5B6472">MONTAR PROVA</div>
+                <div style="font:800 22px 'Baloo 2';color:#F2F4F7;line-height:1.1">Senta que a prova é sua</div>
+              </div>
+              <div style="position:absolute;right:44px;top:16px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;z-index:2">
+                <div style="font:800 11px 'Nunito';color:#FFC42E;background:#2A2210;border:1px solid #4A3A12;
+                     border-radius:999px;padding:5px 12px">{dias["dias_restantes"]} dias até o ENEM</div>
+                <div style="font:700 11px 'Nunito';color:#6B7385">{total_questoes_banco} questões · {min(anos)} a {max(anos)}</div>
+              </div>
+              <div style="position:absolute;left:0;right:0;top:60px;display:flex;align-items:flex-end;justify-content:center;gap:38px;transform:translateX(78px)">
+                <div style="width:44px;height:44px;border-radius:999px;background:{bg_relogio};border:2px solid {borda_relogio};
+                     display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{cor_relogio}" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:2px;flex:0 0 auto">
+                  <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(-6deg)"></div>
+                  <div style="width:46px;height:60px;border-radius:4px;background:#FFFFFF;box-shadow:0 5px 0 rgba(0,0,0,.32);
+                       display:flex;flex-direction:column;gap:4px;padding:8px 7px;position:relative;z-index:1">
+                    <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
+                    <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
+                    <div style="height:3px;width:60%;border-radius:2px;background:#C8CEDA"></div>
+                    <div style="margin-top:auto;height:7px;border-radius:3px;background:{cor_area_mesa}"></div>
+                  </div>
+                  <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(5deg)"></div>
+                </div>
+                <div style="width:44px;height:44px;border-radius:14px;background:#141821;border:2px solid {cor_area_mesa};
+                     display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{cor_area_mesa}" stroke-width="2.1" stroke-linecap="round">{path_area_mesa}</svg>
+                </div>
+              </div>
+              <div style="position:absolute;left:50%;top:20px;transform:translateX(calc(-50% - 148px));z-index:3">
+                {ui_theme.mascote_html("happy", size=0.92, pattern="tuxedo", patch="#3A4152", collar="#6EE12B")}
+              </div>
+            </div>''',
+            unsafe_allow_html=True,
+        )
+
+        col_passos, col_bilhete = st.columns([2, 1], gap="large")
+
+        with col_passos:
+            status_por_ano = _status_provas_por_ano(provas)
+            ponto_status = {"feito": "🟢", "parcial": "🟡", "nunca": "⚪"}
+
+            st.markdown(
+                '<div class="ano-pills"></div>'
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">1 · QUAL ANO</div>'
+                '<div style="flex:1;height:1px;background:var(--tema-border)"></div>'
+                f'<div style="font:700 11px \'Nunito\';color:var(--tema-ink-3)">{ponto_status["feito"]} já fez &nbsp; '
+                f'{ponto_status["parcial"]} parou no meio &nbsp; {ponto_status["nunca"]} não abriu</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
+            ano_sel = st.radio(
+                "Qual ano", anos,
+                format_func=lambda a: f"{ponto_status[status_por_ano.get(a, 'nunca')]} {a}",
+                horizontal=True, key="montar_prova_ano", label_visibility="collapsed",
+            )
+
+            areas_do_ano = sorted({area for a, c, area in provas if a == ano_sel})
+            if not areas_do_ano:
+                st.info("Nenhuma prova cadastrada pra esse ano ainda.")
+                return None
+
+            opcoes_area = list(areas_do_ano) + (["ambas"] if len(areas_do_ano) > 1 else [])
+            rotulo_area = {**RÓTULO_AREA, "ambas": "As duas"}
+
+            # Área mais fraca de verdade (dado real, ver _taxa_media_area)
+            # -- só marca "seu ponto fraco" em quem tem MENOS acerto das
+            # duas, nunca hardcoded pra uma área específica como o mockup.
+            taxas = {a: _taxa_media_area(a) for a in areas_do_ano if a != "ambas"}
+            conhecidas = {a: t for a, t in taxas.items() if t is not None}
+            area_mais_fraca = min(conhecidas, key=conhecidas.get) if len(conhecidas) > 1 else None
+
+            st.markdown(
+                '<div class="area-cards"></div>'
+                '<div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px">'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">2 · QUAL ÁREA</div>'
+                '<div style="flex:1;height:1px;background:var(--tema-border)"></div></div>',
+                unsafe_allow_html=True,
+            )
+            chave_area_valor = "montar_prova_area_valor"
+            if st.session_state.get(chave_area_valor) not in opcoes_area:
+                st.session_state[chave_area_valor] = opcoes_area[0]
+            cols_area = st.columns(len(opcoes_area))
+            for col, opcao in zip(cols_area, opcoes_area):
+                with col:
+                    selecionada = st.session_state[chave_area_valor] == opcao
+                    if opcao == "ambas":
+                        legenda = f"{total_questoes_banco and '90 questões · 3h' or ''}"
+                    else:
+                        n_questoes = db.questoes_totais_da_prova(ano_sel, _caderno_padrao(provas, ano_sel, opcao) or "azul", opcao)
+                        legenda = f"{n_questoes}q · {_formatar_tempo_estimado(n_questoes * 2)}"
+                        if opcao == area_mais_fraca:
+                            legenda += " · seu ponto fraco"
+                    humor = _humor_por_area(opcao) if opcao != "ambas" else None
+                    icone_html = ui_theme.mascote_html("cheer" if humor == "happy" else humor, size=0.36) if humor else ""
+                    st.markdown(
+                        f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">{icone_html}'
+                        f'<div style="font:700 11.5px \'Nunito\';color:var(--tema-ink-3)">{legenda}</div></div>',
+                        unsafe_allow_html=True,
+                    )
+                    rotulo_card = ("✓ " if selecionada else "") + rotulo_area.get(opcao, opcao)
+                    if st.button(
+                        rotulo_card, key=f"montar_prova_area_btn_{opcao}",
+                        type="primary" if selecionada else "secondary", use_container_width=True,
+                    ):
+                        st.session_state[chave_area_valor] = opcao
+                        st.rerun()
+            area_sel = st.session_state[chave_area_valor]
+
+            st.markdown(
+                '<div class="ano-pills"></div>'
+                '<div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px">'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">3 · COMO RESPONDER</div>'
+                '<div style="flex:1;height:1px;background:var(--tema-border)"></div></div>',
+                unsafe_allow_html=True,
+            )
+            modo_resposta = st.radio(
+                "Como responder", ["cronometro", "sem_pressa", "corrige_cada", "so_errei_antes"],
+                format_func=lambda m: {
+                    "cronometro": "Com cronômetro", "sem_pressa": "Sem pressa",
+                    "corrige_cada": "Corrige a cada questão", "so_errei_antes": "Só as que errei antes",
+                }[m],
+                horizontal=True, key="montar_prova_modo", label_visibility="collapsed",
+            )
+            if modo_resposta == "cronometro":
+                st.caption("⏱️ O cronômetro em si ainda não existe de verdade — por enquanto se comporta igual \"Sem pressa\".")
+            if modo_resposta == "so_errei_antes":
+                st.caption("🚧 Filtro ainda não implementado — por enquanto mostra a prova inteira, igual \"Sem pressa\".")
+
+        with col_bilhete:
+            caderno_bilhete = _caderno_padrao(provas, ano_sel, area_sel) if area_sel != "ambas" else None
+            if area_sel == "ambas":
+                n_questoes_bilhete = sum(
+                    db.questoes_totais_da_prova(ano_sel, _caderno_padrao(provas, ano_sel, a) or "azul", a)
+                    for a in areas_do_ano
+                )
+                nome_materia = "Matemática + Ciências"
+            else:
+                n_questoes_bilhete = db.questoes_totais_da_prova(ano_sel, caderno_bilhete or "azul", area_sel)
+                nome_materia = RÓTULO_AREA.get(area_sel, area_sel)
+            tempo_bilhete = _formatar_tempo_estimado(n_questoes_bilhete * 2)
+            rotulo_modo = {
+                "cronometro": "Com cronômetro", "sem_pressa": "Sem pressa",
+                "corrige_cada": "Corrige a cada questão", "so_errei_antes": "Só as que errei antes",
+            }[modo_resposta]
+            barras_codigo = "".join(
+                f'<div style="width:{w}px;height:34px;background:#131722"></div>'
+                for w in [3, 2, 5, 2, 3, 6, 2, 4, 2, 5]
+            )
+            st.markdown(
+                f'''<div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="display:flex;align-items:center;gap:12px">
+                    <div style="font:800 12px 'Nunito';letter-spacing:.14em;color:var(--tema-ink-3);flex:1">SEU BILHETE</div>
+                    <div style="font:800 11px 'Nunito';color:#3D2C00;background:#FFC42E;border-radius:7px;padding:4px 9px">Nº {(db.resumo_geral_desempenho()["total_tentativas"] % 900) + 100:04d}</div>
+                  </div>
+                  <div style="background:#F2F4F7;border-radius:20px;overflow:hidden">
+                    <div style="background:#7C5CFF;padding:16px 20px;display:flex;align-items:center;gap:12px">
+                      {ui_theme.mascote_html("cheer", size=0.42)}
+                      <div style="flex:1;min-width:0">
+                        <div style="font:800 11px 'Nunito';letter-spacing:.14em;color:#D7CEFF">ENEM · CADERNO {(caderno_bilhete or "azul").upper()}</div>
+                        <div style="font:800 20px 'Baloo 2';color:#FFFFFF">{nome_materia}</div>
+                      </div>
+                    </div>
+                    <div style="padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+                      <div style="display:flex;gap:18px">
+                        <div style="flex:1"><div style="font:800 10.5px 'Nunito';letter-spacing:.12em;color:#7A8494">ANO</div>
+                          <div style="font:800 30px 'Baloo 2';color:#131722;line-height:1.1">{ano_sel}</div></div>
+                        <div style="flex:1"><div style="font:800 10.5px 'Nunito';letter-spacing:.12em;color:#7A8494">QUESTÕES</div>
+                          <div style="font:800 30px 'Baloo 2';color:#131722;line-height:1.1">{n_questoes_bilhete}</div></div>
+                        <div style="flex:1"><div style="font:800 10.5px 'Nunito';letter-spacing:.12em;color:#7A8494">TEMPO</div>
+                          <div style="font:800 30px 'Baloo 2';color:#131722;line-height:1.1">{tempo_bilhete}</div></div>
+                      </div>
+                      <div style="height:2px;background:repeating-linear-gradient(90deg,#C8CEDA 0 7px,transparent 7px 14px)"></div>
+                      <div style="display:flex;align-items:flex-end;gap:12px">
+                        <div style="flex:1"><div style="font:800 10.5px 'Nunito';letter-spacing:.12em;color:#7A8494">MODO</div>
+                          <div style="font:800 14px 'Baloo 2';color:#131722">{rotulo_modo}</div></div>
+                        <div style="display:flex;gap:2.5px;align-items:flex-end;height:34px;flex:0 0 auto">{barras_codigo}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="font:600 13px 'Nunito';color:var(--tema-ink-3);line-height:1.55">Ele se preenche à medida
+                    que você escolhe ao lado. Terminada a prova, volta carimbado com nota, acertos e tempo.</div>
+                </div>''',
+                unsafe_allow_html=True,
+            )
+            st.markdown('<div style="margin-top:14px"></div>', unsafe_allow_html=True)
+            if st.button("Sentar e começar", type="primary", key="montar_prova_confirmar", use_container_width=True):
+                if area_sel == "ambas":
+                    return (ano_sel, None, "ambas", modo_resposta)
+                caderno_sel = _caderno_padrao(provas, ano_sel, area_sel)
+                return (ano_sel, caderno_sel, area_sel, modo_resposta)
+        return None
+
 
 def render_cartao_resposta() -> None:
     db.inicializar_banco()
@@ -105,23 +459,27 @@ def render_cartao_resposta() -> None:
         render_prova_beta()
         return
 
-    areas_disponiveis = sorted({area for _, _, area in provas})
-    area_sel = st.radio(
-        "Área", areas_disponiveis, format_func=lambda a: RÓTULO_AREA.get(a, a), horizontal=True,
-    )
-
-    opcoes = {
-        f"{ano} — {caderno}": (ano, caderno, area)
-        for ano, caderno, area in provas
-        if area == area_sel
-    }
-    if not opcoes:
-        st.info(f"Nenhuma prova de {RÓTULO_AREA.get(area_sel, area_sel)} cadastrada ainda.")
+    selecao = _renderizar_montar_prova(provas)
+    if selecao is None:
         return
-    escolha = st.selectbox("Prova", list(opcoes.keys()))
-    ano_sel, caderno_sel, area_sel = opcoes[escolha]
+    ano_sel, caderno_sel, area_sel, modo_resposta = selecao
 
-    _renderizar_bloco_prova(ano_sel, caderno_sel, area_sel)
+    if area_sel == "ambas":
+        areas_ambas = sorted({area for a, c, area in provas if a == ano_sel})
+        abas = st.tabs([RÓTULO_AREA.get(a, a) for a in areas_ambas])
+        for aba, area_aba in zip(abas, areas_ambas):
+            with aba:
+                caderno_aba = _caderno_padrao(provas, ano_sel, area_aba)
+                if modo_resposta == "corrige_cada":
+                    _renderizar_prova_no_a_no(ano_sel, caderno_aba, area_aba)
+                else:
+                    _renderizar_bloco_prova(ano_sel, caderno_aba, area_aba)
+        return
+
+    if modo_resposta == "corrige_cada":
+        _renderizar_prova_no_a_no(ano_sel, caderno_sel, area_sel)
+    else:
+        _renderizar_bloco_prova(ano_sel, caderno_sel, area_sel)
 
 
 def _render_simulado_completo() -> None:
@@ -444,6 +802,33 @@ def _renderizar_tela_trilha() -> None:
 
     chave_base = f"{area_sel}_{materia_sel}_{fonte_sel or 'todas'}"
     chave_no_ativo = f"trilha_no_ativo_{chave_base}"
+
+    # Clique direto na bolinha da trilha -- pedido explícito do usuário:
+    # mesma interação do app mobile, tocar no nó abre ele, não um botão
+    # separado embaixo. enem_theme.trilha() embrulha cada nó
+    # desbloqueado num <a href="?...&no=N">, o MESMO truque zero-JS que
+    # navegacao_lateral() já usa pra página/tema (não é a tentativa com
+    # JavaScript que já falhou antes -- ver docstring da gaveta em
+    # ui_theme.py -- é link puro, sempre funciona em qualquer
+    # navegador). Lido e IMEDIATAMENTE removido da URL: senão um F5 na
+    # tela do nó reabriria ele de novo pra sempre, e voltar pra trilha
+    # por outro caminho deixaria o parâmetro preso na barra de
+    # endereço, incoerente com session_state (a fonte de verdade de
+    # "qual nó está ativo" continua sendo session_state, igual antes --
+    # a URL só entrega o clique inicial).
+    no_da_url = st.query_params.pop("no", None)
+    if no_da_url is not None:
+        try:
+            indice_clicado = int(no_da_url)
+        except ValueError:
+            indice_clicado = -1
+        if 0 <= indice_clicado < len(trilha) and trilha[indice_clicado]["desbloqueado"]:
+            st.session_state[chave_no_ativo] = indice_clicado
+            pos_inicial = next(
+                (i for i, q in enumerate(trilha[indice_clicado]["questoes"]) if not q["ja_respondida"]), 0,
+            )
+            st.session_state[f"trilha_pos_{chave_base}_{indice_clicado}"] = pos_inicial
+
     no_ativo_idx = st.session_state.get(chave_no_ativo)
 
     if no_ativo_idx is not None and no_ativo_idx < len(trilha):
@@ -455,10 +840,10 @@ def _renderizar_tela_trilha() -> None:
             # pro mapa em vez de quebrar tentando renderizar um índice
             # inválido.
             del st.session_state[chave_no_ativo]
-        _renderizar_mapa_trilha(trilha, chave_base, materia_sel, area_sel)
+        _renderizar_mapa_trilha(trilha, materia_sel, area_sel)
 
 
-def _renderizar_mapa_trilha(trilha: list[dict], chave_base: str, materia_sel: str, area_sel: str) -> None:
+def _renderizar_mapa_trilha(trilha: list[dict], materia_sel: str, area_sel: str) -> None:
     """Cabeçalho + banner "continue de onde parou" + trilha visual +
     Pipo + coluna lateral (missões, liga, baú) -- tela "Trilha" do
     handoff, agora usando o helper enem_theme.trilha() em vez de HTML
@@ -466,12 +851,16 @@ def _renderizar_mapa_trilha(trilha: list[dict], chave_base: str, materia_sel: st
     render_banco_pratica). Duas adaptações deliberadas em relação ao
     mockup:
 
-    1. Menu lateral fixo de 268px do mockup NÃO foi implementado --
-       o app já tem uma navegação (hamburguer + gaveta) testada e
-       corrigindo bugs reais de responsividade em produção; trocar
-       por uma sidebar fixa é uma mudança de infraestrutura maior e
-       mais arriscada do que o pedido de "mesma cara" pedia, fica de
-       fora por ora.
+    1. Menu lateral fixo de 268px do mockup: implementado via CSS puro
+       em cima da MESMA gaveta hamburguer/checkbox de sempre (ver
+       ui_theme._CSS, bloco "@media (min-width: 1100px)") -- acima
+       desse corte ela fica sempre aberta e o hambúrguer some; abaixo
+       continua exatamente como era (nenhum bug de responsividade
+       reaberto). Pedido explícito do usuário depois de ver a mesma
+       sidebar já funcionando no app mobile (mobile/src/components/
+       app-tabs.web.tsx) -- antes disto ficava de fora por ser mudança
+       de infraestrutura mais arriscada do que o pedido original de
+       "mesma cara" pedia.
     2. enem_theme.trilha() gera as âncoras por fórmula (não a lista
        fixa de 5 do mockup) porque uma matéria real pode ter mais de
        5 nós -- ver comentário em enem_theme.py.
@@ -510,60 +899,45 @@ def _renderizar_mapa_trilha(trilha: list[dict], chave_base: str, materia_sel: st
             titulo = "Trilha concluída!"
         enem_theme.banner_continuar(kicker, titulo)
 
+        # Pipoco "areia" com manchas nesta tela especificamente -- mesma
+        # variação da tela "Trilha" do projeto de design (dc-import
+        # scene="fogueira" pattern="patches"), espelhando o que já foi
+        # feito no app mobile (ver trilha-path.tsx) em vez do gatinho
+        # branco liso genérico de ui_theme.mascote_html().
+        _MASCOTE_TRILHA = dict(color="#F5C98A", shadow="#C99A5B", pattern="patches", patch="#E0A05C")
         if no_atual:
             frase = f"Cinco questões e o Nó {no_atual['indice'] + 2} abre. Vamos?" if no_atual["indice"] + 1 < len(trilha) else "Última leva! Bora fechar com chave de ouro."
             mascote_bloco = (
                 '<div class="ex-card" style="display:flex;align-items:center;gap:16px;padding:14px 20px 14px 14px">'
-                f'{ui_theme.mascote_html("happy", size=0.7)}'
+                f'{ui_theme.mascote_html("happy", size=0.7, **_MASCOTE_TRILHA)}'
                 '<div style="font-weight:600;font-size:14px;color:var(--ink-2);line-height:1.5">'
-                f'"{frase}" — <span style="color:var(--lime);font-weight:800">Pipo</span></div>'
+                f'"{frase}" — <span style="color:var(--lime);font-weight:800">Pipoco</span></div>'
                 '</div>'
             )
         else:
             mascote_bloco = (
                 '<div class="ex-card" style="display:flex;align-items:center;gap:16px;padding:14px 20px 14px 14px">'
-                f'{ui_theme.mascote_html("cheer", size=0.7)}'
+                f'{ui_theme.mascote_html("cheer", size=0.7, **_MASCOTE_TRILHA)}'
                 '<div style="font-weight:600;font-size:14px;color:var(--ink-2);line-height:1.5">'
-                '"Você zerou essa trilha!" — <span style="color:var(--lime);font-weight:800">Pipo</span></div>'
+                '"Você zerou essa trilha!" — <span style="color:var(--lime);font-weight:800">Pipoco</span></div>'
                 '</div>'
             )
+        # As bolinhas da trilha SÃO o botão agora -- pedido explícito do
+        # usuário: tocar no nó abre ele, igual no app mobile, sem lista
+        # de botão separada embaixo repetindo "Nó N" (isso já foi tirado
+        # daqui uma vez). no_href_base vira, dentro de enem_theme.trilha(),
+        # um <a href="...&no=I"> de verdade em cada nó desbloqueado --
+        # zero JS, mesmo truque que a navegação lateral já usa (ver
+        # docstring de trilha() e o tratamento de ?no= no topo desta
+        # função). tema preservado no link pra não voltar pro escuro ao
+        # clicar num nó com o claro ativado.
+        tema_atual = st.query_params.get("tema", "escuro")
         enem_theme.trilha(
             materia_sel.capitalize(), area_label,
             nodes=len(trilha), done=concluidos, current=current_1based,
-            questions_per_node=len(trilha[0]["questoes"]) if trilha else 5,
             mascote_bloco=mascote_bloco,
+            no_href_base=f"?pagina=cartao&tema={tema_atual}",
         )
-
-        for no in trilha:
-            with st.container(border=True):
-                n_questoes = len(no["questoes"])
-                if no["concluido"]:
-                    status = "concluído"
-                elif no["desbloqueado"]:
-                    status = "disponível"
-                else:
-                    status = "bloqueado"
-
-                col_txt, col_btn = st.columns([4, 1])
-                with col_txt:
-                    # sem emoji de status (bug #3 do relatório de design)
-                    # -- a palavra já diz o estado, o ícone da trilha
-                    # visual acima (enem_theme.trilha) já é o indicador
-                    # visual de verdade.
-                    st.markdown(f"**Nó {no['indice'] + 1}** — {n_questoes} questão(ões) · {status}")
-                    if not no["desbloqueado"]:
-                        st.caption("Conclua o(s) nó(s) anterior(es) pra destravar este.")
-                with col_btn:
-                    if no["desbloqueado"]:
-                        ja_comecou = any(q["ja_respondida"] for q in no["questoes"])
-                        rotulo_botao = "Repetir" if no["concluido"] else ("Continuar" if ja_comecou else "Começar")
-                        if st.button(rotulo_botao, key=f"trilha_abrir_{chave_base}_{no['indice']}"):
-                            pos_inicial = next(
-                                (i for i, q in enumerate(no["questoes"]) if not q["ja_respondida"]), 0,
-                            )
-                            st.session_state[f"trilha_no_ativo_{chave_base}"] = no["indice"]
-                            st.session_state[f"trilha_pos_{chave_base}_{no['indice']}"] = pos_inicial
-                            st.rerun()
 
     with col_lateral:
         _renderizar_sidebar_gamificacao(missoes, nivel, concluidos)
@@ -686,6 +1060,75 @@ def _renderizar_no_trilha_ativo(no: dict, chave_base: str, no_indice: int, total
             marcou = resultado["resposta_escolhida"] or "— (em branco)"
             st.error(f"❌ Você marcou {marcou}. A resposta certa era {resultado['alternativa_correta']}.")
         if st.button("Continuar ➜", type="primary", key=f"trilha_continuar_{chave_base}_{no_indice}_{pos}"):
+            st.session_state[chave_pos] = pos + 1
+            st.rerun()
+
+
+def _renderizar_prova_no_a_no(ano: int, caderno: str, area: str) -> None:
+    """"Corrige a cada questão" do wizard Montar Prova -- mesma
+    dinâmica de feedback imediato que _renderizar_no_trilha_ativo já
+    usa pro banco de prática, só que pra uma prova REAL (ENEM oficial):
+    cada resposta é gravada e corrigida NA HORA via
+    db.registrar_tentativa(), avançando uma questão de cada vez, em vez
+    do lote (responde tudo, corrige no fim) que
+    _renderizar_grade_questoes usa pros outros dois "como responder"
+    (Com cronômetro / Sem pressa). Usa _mostrar_enunciado_exame() --
+    mesma função que "Prova com enunciado" já usa -- pra mostrar
+    enunciado+imagem com segurança (texto de PDF pode ter '<'/'>' de
+    verdade, por isso não é markdown com HTML)."""
+    sufixo = f"noano_{ano}_{caderno}_{area}"
+    questoes = db.listar_questoes_da_prova(ano, caderno, area)
+    if not questoes:
+        st.info("Essa prova não tem questões cadastradas.")
+        return
+
+    chave_pos = f"prova_no_a_no_pos_{sufixo}"
+    pos = st.session_state.get(chave_pos, 0)
+
+    if st.button("⬅️ Trocar prova", key=f"prova_no_a_no_sair_{sufixo}"):
+        st.session_state[chave_pos] = 0
+        for chave in ("montar_prova_ano", "montar_prova_area", "montar_prova_modo"):
+            st.session_state.pop(chave, None)
+        st.rerun()
+
+    if pos >= len(questoes):
+        acertos = sum(
+            1 for q in questoes
+            if st.session_state.get(f"prova_no_a_no_resultado_{sufixo}_{q['id_questao']}", {}).get("resultado") == "acertou"
+        )
+        st.success(f"✅ Prova concluída! {acertos}/{len(questoes)} acertos.")
+        return
+
+    q = questoes[pos]
+    st.progress(pos / len(questoes), text=f"Questão {q['numero_questao']} · {pos + 1} de {len(questoes)}")
+
+    alternativas = _mostrar_enunciado_exame(q)
+
+    chave_resultado = f"prova_no_a_no_resultado_{sufixo}_{q['id_questao']}"
+    resultado = st.session_state.get(chave_resultado)
+
+    if resultado is None:
+        chave_radio = f"prova_no_a_no_radio_{sufixo}_{q['id_questao']}"
+        if alternativas:
+            escolha = st.radio(
+                "Resposta", ["—", "A", "B", "C", "D", "E"],
+                format_func=lambda letra, alt=alternativas: f"{letra}) {alt[letra]}" if letra in alt else "Selecione uma alternativa",
+                key=chave_radio,
+            )
+        else:
+            escolha = st.radio("Resposta", ["—", "A", "B", "C", "D", "E"], horizontal=True, key=chave_radio)
+
+        if st.button("Confirmar", type="primary", disabled=(escolha == "—"), key=f"prova_no_a_no_confirmar_{sufixo}_{q['id_questao']}"):
+            resultado_novo = db.registrar_tentativa(q["id_questao"], escolha)
+            st.session_state[chave_resultado] = resultado_novo
+            st.rerun()
+    else:
+        if resultado["resultado"] == "acertou":
+            st.success(f"✅ Certo! A resposta era {resultado['alternativa_correta']}.")
+        else:
+            marcou = resultado["resposta_escolhida"] or "— (em branco)"
+            st.error(f"❌ Você marcou {marcou}. A resposta certa era {resultado['alternativa_correta']}.")
+        if st.button("Continuar ➜", type="primary", key=f"prova_no_a_no_continuar_{sufixo}_{q['id_questao']}"):
             st.session_state[chave_pos] = pos + 1
             st.rerun()
 
@@ -840,11 +1283,17 @@ def _renderizar_grade_questoes(
     exibida antes de responder) pro layout "uma embaixo da outra, com
     o enunciado inteiro visível antes da resposta", pedido explícito
     do usuário pra prova beta parecer com o PDF do ENEM em vez do
-    cartão-resposta compacto -- esconde também o preenchimento rápido
-    (não faz sentido colar sequência numa prova que você está lendo
-    pela primeira vez, é ferramenta de transcrever prova já feita no
-    papel). Tudo depois de responder (corrigir, desfazer, ver o que
-    marcou, erros) continua idêntico nos dois estilos.
+    cartão-resposta compacto. Tudo depois de responder (corrigir,
+    desfazer, ver o que marcou, erros) continua idêntico nos dois
+    estilos -- inclusive o "⚡ Preenchimento rápido" (colar sequência),
+    que ANTES só aparecia fora de estilo_exame (raciocínio: "não faz
+    sentido colar sequência numa prova que você está lendo pela
+    primeira vez") -- pedido explícito do usuário pra reverter isso:
+    o simulado completo serve tanto pra quem lê a questão no app e
+    responde na hora quanto pra quem resolve no papel/PDF impresso e só
+    quer digitar o gabarito depois, sem rolar a tela toda pra achar
+    cada rádio -- caso em que colar sequência é exatamente a ferramenta
+    certa, mesmo no estilo "uma questão por vez com enunciado".
 
     Modo Cartão/Foco (design_handoff_enem_gamificado/App ENEM.dc.html,
     Turno 2 -- ver DesignSync 2026-09-09): só aparece quando
@@ -880,31 +1329,30 @@ def _renderizar_grade_questoes(
     retrato "desde a última correção/aplicação de sequência"."""
     _renderizar_editor_enunciado(questoes, sufixo)
 
-    if not estilo_exame:
-        with st.expander("⚡ Preenchimento rápido (cola a sequência de letras)"):
-            st.caption(
-                "Cola as letras na ordem das questões, sem espaço nem pontuação (ex: ABCDEBAACD...). "
-                "Use * ou deixa em branco pra pular uma questão que você não respondeu."
-            )
-            sequencia = st.text_input("Sequência de respostas", key=f"sequencia_rapida_{sufixo}")
-            if st.button("Aplicar sequência", key=f"aplicar_seq_{sufixo}"):
-                aplicadas = 0
-                for i, q in enumerate(questoes):
-                    letra = sequencia[i].upper() if i < len(sequencia) else "*"
-                    chave_resp = f"resp_{q['id_questao']}"
-                    if letra in "ABCDE":
-                        st.session_state[chave_resp] = letra
-                        aplicadas += 1
-                    else:
-                        # * (ou string mais curta que a prova) LIMPA a
-                        # resposta de propósito -- sem isso, colar uma
-                        # sequência corrigida com * numa posição que já
-                        # tinha letra de uma aplicação anterior deixava a
-                        # letra velha lá (só escrevia em cima de A-E, nunca
-                        # apagava), então "pular" não pulava de verdade se
-                        # já tinha algo marcado ali antes.
-                        st.session_state[chave_resp] = "—"
-                st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
+    with st.expander("⚡ Preenchimento rápido (cola a sequência de letras)"):
+        st.caption(
+            "Cola as letras na ordem das questões, sem espaço nem pontuação (ex: ABCDEBAACD...). "
+            "Use * ou deixa em branco pra pular uma questão que você não respondeu."
+        )
+        sequencia = st.text_input("Sequência de respostas", key=f"sequencia_rapida_{sufixo}")
+        if st.button("Aplicar sequência", key=f"aplicar_seq_{sufixo}"):
+            aplicadas = 0
+            for i, q in enumerate(questoes):
+                letra = sequencia[i].upper() if i < len(sequencia) else "*"
+                chave_resp = f"resp_{q['id_questao']}"
+                if letra in "ABCDE":
+                    st.session_state[chave_resp] = letra
+                    aplicadas += 1
+                else:
+                    # * (ou string mais curta que a prova) LIMPA a
+                    # resposta de propósito -- sem isso, colar uma
+                    # sequência corrigida com * numa posição que já
+                    # tinha letra de uma aplicação anterior deixava a
+                    # letra velha lá (só escrevia em cima de A-E, nunca
+                    # apagava), então "pular" não pulava de verdade se
+                    # já tinha algo marcado ali antes.
+                    st.session_state[chave_resp] = "—"
+            st.success(f"{aplicadas} resposta(s) aplicada(s) — confere a grade abaixo antes de corrigir.")
 
     # Ano de questão do banco de prática é um sentinela (ANO_BANCO_PRATICA
     # = 0, ver db.py), não um ano de prova real -- fica fora da conta de
@@ -936,14 +1384,15 @@ def _renderizar_grade_questoes(
         _processar_correcao_e_resultados(questoes, sufixo, enviado)
         return
 
-    # Rail "Por matéria" só quando a lista tem mais de uma matéria de
-    # verdade (uma prova completa mistura várias; "Praticar por
-    # matéria" é uma só, o rail não diria nada útil ali). Calculado
-    # antes do form só pra decidir o layout (colunas ou não) -- os
-    # NÚMEROS do rail em si só são lidos depois que o form já rodou
-    # (ver abaixo), tanto faz a ordem de leitura de session_state.
+    # Rail lateral existe sempre que não é estilo_exame agora -- antes
+    # só aparecia com mais de 1 matéria (só o card "Por matéria" morava
+    # lá); o card novo "Marcadas p/ revisão" (App ENEM.dc.html, Turno 2,
+    # seção 2a) é útil em QUALQUER grade, inclusive "Praticar por
+    # matéria" (1 matéria só). _renderizar_rail_por_materia() continua
+    # só sendo chamada quando há mais de 1 matéria de verdade -- ver
+    # dentro de col_rail abaixo.
     materias_da_grade = sorted({q["materia"] for q in questoes if q.get("materia")})
-    usar_rail = not estilo_exame and len(materias_da_grade) > 1
+    usar_rail = not estilo_exame
     if usar_rail:
         col_grade, col_rail = st.columns([3, 1])
     else:
@@ -1011,14 +1460,20 @@ def _renderizar_grade_questoes(
                     1 for q in questoes if st.session_state.get(f"resp_{q['id_questao']}", "—") != "—"
                 )
                 em_branco = len(questoes) - respondidas
+                pct_respondido = (respondidas / len(questoes) * 100) if questoes else 0
                 st.markdown(
-                    '<div style="display:flex;align-items:center;justify-content:space-between;'
-                    'flex-wrap:wrap;gap:10px;margin-bottom:14px">'
-                    '  <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap">'
+                    '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">'
+                    '  <div style="display:flex;align-items:baseline;justify-content:space-between;'
+                    'flex-wrap:wrap;gap:10px">'
                     f'    <span style="font-weight:800;font-size:15px;color:var(--tema-ink)">'
                     f'{respondidas} de {len(questoes)} respondidas</span>'
                     f'    <span style="font-weight:700;font-size:13px;color:var(--tema-ink-3)">'
                     f'{em_branco} em branco</span>'
+                    '  </div>'
+                    '  <div style="height:12px;border-radius:999px;background:var(--tema-surface-3);'
+                    'overflow:hidden;box-shadow:inset 0 2px 0 rgba(0,0,0,.3)">'
+                    f'    <div style="width:{pct_respondido:.0f}%;height:100%;border-radius:999px;'
+                    'background:var(--tema-lime);box-shadow:inset 0 3px 0 rgba(255,255,255,.32)"></div>'
                     '  </div>'
                     '</div>',
                     unsafe_allow_html=True,
@@ -1043,6 +1498,9 @@ def _renderizar_grade_questoes(
                     'background:var(--tema-lime);margin-right:5px"></span>respondida</span>'
                     '<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;'
                     'background:var(--tema-surface-2);border:1px solid #2C3342;margin-right:5px"></span>em branco</span>'
+                    '<span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;'
+                    'background:var(--tema-amber-bg);border:1px solid var(--tema-amber-border);margin-right:5px">'
+                    '</span>marcada p/ revisão</span>'
                     '</div>',
                     unsafe_allow_html=True,
                 )
@@ -1080,11 +1538,24 @@ def _renderizar_grade_questoes(
                                     'style="color:var(--tema-coral);font-weight:800">!</span>'
                                     if q["status_classificacao"] == "nao_classificado" else ""
                                 )
+                                # Lida ANTES de desenhar o checkbox de propósito
+                                # -- mesma limitação/convenção de frescor do
+                                # resto do form (reflete a última vez que ele
+                                # rodou, não ao vivo -- ver docstring da
+                                # função). Cor do número muda pra âmbar só
+                                # como reforço visual extra; a bandeirinha em
+                                # si é a fonte de verdade (session_state).
+                                marcada_antes = st.session_state.get(f"marcada_revisao_{q['id_questao']}", False)
+                                cor_numero = "var(--tema-amber)" if marcada_antes else "var(--tema-ink-2)"
                                 st.markdown(
                                     f'<div style="font-weight:800;font-size:13px;'
-                                    f'color:var(--tema-ink-2);padding-top:9px;'
+                                    f'color:{cor_numero};padding-top:9px;'
                                     f'white-space:nowrap">{numero_texto}{aviso_html}</div>',
                                     unsafe_allow_html=True,
+                                )
+                                st.checkbox(
+                                    "Marcar p/ revisão", key=f"marcada_revisao_{q['id_questao']}",
+                                    label_visibility="collapsed",
                                 )
                             with col_resp:
                                 st.radio(
@@ -1101,7 +1572,9 @@ def _renderizar_grade_questoes(
 
     if col_rail is not None:
         with col_rail:
-            _renderizar_rail_por_materia(questoes, materias_da_grade)
+            if len(materias_da_grade) > 1:
+                _renderizar_rail_por_materia(questoes, materias_da_grade)
+            _renderizar_rail_marcadas_revisao(questoes)
 
     _processar_correcao_e_resultados(questoes, sufixo, enviado)
 
@@ -1140,6 +1613,37 @@ def _renderizar_rail_por_materia(questoes: list[dict], materias: list[str]) -> N
         '<div style="font-family:\'Baloo 2\',sans-serif;font-weight:700;font-size:15px;'
         'color:var(--tema-ink);margin-bottom:14px">Por matéria</div>'
         f'{"".join(linhas)}'
+        '</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def _renderizar_rail_marcadas_revisao(questoes: list[dict]) -> None:
+    """Card lateral "Marcadas p/ revisão" (App ENEM.dc.html, Turno 2,
+    seção 2a) -- lista as questões que o aluno marcou com a bandeirinha
+    🚩 (checkbox `marcada_revisao_{id_questao}`, ao lado do número, ver
+    _renderizar_grade_questoes). Puramente de sessão: não grava nada no
+    banco, é só um lembrete visual de "quero olhar de novo antes de
+    corrigir" -- desaparece ao fechar a aba, igual o resto do estado do
+    form (mesma limitação de frescor: reflete a última vez que o form
+    rodou). Chamado pra QUALQUER grade (Modo Cartão), mesmo com 1 matéria
+    só -- diferente de _renderizar_rail_por_materia."""
+    marcadas = [
+        q for q in questoes if st.session_state.get(f"marcada_revisao_{q['id_questao']}", False)
+    ]
+    if not marcadas:
+        return
+    chips = "".join(
+        f'<span style="padding:6px 11px;border-radius:999px;background:var(--tema-amber-bg);'
+        f'border:1px solid var(--tema-amber-border);font-weight:800;font-size:12px;'
+        f'color:var(--tema-amber)">Q{q["numero_questao"]}</span>'
+        for q in marcadas
+    )
+    st.markdown(
+        '<div class="materia-rail-card" style="margin-top:14px">'
+        '<div style="font-family:\'Baloo 2\',sans-serif;font-weight:700;font-size:15px;'
+        'color:var(--tema-ink);margin-bottom:12px">Marcadas p/ revisão</div>'
+        f'<div style="display:flex;gap:8px;flex-wrap:wrap">{chips}</div>'
         '</div>',
         unsafe_allow_html=True,
     )

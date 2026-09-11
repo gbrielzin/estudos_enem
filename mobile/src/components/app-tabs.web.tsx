@@ -1,16 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import {
-  Tabs,
-  TabList,
-  TabTrigger,
-  TabSlot,
-  TabTriggerSlotProps,
-  TabListProps,
-} from 'expo-router/ui';
+import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps, TabListProps } from 'expo-router/ui';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
+import { CustomTabList, ITENS_NAV, TabButton } from '@/components/tab-bar';
 import { getDiasAteProva } from '@/lib/api';
 
 /** Barra de abas do site (react-native-web). Dois modos, ambos usando os
@@ -18,19 +12,29 @@ import { getDiasAteProva } from '@/lib/api';
  * TabList e o layout ao redor de TabSlot -- README seção "Interactions &
  * Behavior": "a partir de ~1100px entra o layout de três colunas do
  * desktop"):
- *  - Largura < 1100px: pill flutuante embaixo (README seção 1, "Tab bar"),
- *    3 abas ícone+rótulo em coluna, ativa vira pill violeta.
+ *  - Largura < 1100px: barra de 6 ícones encostada no fundo -- mesmo
+ *    componente que app-tabs.tsx (nativo) usa sempre agora, ver
+ *    components/tab-bar.tsx.
  *  - Largura >= 1100px: sidebar esquerda fixa 268px (README seção 8,
  *    "Desktop") -- marca, pills de navegação (ativa = pill lima), card
- *    "N dias até o ENEM" no rodapé. Sem rail direito por enquanto (o
- *    conteúdo de cada tela, ex. Perfil, já tem os próprios cards). */
+ *    "N dias até o ENEM" no rodapé. Ícones aqui continuam Feather (não
+ *    os <svg> coloridos da barra de 6) -- é um componente visual
+ *    diferente (pill com rótulo em texto), ver ICONE_SIDEBAR. Sem rail
+ *    direito por enquanto (o conteúdo de cada tela, ex. Perfil, já tem
+ *    os próprios cards). */
 const LARGURA_DESKTOP = 1100;
 
-const ITENS_NAV: { nome: string; rotulo: string; href: '/' | '/explore' | '/perfil'; icone: keyof typeof Feather.glyphMap }[] = [
-  { nome: 'home', rotulo: 'Home', href: '/', icone: 'home' },
-  { nome: 'explore', rotulo: 'Explore', href: '/explore', icone: 'compass' },
-  { nome: 'perfil', rotulo: 'Perfil', href: '/perfil', icone: 'user' },
-];
+// Ícone Feather por aba, só pra sidebar do desktop (pill com rótulo em
+// texto) -- ITENS_NAV (tab-bar.tsx) não carrega mais um campo `icone`
+// porque a barra de 6 usa <svg> próprios, não Feather.
+const ICONE_SIDEBAR: Record<string, keyof typeof Feather.glyphMap> = {
+  trilha: 'zap',
+  explorar: 'compass',
+  simulado: 'edit-3',
+  missoes: 'target',
+  liga: 'award',
+  pipoco: 'user',
+};
 
 export default function AppTabs() {
   const { width } = useWindowDimensions();
@@ -43,7 +47,7 @@ export default function AppTabs() {
           <DesktopSidebar>
             {ITENS_NAV.map((item) => (
               <TabTrigger key={item.nome} name={item.nome} href={item.href} asChild>
-                <SidebarItem icone={item.icone}>{item.rotulo}</SidebarItem>
+                <SidebarItem icone={ICONE_SIDEBAR[item.nome]}>{item.rotulo}</SidebarItem>
               </TabTrigger>
             ))}
           </DesktopSidebar>
@@ -56,48 +60,20 @@ export default function AppTabs() {
   }
 
   return (
-    <Tabs>
-      <TabSlot style={{ height: '100%' }} />
+    <Tabs style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <TabSlot />
+      </View>
       <TabList asChild>
         <CustomTabList>
           {ITENS_NAV.map((item) => (
             <TabTrigger key={item.nome} name={item.nome} href={item.href} asChild>
-              <TabButton icone={item.icone}>{item.rotulo}</TabButton>
+              <TabButton nome={item.nome} rotulo={item.rotulo} />
             </TabTrigger>
           ))}
         </CustomTabList>
       </TabList>
     </Tabs>
-  );
-}
-
-// ---------------------------------------------------------- pill (< 1100px)
-
-function TabButton({
-  children,
-  isFocused,
-  icone,
-  ...props
-}: TabTriggerSlotProps & { icone: keyof typeof Feather.glyphMap }) {
-  return (
-    <Pressable
-      {...props}
-      style={({ pressed }) => [
-        styles.tabButton,
-        isFocused && styles.tabButtonAtivo,
-        pressed && styles.pressed,
-      ]}>
-      <Feather name={icone} size={18} color={isFocused ? Brand.roxoClaro : Brand.textoApagado} />
-      <Text style={[styles.tabLabel, isFocused && styles.tabLabelAtivo]}>{children}</Text>
-    </Pressable>
-  );
-}
-
-function CustomTabList(props: TabListProps) {
-  return (
-    <View {...props} style={styles.tabListContainer}>
-      <View style={styles.innerContainer}>{props.children}</View>
-    </View>
   );
 }
 
@@ -159,48 +135,7 @@ function DesktopSidebar(props: TabListProps) {
 }
 
 const styles = StyleSheet.create({
-  // pill flutuante (< 1100px)
-  tabListContainer: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  innerContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    backgroundColor: Brand.bgCard,
-    borderWidth: 1,
-    borderColor: Brand.borda,
-    borderRadius: 999,
-    padding: 6,
-  },
-  tabButton: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    paddingVertical: 8,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-  },
-  tabButtonAtivo: {
-    backgroundColor: Brand.roxo,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  tabLabel: {
-    fontFamily: Fontes.corpoExtraNegrito,
-    fontSize: 11,
-    color: Brand.textoApagado,
-  },
-  tabLabelAtivo: {
-    color: Brand.roxoClaro,
-  },
-  // sidebar (>= 1100px)
+  // sidebar (>= 1100px) -- barra de 6 ícones (< 1100px) mora em components/tab-bar.tsx
   desktopRoot: {
     flex: 1,
     flexDirection: 'row',
@@ -252,6 +187,9 @@ const styles = StyleSheet.create({
   },
   sidebarItemAtivo: {
     backgroundColor: Brand.verde,
+  },
+  pressed: {
+    opacity: 0.8,
   },
   sidebarItemTexto: {
     fontFamily: Fontes.corpoNegrito,

@@ -4,7 +4,7 @@ ui_theme.py — CSS complementar ao tema em .streamlit/config.toml.
 O config.toml cobre cor/fonte/raio via API oficial do Streamlit (robusto
 entre versões). O que ele não alcança — esconder o rodapé "Made with
 Streamlit", dar cara de cartão pras métricas, estilizar as bolhas de
-resposta A-E, desenhar o mascote "Pipo" — fica aqui, isolado, pra não
+resposta A-E, desenhar o mascote "Pipoco" — fica aqui, isolado, pra não
 espalhar <style> solto pelas telas.
 
 Chamar injetar_tema() uma vez, no topo do entrypoint (__main__ de
@@ -251,6 +251,45 @@ header[data-testid="stHeader"] { background: transparent; }
 .nav-drawer .nav-footer-track { height: 9px; border-radius: 999px; background: var(--tema-surface-3); overflow: hidden; }
 .nav-drawer .nav-footer-fill { height: 100%; background: var(--tema-amber); }
 
+/* >= 1100px (mesmo corte de design_handoff_enem_gamificado/README.md,
+   seção "Interactions & Behavior", e do app mobile --
+   mobile/src/components/app-tabs.web.tsx usa o mesmo número pro
+   mesmo motivo): a gaveta vira sidebar FIXA sempre aberta, como no
+   mockup original e no app mobile -- pedido explícito do usuário
+   depois de ver a versão mobile (que já tinha ganho essa sidebar)
+   funcionando. navegacao_lateral() descrevia isso como deixado de
+   fora "por ora" por ser mais arriscado que o pedido original de
+   "mesma cara" pedia -- isto é exatamente esse "depois".
+
+   Zero HTML novo, zero JS, zero estado novo: o checkbox/hambúrguer/
+   overlay continuam existindo no DOM (abaixo de 1100px o
+   comportamento de toggle não muda em nada), só ficam escondidos
+   aqui, e a MESMA regra `left: 0` que `#nav-toggle:checked ~
+   .nav-drawer` já aplicava passa a valer sempre, sem depender do
+   checkbox. Isso transforma a gaveta de overlay modal (por cima do
+   conteúdo, com escurecedor) em parte fixa do layout -- por isso o
+   conteúdo principal (`[data-testid="stMain"]`, o wrapper real do
+   Streamlit 1.61 confirmado no bundle, não um nome adivinhado) ganha
+   `padding-left` igual à largura da gaveta, senão o texto entraria
+   por baixo dela. */
+@media (min-width: 1100px) {
+    .nav-hamburger, .nav-overlay { display: none !important; }
+    .nav-drawer { left: 0 !important; box-shadow: none; }
+    [data-testid="stMain"] {
+        padding-left: 280px;
+        /* `stMain` reserva um padding-top próprio por padrão (pensado
+           pra sobrar espaço pro hambúrguer flutuante, top:0.7rem, que
+           essa mesma media query já escondeu duas regras acima) --
+           acima de 1100px ele não existe mais, então esse espaço fica
+           sobrando por cima do padding-top de verdade que já é
+           controlado (.block-container, 28px, ver theme.css) -- daí o
+           "Óptica" (enem_theme.header(), primeira coisa da página)
+           ficar longe do topo. Zerado só aqui (>=1100px): abaixo desse
+           corte o hambúrguer volta a existir e precisa da folga. */
+        padding-top: 0 !important;
+    }
+}
+
 /* Título principal com uma régua lima embaixo. */
 .app-hero {
     display: flex;
@@ -421,6 +460,56 @@ div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio
     align-self: center;
 }
 
+/* Pills grandes do wizard "Montar prova" (App ENEM.dc.html, Turno 3,
+   seções 3a/3b -- ver _renderizar_montar_prova em cartao_resposta.py):
+   "Qual ano" e "Como responder" usam isto (marcador ".ano-pills" antes
+   de cada um, mesmo truque de irmão-geral que .grade-blocos já usa) --
+   pill grande arredondada com sombra sólida e número/texto em Baloo 2,
+   BEM diferente do pill fino genérico (div[data-testid="stRadio"]
+   label, acima) que o resto do app usa -- pedido explícito do usuário
+   pra bater de verdade com o visual do mockup, não só reaproveitar o
+   estilo padrão de radio. */
+div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] {
+    gap: 9px !important;
+}
+div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label {
+    background: var(--tema-surface) !important;
+    border: 1.5px solid var(--tema-border-2) !important;
+    box-shadow: 0 4px 0 #14181F !important;
+    border-radius: 16px !important;
+    padding: 11px 17px !important;
+    font-family: 'Baloo 2', sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 17px !important;
+    color: var(--tema-ink-2) !important;
+    transition: none !important;
+}
+div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
+    background: var(--tema-lime) !important;
+    border-color: var(--tema-lime-shadow) !important;
+    box-shadow: 0 5px 0 var(--tema-lime-shadow) !important;
+    color: var(--tema-on-lime) !important;
+}
+
+/* Cartões "Qual área" do mesmo wizard -- são st.button de verdade
+   (não st.radio, ver _renderizar_montar_prova), então usam type=
+   "primary"/"secondary" nativos do Streamlit pra marcar qual está
+   selecionado em vez de CSS -- aqui só engorda a altura/raio pra
+   parecer cartão, não botão de ação comum. Marcador ".area-cards"
+   ANTES do st.columns() que contém os botões (mesmo truque de
+   irmão-geral) -- sem isso a regra pegaria QUALQUER st.button dentro
+   de QUALQUER st.columns do app inteiro (Corrigir/Continuar/etc),
+   que é exatamente o tipo de vazamento que esse truque existe pra
+   evitar. */
+div.area-cards ~ div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
+    border-radius: 20px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+}
+
 /* Separadores e expanders com a mesma linguagem de borda, pra tudo
    parecer parte do mesmo sistema visual. */
 div[data-testid="stExpander"] {
@@ -451,6 +540,20 @@ div[data-testid="stExpander"] {
     height: 100%;
     border-radius: 999px;
     background: var(--tema-lime);
+}
+
+/* CTA do wizard "Montar prova" (ver _renderizar_montar_prova em
+   cartao_resposta.py) quando a casca sorteada é "bilhete" -- o botão
+   de confirmar vira âmbar em vez do lima padrão de type="primary",
+   pra bater com a cor do bilhete no mockup (App ENEM.dc.html, Turno 3,
+   seção 3b). Mesmo truque de marcador-irmão de sempre
+   (.grade-blocos/.ex-desktop-cols): só afeta o PRÓXIMO botão renderizado,
+   não qualquer st.button("...", type="primary") do resto do app. */
+div.montar-prova-cta-bilhete ~ div[data-testid="stButton"] button {
+    background: var(--tema-amber) !important;
+    border-color: var(--tema-amber-shadow) !important;
+    color: #3D2C00 !important;
+    box-shadow: 0 5px 0 var(--tema-amber-shadow) !important;
 }
 
 /* Tabela própria (ver tabela_html() abaixo) -- substitui st.dataframe()
@@ -580,20 +683,33 @@ div[data-testid="stProgress"] > div > div > div {
     font-size: 15px;
 }
 
-/* Mascote "Pipo" (ver mascote_html() abaixo) -- corpo arredondado com
-   sombra sólida 3D via duas camadas empilhadas (mesma técnica do
-   mobile, ver mobile/src/components/mascote.tsx e trilha-path.tsx),
-   já que CSS puro não tem um jeito nativo de "box-shadow offset sólido
-   sem blur" que funcione igual em toda situação de fundo. */
+/* Mascote "Pipoco" (ver mascote_html() abaixo) -- gatinho, MESMA
+   implementação conceitual do componente mobile (ver
+   mobile/src/components/mascote.tsx): corpo com sombra sólida 3D via
+   boxShadow offset sem blur (CSS de verdade tem isso nativo, não
+   precisa de duas camadas empilhadas como o RN antigo precisava), e
+   as orelhas/nariz via border-trick (par de bordas transparentes +
+   uma colorida = triângulo, mesmo truque, funciona em qualquer motor
+   CSS). Substituiu o desenho anterior (um passarinho verde, "bico" e
+   "tufo" de pena) -- a nomenclatura das classes ficou por conveniência
+   (evita renomear todo o arquivo por causa de uma troca visual), mas
+   NENHUMA delas desenha mais bico/pena. */
 .pipo-root { position: relative; flex: 0 0 auto; }
-.pipo-tufo { position: absolute; width: 26px; height: 26px; }
-.pipo-corpo-sombra, .pipo-corpo { position: absolute; left: 8px; width: 88px; height: 84px; border-radius: 40px; }
+.pipo-orelha { position: absolute; top: 0; width: 33px; height: 35px; }
+.pipo-orelha-fora { width: 0; height: 0; border-left: 16.5px solid transparent; border-right: 16.5px solid transparent; border-bottom: 35px solid; }
+.pipo-orelha-dentro { position: absolute; left: 9.5px; top: 13px; opacity: .8; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 18px solid; }
+.pipo-corpo-sombra, .pipo-corpo { position: absolute; left: 8px; top: 14px; width: 88px; height: 84px; border-radius: 50% 50% 44% 44% / 56% 56% 44% 44%; }
 .pipo-corpo { overflow: hidden; }
-.pipo-olho { position: absolute; width: 27px; height: 27px; border-radius: 50%; background: #FDFEFF; display: flex; align-items: center; justify-content: center; overflow: hidden; top: 33px; }
-.pipo-pupila { width: 13px; height: 13px; border-radius: 50%; background: #141821; }
-.pipo-palpebra { position: absolute; left: 0; top: 0; width: 27px; }
-.pipo-bico { position: absolute; left: 50%; top: 63px; border-radius: 3px; transform: rotate(45deg); }
-.pipo-bochecha { position: absolute; top: 68px; width: 14px; height: 9px; border-radius: 50%; background: rgba(255,120,110,.42); }
+.pipo-olho { position: absolute; width: 27px; height: 27px; border-radius: 50%; background: #F4F7FA; display: flex; align-items: center; justify-content: center; overflow: hidden; top: 34px; }
+.pipo-pupila { width: 9.5px; height: 18px; border-radius: 4.75px; background: #141821; }
+.pipo-palpebra { position: absolute; left: 0; top: 0; width: 27px; border-bottom: 2.5px solid; }
+.pipo-nariz { position: absolute; left: 50%; top: 63px; margin-left: -7.5px; width: 0; height: 0; border-left: 7.5px solid transparent; border-right: 7.5px solid transparent; border-top: 11px solid; }
+.pipo-bochecha { position: absolute; top: 70px; width: 15px; height: 9px; border-radius: 7.5px; background: rgba(255,143,163,.5); }
+.pipo-bigode { position: absolute; width: 28px; height: 2.5px; border-radius: 999px; }
+.pipo-boca-fechada { position: absolute; left: 50%; top: 74px; margin-left: -9.5px; width: 19px; height: 9px; border-radius: 0 0 999px 999px; border: 2.5px solid; border-top: 0; background: transparent; }
+.pipo-boca-aberta { position: absolute; left: 50%; top: 75px; margin-left: -10.5px; width: 21px; height: 15px; border-radius: 0 0 999px 999px; background: #8C3448; }
+.pipo-coleira { position: absolute; left: 22px; top: 60px; width: 60px; height: 11px; border-radius: 6px; z-index: 2; }
+.pipo-coleira-fivela { position: absolute; left: 50%; top: 1.5px; margin-left: -4px; width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,.85); }
 </style>
 """
 
@@ -622,6 +738,20 @@ _CSS_CLARO = """
     --tema-lime: #4FAE12;
     --tema-lime-shadow: #2F7D0E;
     --tema-coral: #C5401F;
+}
+/* `--tema-bg` acima nunca tocava a tela de verdade: o fundo real da
+   página vem de `config.toml`'s `backgroundColor` (#0A0C10), lido UMA
+   vez na subida do servidor e travado (não dá pra mudar em runtime,
+   ver core/CLAUDE.md) -- sem esta regra, o toggle "Modo claro" deixava
+   a gaveta de navegação clara mas o CONTEÚDO principal continuava
+   preto atrás dela, um "meio-claro" quebrado (confirmado ao vivo no
+   Chrome: sidebar branca, `[data-testid="stMain"]` ainda `#0A0C10`).
+   `stAppViewContainer` é o pai que realmente pinta o fundo por trás de
+   tudo no Streamlit 1.61 (confirmado no bundle, mesmo raciocínio já
+   usado pro `stMain` acima); `stMain` também recebe a cor por
+   segurança, caso alguma versão pinte ali em vez do pai. */
+[data-testid="stAppViewContainer"], [data-testid="stMain"] {
+    background: var(--tema-bg) !important;
 }
 /* Gaveta de navegação: era hardcoded #12151C (deliberadamente escura
    mesmo antes do redesign, ver comentário grande em _CSS acima) --
@@ -725,7 +855,13 @@ def navegacao_lateral(
         '<label for="nav-toggle" class="nav-hamburger">☰</label>'
         '<label for="nav-toggle" class="nav-overlay"></label>'
         '<nav class="nav-drawer">'
-        '<div class="nav-title">Menu</div>'
+        # "Enem" em vez do genérico "Menu" -- pedido explícito do
+        # usuário, marcado como provisório por ele mesmo ("por
+        # enquanto"): a gaveta agora é uma sidebar fixa sempre visível
+        # em telas largas (ver bloco @media acima), então o topo dela
+        # passou a fazer o papel de "marca" do app, não só de rótulo de
+        # seção -- um nome de verdade ainda não foi decidido.
+        '<div class="nav-title">Enem</div>'
         f"{itens_html}"
         f"{toggle_tema_html}"
         f"{rodape_html}"
@@ -809,26 +945,42 @@ def emblema_html(icone: str, bg: str, cor: str, tamanho: int = 32, raio: int = 1
 
 
 _HUMORES_PIPO = {
-    "happy": {"tilt": 0, "pupil_y": 0, "beak": 17, "fechado": False},
-    "cheer": {"tilt": -7, "pupil_y": -2, "beak": 22, "fechado": False},
-    "sad": {"tilt": 5, "pupil_y": 4, "beak": 13, "fechado": True},
-    "sleep": {"tilt": 0, "pupil_y": 0, "beak": 17, "fechado": True},
+    "happy": {"tilt": 0, "pupil_y": 0, "pupil_w": 9.5, "ear_tilt": 7, "fechado": False, "tail_top": 62, "tail_rot": -16},
+    "cheer": {"tilt": -7, "pupil_y": -2, "pupil_w": 12, "ear_tilt": -4, "fechado": False, "tail_top": 40, "tail_rot": -54},
+    "sad": {"tilt": 5, "pupil_y": 4, "pupil_w": 9.5, "ear_tilt": 32, "fechado": True, "tail_top": 62, "tail_rot": -16},
+    "sleep": {"tilt": 0, "pupil_y": 0, "pupil_w": 9.5, "ear_tilt": 7, "fechado": True, "tail_top": 62, "tail_rot": -16},
 }
 
 
 def mascote_html(
     mood: str = "happy",
-    color: str = "#6EE12B",
-    shadow: str = "#3F8F14",
-    beak: str = "#FFC42E",
+    color: str = "#FDFEFF",
+    shadow: str = "#C4CFDB",
+    beak: str = "#FF8FA3",
     size: float = 1.0,
+    pattern: str = "solido",
+    patch: str | None = None,
+    collar: str | None = None,
 ) -> str:
-    """"Pipo", o mascote -- porta direta de Mascote.dc.html (projeto de
-    design do usuário no Claude Design, importado via DesignSync), MESMA
-    implementação conceitual do componente React Native (ver
-    mobile/src/components/mascote.tsx) -- aqui como uma string de HTML
+    """"Pipoco", o mascote (gatinho branco) -- porta direta da versão
+    ATUAL de Mascote.dc.html (projeto de design do usuário no Claude
+    Design, importado via DesignSync), MESMA implementação conceitual
+    do componente React Native (ver mobile/src/components/mascote.tsx,
+    fonte de verdade -- qualquer mudança de anatomia/humor deveria ser
+    feita lá primeiro e replicada aqui) -- aqui como uma string de HTML
     puro (divs com estilo inline + classes do bloco .pipo-* em _CSS),
     pra injetar via st.markdown(mascote_html(...), unsafe_allow_html=True).
+    Substitui o desenho anterior (um passarinho verde -- `color`/
+    `shadow`/`beak` tinham default lima/verde-escuro/âmbar, os tokens de
+    MARCA do app, não do bichinho; os novos defaults são os do gato
+    branco, mesmos valores de mobile/src/constants/brand.ts).
+
+    `beak` (nome mantido por compatibilidade, ver mesma nota em
+    mascote.tsx) tinge o nariz e a parte interna da orelha, não desenha
+    mais bico. `pattern`/`patch`/`collar`: mesmas variações de pelagem
+    do componente mobile (ver docstring de lá pro porquê) -- só
+    'tuxedo' e 'patches' têm desenho aqui, qualquer outro valor cai no
+    'solido' (cor única, comportamento de sempre).
 
     Não retorna um componente Streamlit de verdade (é só HTML), então
     quem chama precisa envolver com st.markdown(..., unsafe_allow_html=True)
@@ -837,41 +989,95 @@ def mascote_html(
     humor = _HUMORES_PIPO.get(mood, _HUMORES_PIPO["happy"])
     fechado = humor["fechado"]
     altura_palpebra = 16 if mood == "sleep" else 14
+    cor_orelha = patch if (pattern == "tuxedo" and patch) else color
+
     palpebra_html = (
-        f'<div class="pipo-palpebra" style="height:{altura_palpebra}px;background:{color};'
-        f'border-bottom:2px solid {shadow}"></div>'
+        f'<div class="pipo-palpebra" style="height:{altura_palpebra}px;background:{color};border-bottom-color:{shadow}"></div>'
         if fechado else ""
     )
     sparkle_html = (
-        f'<div style="position:absolute;right:-8px;top:-10px;width:15px;height:15px;'
-        f'transform:rotate(45deg);border-radius:4px;background:{beak}"></div>'
+        f'<div style="position:absolute;right:-10px;top:-6px;width:15px;height:15px;'
+        f'transform:rotate(45deg);border-radius:4px;background:#FFC42E"></div>'
         if mood == "cheer" else ""
     )
-    return f"""
+    boca_html = (
+        f'<div class="pipo-boca-aberta"></div>' if mood == "cheer"
+        else f'<div class="pipo-boca-fechada" style="border-color:{shadow}"></div>'
+    )
+    manchas_html = ""
+    if pattern == "tuxedo" and patch:
+        # "Capuz": só o terço de cima do corpo, mesmo raio do corpo em
+        # cima -- lê como pelagem escura na cabeça/costas sobre um corpo
+        # claro. Mesma abordagem de mobile/src/components/mascote.tsx.
+        manchas_html = f'<div style="position:absolute;left:0;top:0;right:0;height:32px;background:{patch};border-radius:44px 44px 0 0"></div>'
+    elif pattern == "patches" and patch:
+        manchas_html = (
+            f'<div style="position:absolute;left:-6px;top:-4px;width:34px;height:30px;border-radius:16px;'
+            f'background:{patch};transform:rotate(-12deg)"></div>'
+            f'<div style="position:absolute;right:-8px;bottom:-6px;width:30px;height:26px;border-radius:14px;'
+            f'background:{patch};transform:rotate(10deg)"></div>'
+        )
+    coleira_html = (
+        f'<div class="pipo-coleira" style="background:{collar}"><div class="pipo-coleira-fivela"></div></div>'
+        if collar else ""
+    )
+    bigodes_html = "".join(
+        f'<div class="pipo-bigode" style="{lado}:-8px;top:{63 + i * 8}px;background:{shadow};'
+        f'transform:rotate({(1 if lado == "left" else -1) * angulo}deg)"></div>'
+        for lado in ("left", "right")
+        for i, angulo in enumerate((13, 0, -13))
+    )
+
+    html = f"""
 <div class="pipo-root" style="width:104px;height:104px;transform:scale({size}) rotate({humor['tilt']}deg)">
-  <div class="pipo-tufo" style="left:6px;top:2px;transform:rotate(-18deg);background:{shadow};
-       border-radius:50% 50% 40% 60%"></div>
-  <div class="pipo-tufo" style="right:6px;top:2px;transform:rotate(18deg);background:{shadow};
-       border-radius:50% 50% 60% 40%"></div>
-  <div class="pipo-corpo-sombra" style="top:22px;background:{shadow}"></div>
-  <div class="pipo-corpo" style="top:14px;background:{color}">
-    <div style="position:absolute;left:8px;top:20px;width:56px;height:44px;border-radius:24px;
-         background:rgba(255,255,255,.26)"></div>
-    <div style="position:absolute;left:2px;top:-8px;width:30px;height:22px;border-radius:15px;
-         background:rgba(255,255,255,.22)"></div>
+  <div style="position:absolute;right:-18px;top:{humor['tail_top']}px;width:46px;height:13px;border-radius:999px;
+       background:{color};box-shadow:0 3px 0 {shadow};transform:rotate({humor['tail_rot']}deg);transform-origin:left center"></div>
+
+  <div class="pipo-orelha" style="left:8px;transform:rotate(-{humor['ear_tilt']}deg);transform-origin:center bottom">
+    <div class="pipo-orelha-fora" style="border-bottom-color:{cor_orelha}"></div>
+    <div class="pipo-orelha-dentro" style="border-bottom-color:{beak}"></div>
   </div>
+  <div class="pipo-orelha" style="right:8px;transform:rotate({humor['ear_tilt']}deg);transform-origin:center bottom">
+    <div class="pipo-orelha-fora" style="border-bottom-color:{cor_orelha}"></div>
+    <div class="pipo-orelha-dentro" style="border-bottom-color:{beak}"></div>
+  </div>
+
+  <div class="pipo-corpo-sombra" style="background:{shadow}"></div>
+  <div class="pipo-corpo" style="background:{color}">
+    {manchas_html}
+    <div style="position:absolute;left:18px;top:26px;width:52px;height:38px;border-radius:26px;
+         background:rgba(255,255,255,.5)"></div>
+  </div>
+  {coleira_html}
+
   <div class="pipo-olho" style="left:17px">
-    <div class="pipo-pupila" style="transform:translateY({humor['pupil_y']}px)"></div>
+    <div class="pipo-pupila" style="width:{humor['pupil_w']}px;border-radius:{humor['pupil_w'] / 2}px;transform:translateY({humor['pupil_y']}px)"></div>
     {palpebra_html}
   </div>
   <div class="pipo-olho" style="right:17px">
-    <div class="pipo-pupila" style="transform:translateY({humor['pupil_y']}px)"></div>
+    <div class="pipo-pupila" style="width:{humor['pupil_w']}px;border-radius:{humor['pupil_w'] / 2}px;transform:translateY({humor['pupil_y']}px)"></div>
     {palpebra_html}
   </div>
+
+  {bigodes_html}
+  <div class="pipo-nariz" style="border-top-color:{beak}"></div>
+  {boca_html}
   <div class="pipo-bochecha" style="left:11px"></div>
   <div class="pipo-bochecha" style="right:11px"></div>
-  <div class="pipo-bico" style="width:{humor['beak']}px;height:{humor['beak']}px;
-       margin-left:-{humor['beak'] / 2}px;background:{beak}"></div>
   {sparkle_html}
 </div>
 """
+    # Achatado pra uma linha só (sem quebra/indentação) antes de devolver:
+    # este HTML quase sempre é interpolado DENTRO de outro st.markdown(...,
+    # unsafe_allow_html=True) maior (cena da mesa, bilhete, cards de área).
+    # Uma linha em branco no meio encerra o "HTML block" do CommonMark mais
+    # cedo -- o resto do markdown pai volta a ser parseado como texto comum,
+    # onde qualquer linha com 4+ espaços de indentação (comum em f-string
+    # Python) vira bloco de código literal em vez de HTML de verdade. Já
+    # aconteceu de verdade: o cartão "SEU BILHETE" e o "mesa"/"área" ao
+    # lado mostravam pedaços de `<div ...>` crus com botão "Copy to
+    # clipboard" bem depois de qualquer chamada a mascote_html(). Uma só
+    # linha nunca aciona nem a regra de linha-em-branco nem a de
+    # indentação, então é imune ao mesmo bug em qualquer contexto onde for
+    # colada.
+    return " ".join(linha.strip() for linha in html.splitlines() if linha.strip())
