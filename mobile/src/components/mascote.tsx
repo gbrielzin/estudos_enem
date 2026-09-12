@@ -1,4 +1,5 @@
-import { View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing, View } from 'react-native';
 
 export type MascoteMood = 'happy' | 'cheer' | 'sad' | 'sleep';
 export type MascotePattern = 'solido' | 'tuxedo' | 'patches';
@@ -20,6 +21,14 @@ export interface MascoteProps {
   /** Cor de uma coleira opcional (banda + fivela no pescoço). Sem
    * relação com `pattern` -- pode combinar os dois. */
   collar?: string;
+  /** "Pipoco respirando" -- padrão de movimento 6a do projeto de
+   * design (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de
+   * animação"): estado parado do mascote em QUALQUER tela, ligado por
+   * padrão. Só vale a pena desligar (`animado={false}`) num mascote
+   * bem pequeno/inline ao lado de texto (ex: os cards de área de
+   * "Montar simulado", 0.33 de tamanho) -- balançar 7px ali chamaria
+   * mais atenção do que o próprio texto ao lado. */
+  animado?: boolean;
 }
 
 /**
@@ -90,8 +99,30 @@ export function Mascote({
   pattern = 'solido',
   patch,
   collar,
+  animado = true,
 }: MascoteProps) {
   const tilt = mood === 'cheer' ? '-7deg' : mood === 'sad' ? '5deg' : '0deg';
+
+  // "Pipoco respirando" (pk-bob no design): 2,6s em loop, sobe 7px e
+  // balança ±1,5° -- valores FIXOS em px/grau, não escalam com `size`
+  // (mesma @keyframes do design aplicada igual em qualquer instância).
+  // Roda num wrapper RÍGIDO por fora do wrapper de escala (abaixo),
+  // pra não interferir no `transformOrigin` que resolve o bug de
+  // layout já documentado ali.
+  const respirar = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!animado) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(respirar, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(respirar, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [animado, respirar]);
+  const respirarY = respirar.interpolate({ inputRange: [0, 1], outputRange: [0, -7] });
+  const respirarRotacao = respirar.interpolate({ inputRange: [0, 1], outputRange: ['-1.5deg', '1.5deg'] });
   const pupilY = mood === 'sad' ? 4 : mood === 'cheer' ? -2 : 0;
   const pupilWidth = mood === 'cheer' ? 12 : 9.5;
   const fechado = mood === 'sleep' || mood === 'sad';
@@ -101,8 +132,29 @@ export function Mascote({
   const tailRotate = mood === 'cheer' ? '-54deg' : '-16deg';
   const corOrelha = pattern === 'tuxedo' && patch ? patch : color;
 
+  // Wrapper externo com o tamanho VISUAL de verdade (104*size) -- por
+  // dentro, o View de 104x104 nativo (todo o resto deste componente usa
+  // offsets em px pensados pra essa referência) só encolhe visualmente
+  // via transform:scale, que em React Native (igual em CSS web, mesmo
+  // bug já achado e corrigido em ui_theme.mascote_html() no lado
+  // Streamlit) NUNCA muda o espaço reservado em layout, só o que é
+  // pintado na tela. Sem este wrapper, um <Mascote size={0.33}/> dentro
+  // de uma linha flexDirection:'row' (como os cards de área da tela
+  // "Montar simulado") reservava 104px de largura mesmo aparentando
+  // ser bem menor -- sobrava pouco espaço de verdade pro texto vizinho,
+  // que quebrava letra por letra ("Natu/reza", "Mate/máti/ca"), achado
+  // ao vivo no navegador. `transformOrigin: 'top left'` (em vez do
+  // padrão "center") é o que faz o conteúdo encolhido bater exatamente
+  // com o canto (0,0) do wrapper, em vez de encolher pro centro e
+  // sobrar espaço torto.
   return (
-    <View style={{ width: 104, height: 104, transform: [{ scale: size }, { rotate: tilt }] }}>
+    <Animated.View
+      style={{
+        width: 104 * size,
+        height: 104 * size,
+        transform: animado ? [{ translateY: respirarY }, { rotate: respirarRotacao }] : undefined,
+      }}>
+    <View style={{ width: 104, height: 104, transform: [{ scale: size }, { rotate: tilt }], transformOrigin: 'top left' }}>
       {/* cauda -- pill rotacionado, sombra sólida via boxShadow (nunca gradiente) */}
       <View
         style={{
@@ -198,6 +250,7 @@ export function Mascote({
         <View style={{ position: 'absolute', left: -10, top: -6, width: 15, height: 15, transform: [{ rotate: '45deg' }], borderRadius: 4, backgroundColor: '#FFC42E' }} />
       )}
     </View>
+    </Animated.View>
   );
 }
 

@@ -290,6 +290,97 @@ header[data-testid="stHeader"] { background: transparent; }
     }
 }
 
+/* "Cena da mesa" (Provas ENEM, topo da página) -- panorâmica de
+   verdade, encostando nas duas bordas do espaço disponível (depois da
+   gaveta fixa), não uma caixa flutuando dentro do padding padrão do
+   Streamlit. .block-container nesta versão instalada (1.61.1) usa
+   80px de padding lateral em qualquer viewport >=1100px (confirmado
+   ao vivo via getComputedStyle em 1150px e 1800px, mesmo valor nos
+   dois -- estável nessa faixa, não chutado), por isso a margem
+   negativa é fixa aqui, só dentro da MESMA media query que já trava a
+   gaveta lateral fixa (breakpoint compartilhado de propósito, mesmo
+   corte de ui_theme já usa acima). Abaixo de 1100px (celular/gaveta em
+   overlay) cai pro padding normal do Streamlit -- sem margem negativa
+   lá, zero risco de estourar a viewport numa tela estreita que esta
+   sessão não consegue testar de verdade. */
+.cena-mesa-full-bleed { width: 100%; }
+@media (min-width: 1100px) {
+    .cena-mesa-full-bleed {
+        width: calc(100% + 160px);
+        margin-left: -80px;
+        margin-right: -80px;
+    }
+}
+
+/* Barra de navegação de ícones (App ENEM.dc.html, Turno 4, 4a) --
+   SUBSTITUI a gaveta de texto (.nav-drawer/.nav-hamburger/.nav-overlay
+   acima, mantidas no arquivo só pra não perder o código, mas não são
+   mais chamadas por __main__) -- pedido explícito do usuário,
+   2026-09-11: "substitua cartão resposta, prova enem e tudo aquele
+   menu por aqueles ícones". Uma tentativa anterior deste MESMO visual
+   escopada só dentro de Provas ENEM (classes .entrada-bleed/.barra-
+   icones-entrada) saiu "bugada" segundo o usuário e foi revertida --
+   esta versão é a navegação real do app inteiro, sempre fixa, sempre
+   visível (ver barra_navegacao_icones() em ui_theme.py).
+
+   Fixa a esquerda em QUALQUER largura de tela, sem hambúrguer/gaveta
+   nenhum -- 82px é estreito o bastante pra nunca precisar de um modo
+   "recolhido": a mesma lição de "não dá pra testar comportamento
+   responsivo de verdade nesta sessão" que motivou trocar a sidebar
+   nativa por esta gaveta CSS (ver navegacao_lateral()) se aplica aqui
+   só que ao extremo -- eliminando o breakpoint por completo eliminou
+   também a classe inteira de bug ("hambúrguer inacessível no celular")
+   que motivou toda a reescrita anterior. */
+.barra-nav-icones {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 82px;
+    background: #0F1218;
+    border-right: 1px solid #1D222B;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    gap: 8px;
+    z-index: 999999;
+    overflow-y: auto;
+}
+/* border:2px solid transparent na base (não "sem borda") -- crucial:
+   o estado ativo (inline, ver barra_navegacao_icones()) só troca
+   border-color/background, nunca adiciona a borda -- se a base não
+   reservasse os mesmos 2px, o ícone puxaria 4px de largura extra ao
+   ativar e todo o resto da coluna se deslocaria (layout shift). Cor
+   de "ativo" vem de _COR_ATIVA_NAV (a cor do PRÓPRIO ícone, mesma
+   lógica de mobile/tab-bar.tsx -- COR_ATIVA/isFocused), não mais um
+   anel branco genérico (1a versão: "provas_enem"/"guia" tinham cor de
+   repouso fixa que colidia visualmente com um destaque lima de
+   "ativo" -- resolvido junto com a troca pra cor-própria-do-ícone,
+   que não tem mais cor de repouso nenhuma, só ativo/inativo). */
+.barra-nav-icones a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    border: 2px solid transparent;
+    flex: 0 0 auto;
+    text-decoration: none;
+}
+[data-testid="stMain"] {
+    padding-left: 82px !important;
+    padding-top: 0 !important;
+}
+@media (max-width: 480px) {
+    /* Tela realmente minúscula: encolhe a barra em vez de escondê-la
+       (nunca some -- ver comentário grande acima). */
+    .barra-nav-icones { width: 60px; padding: 12px 0; gap: 6px; }
+    .barra-nav-icones a { width: 40px; height: 40px; border-radius: 12px; }
+    [data-testid="stMain"] { padding-left: 60px !important; }
+}
+
 /* Título principal com uma régua lima embaixo. */
 .app-hero {
     display: flex;
@@ -427,11 +518,30 @@ div[data-testid="stRadio"] label:has(input:checked) {
    com a função cell() do data-dc-script do handoff (marcado = lima
    cheio + sombra sólida; não marcado = surface-2 + borda). Opção "—"
    é sempre o 1o filho (["—","A",...]), estilizada menor/apagada de
-   propósito pra não competir visualmente com as 5 letras de verdade. */
-div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] [role="radiogroup"] {
+   propósito pra não competir visualmente com as 5 letras de verdade.
+
+   NENHUMA destas regras batia de verdade até 2026-09-11 (achado ao
+   vivo no Chrome comparando getComputedStyle contra o que o CSS
+   deveria produzir): o "truque de irmão-geral" pressupunha que o
+   `<div class="grade-blocos">` fosse irmão DIRETO do
+   `[data-testid="stHorizontalBlock"]` seguinte, mas o Streamlit 1.61
+   embrulha CADA um em containers próprios -- o marcador fica 4 níveis
+   dentro de um `[data-testid="stElementContainer"]` (stMarkdownContainer
+   > div > stMarkdown > stElementContainer), e o `st.columns()` seguinte
+   vem dentro de um `[data-testid="stLayoutWrapper"]` -- então
+   `.grade-blocos ~ [data-testid="stHorizontalBlock"]` nunca eram irmãos
+   de verdade, e todo st.radio caía no visual de pílula fina genérica
+   acima. Corrigido ancorando o `~` no `stElementContainer` que CONTÉM
+   o marcador (via :has(), suportado em todo browser moderno) e
+   atravessando o `stLayoutWrapper` extra do lado do alvo. */
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] {
     gap: 5px !important;
 }
-div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] [role="radiogroup"] > label {
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] > label {
     width: 26px;
     height: 26px;
     padding: 0 !important;
@@ -445,19 +555,37 @@ div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio
     font-weight: 800;
     font-size: 12px;
 }
-div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
     background: var(--tema-lime);
     border-color: var(--tema-lime-shadow);
     box-shadow: 0 2px 0 var(--tema-lime-shadow);
     color: var(--tema-on-lime);
 }
-div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio"] [role="radiogroup"] > label:first-child {
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] > label:first-child {
     width: 18px;
     height: 18px;
     border-radius: 6px;
     font-size: 10px;
     opacity: .6;
     align-self: center;
+}
+/* Mesmo bug do .ano-pills (ver comentário grande logo abaixo): a
+   bolinha nativa do radio ficava por cima do texto/número aqui
+   também, só que nunca aparecia de verdade porque a regra INTEIRA
+   acima nunca batia -- corrigido junto. */
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] > label > div > div {
+    justify-content: center !important;
+}
+div[data-testid="stElementContainer"]:has(div.grade-blocos)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stRadio"] [role="radiogroup"] > label > div > div > div:first-child {
+    display: none !important;
 }
 
 /* Pills grandes do wizard "Montar prova" (App ENEM.dc.html, Turno 3,
@@ -468,11 +596,22 @@ div.grade-blocos ~ div[data-testid="stHorizontalBlock"] div[data-testid="stRadio
    BEM diferente do pill fino genérico (div[data-testid="stRadio"]
    label, acima) que o resto do app usa -- pedido explícito do usuário
    pra bater de verdade com o visual do mockup, não só reaproveitar o
-   estilo padrão de radio. */
-div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] {
+   estilo padrão de radio.
+
+   Mesmo bug de nesting do .grade-blocos acima (achado ao vivo
+   2026-09-11 investigando por que "os botões de ano ainda não tá como
+   no design" mesmo com esta regra já escrita): `.ano-pills` fica
+   fundo demais dentro do seu próprio stElementContainer pro `~` puro
+   alcançar o `[data-testid="stRadio"]` seguinte (que também tem SEU
+   PRÓPRIO stElementContainer) -- ancorado com :has() dos dois lados
+   agora, confirmado via `label.matches(seletor)` no DOM real antes de
+   fechar o fix, não só por inspeção visual. */
+div[data-testid="stElementContainer"]:has(div.ano-pills)
+  ~ div[data-testid="stElementContainer"] div[data-testid="stRadio"] [role="radiogroup"] {
     gap: 9px !important;
 }
-div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label {
+div[data-testid="stElementContainer"]:has(div.ano-pills)
+  ~ div[data-testid="stElementContainer"] div[data-testid="stRadio"] [role="radiogroup"] > label {
     background: var(--tema-surface) !important;
     border: 1.5px solid var(--tema-border-2) !important;
     box-shadow: 0 4px 0 #14181F !important;
@@ -480,11 +619,28 @@ div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label {
     padding: 11px 17px !important;
     font-family: 'Baloo 2', sans-serif !important;
     font-weight: 800 !important;
-    font-size: 17px !important;
+    font-size: 19px !important;
     color: var(--tema-ink-2) !important;
     transition: none !important;
 }
-div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
+/* A bolinha nativa do radio (anel + miolo, mesma estrutura já mapeada
+   ao vivo no DOM pra corrigir o contraste do modo claro em stRadio)
+   continuava renderizada DENTRO da pill, ao lado do número -- o
+   mockup não tem bolinha nenhuma, só o número centralizado, cor/fundo
+   da própria pill é o que marca "selecionado". `label > div > div` é
+   o container flex que hoje tem 2 filhos (a bolinha e o texto);
+   escondendo o primeiro e centralizando o que sobra reproduz isso sem
+   tocar no radio em si (continua funcionando, só não aparece mais). */
+div[data-testid="stElementContainer"]:has(div.ano-pills)
+  ~ div[data-testid="stElementContainer"] div[data-testid="stRadio"] [role="radiogroup"] > label > div > div {
+    justify-content: center !important;
+}
+div[data-testid="stElementContainer"]:has(div.ano-pills)
+  ~ div[data-testid="stElementContainer"] div[data-testid="stRadio"] [role="radiogroup"] > label > div > div > div:first-child {
+    display: none !important;
+}
+div[data-testid="stElementContainer"]:has(div.ano-pills)
+  ~ div[data-testid="stElementContainer"] div[data-testid="stRadio"] [role="radiogroup"] > label:has(input:checked) {
     background: var(--tema-lime) !important;
     border-color: var(--tema-lime-shadow) !important;
     box-shadow: 0 5px 0 var(--tema-lime-shadow) !important;
@@ -500,14 +656,52 @@ div.ano-pills ~ div[data-testid="stRadio"] [role="radiogroup"] > label:has(input
    irmão-geral) -- sem isso a regra pegaria QUALQUER st.button dentro
    de QUALQUER st.columns do app inteiro (Corrigir/Continuar/etc),
    que é exatamente o tipo de vazamento que esse truque existe pra
-   evitar. */
-div.area-cards ~ div[data-testid="stHorizontalBlock"] div[data-testid="stButton"] button {
+   evitar.
+
+   Mesmo bug de nesting do .grade-blocos/.ano-pills (2026-09-11):
+   ancorado com :has() no stElementContainer do marcador, e
+   atravessando o stLayoutWrapper que embrulha todo st.columns() --
+   confirmado via button.matches(seletor) no DOM real antes de fechar. */
+div[data-testid="stElementContainer"]:has(div.area-cards)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stButton"] button {
     border-radius: 20px;
     padding-top: 16px;
     padding-bottom: 16px;
     font-family: 'Baloo 2', sans-serif;
     font-weight: 800;
     font-size: 15px;
+}
+
+/* Botões "Qual ano" (mesmo wizard) -- também virou st.button (era
+   st.radio, ver comentário grande em _renderizar_montar_prova sobre
+   por que precisou trocar: a referência visual do usuário mostra o
+   número GRANDE dentro do quadrado e uma bolinha de status PEQUENA
+   por fora, embaixo -- st.radio só aceita uma linha de texto simples
+   por opção, sem dar pra ter dois tamanhos de fonte). Marcador
+   ".ano-cards", mesmo truque/fix de :has()+stLayoutWrapper que
+   .area-cards usa logo acima. Quadrado bem maior que o botão de área
+   (a referência mostra 7 deles lado a lado, mais altos que largos) e
+   sombra sólida tipo "botão físico" (0 4px 0 cor-mais-escura) igual
+   ao resto do wizard -- cor da sombra muda com type= primary/
+   secondary porque button[kind=] já é o atributo real que o Streamlit
+   usa pra essa distinção (confirmado: já usado em outra regra global
+   deste mesmo arquivo). */
+div[data-testid="stElementContainer"]:has(div.ano-cards)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stButton"] button {
+    border-radius: 18px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    box-shadow: 0 4px 0 #14181F;
+}
+div[data-testid="stElementContainer"]:has(div.ano-cards)
+  ~ div[data-testid="stLayoutWrapper"] div[data-testid="stHorizontalBlock"]
+  div[data-testid="stButton"] button[kind="primary"] {
+    box-shadow: 0 4px 0 var(--tema-lime-shadow);
 }
 
 /* Separadores e expanders com a mesma linguagem de borda, pra tudo
@@ -871,6 +1065,136 @@ def navegacao_lateral(
     )
 
 
+# Ícones copiados byte-a-byte de mobile/src/components/tab-bar.tsx
+# (ITENS_NAV/ICONES/COR_ATIVA de lá) -- fonte de verdade, não o mockup
+# solto: o usuário pediu explicitamente, 2026-09-11, pra bater com a
+# barra de baixo do app mobile de verdade, não com um mapeamento
+# inventado por tema (a 1a tentativa, comentário antigo removido daqui,
+# errou nisso -- ex: bandeira virou "Provas ENEM" quando no mobile ela
+# é "Trilha"). Nome interno de cada item aqui é o MESMO `nome` de
+# ITENS_NAV (trilha/explorar/simulado/missoes/liga/perfil), não a chave
+# de _PAGINAS -- o mapeamento pra página real do site (que o mobile não
+# tem 1-pra-1, ver _PAGINA_POR_ICONE_NAV) é uma camada SEPARADA.
+_ICONE_NAV: dict[str, str] = {
+    "trilha": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><rect x="5.4" y="3" width="2.6" height="18.4" rx="1.2" fill="#8B93A7"/>'
+        '<path d="M8.6 4h10.6l-2.7 3.7 2.7 3.7H8.6z" fill="#6EE12B"/></svg>'
+    ),
+    "explorar": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.6" fill="#7C5CFF"/>'
+        '<path d="M16.4 7.6l-2.3 6.5-6.5 2.3 2.3-6.5z" fill="#FFFFFF"/></svg>'
+    ),
+    "simulado": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><rect x="3.6" y="3.4" width="16.8" height="18" rx="2.4" fill="#FFC42E"/>'
+        '<rect x="8.4" y="1.5" width="7.2" height="3.6" rx="1.4" fill="#D99A16"/><rect x="6.6" y="8.6" width="10.8" height="2.2" rx="1.1" fill="#FFFFFF"/>'
+        '<rect x="6.6" y="13" width="7" height="2.2" rx="1.1" fill="#FFFFFF"/></svg>'
+    ),
+    "missoes": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.6" fill="#FF5A45"/>'
+        '<circle cx="12" cy="12" r="6" fill="#FFF1EE"/><circle cx="12" cy="12" r="2.7" fill="#FF5A45"/></svg>'
+    ),
+    "liga": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M6.4 3.6h11.2v4.2a5.6 5.6 0 0 1-11.2 0z" fill="#FFC42E"/>'
+        '<path d="M6.4 5.2H4v1.9a3.4 3.4 0 0 0 2.4 3.2zM17.6 5.2H20v1.9a3.4 3.4 0 0 1-2.4 3.2z" fill="#D99A16"/>'
+        '<rect x="10.8" y="12.6" width="2.4" height="3.9" fill="#D99A16"/><rect x="7.4" y="16.4" width="9.2" height="2.8" rx="1" fill="#FFC42E"/></svg>'
+    ),
+    "perfil": (
+        '<svg width="24" height="24" viewBox="0 0 24 24"><path d="M5.6 8.4L4.4 3.2l4.8 2.6zM18.4 8.4l1.2-5.2-4.8 2.6z" fill="#FDFEFF"/>'
+        '<ellipse cx="12" cy="13.4" rx="8" ry="7.2" fill="#FDFEFF"/><ellipse cx="9.2" cy="12.4" rx="1.25" ry="1.6" fill="#2A3140"/>'
+        '<ellipse cx="14.8" cy="12.4" rx="1.25" ry="1.6" fill="#2A3140"/><path d="M12 15.4l-1.5-1.3h3z" fill="#FF8FA3"/></svg>'
+    ),
+}
+# Mesmas cores de mobile/tab-bar.tsx (COR_ATIVA) -- acende a borda do
+# PRÓPRIO ícone quando a página está ativa (não um anel branco genérico
+# como a 1a tentativa fazia) -- mesma linguagem visual dos dois apps.
+_COR_ATIVA_NAV: dict[str, str] = {
+    "trilha": "#6EE12B", "explorar": "#7C5CFF", "simulado": "#FFC42E",
+    "missoes": "#FF5A45", "liga": "#FFC42E", "perfil": "#FDFEFF",
+}
+# O mobile tem 6 abas (trilha/explorar/simulado/missões/liga/perfil)
+# pra 6 telas que só existem lá. O site tem 7 páginas, 3 delas sem
+# equivalente nenhum no app (Admin, Guia do Estudante, Coletar vídeos)
+# e 2 conceitos do mobile sem página própria aqui (Missões e Liga --
+# "ilustrativo por enquanto" mesmo no mobile, ver liga.tsx). Mapeamento
+# escolhido pra cobrir as 7 páginas sem repetir nenhuma, mas ENTRE OS
+# QUE NÃO TÊM PÁGINA IGUAL é só o melhor encaixe possível, avise se
+# quiser outra combinação:
+#   trilha->cartao (mesma tela: home/trilha) -- 1-pra-1 real
+#   simulado->provas_enem (mesma tela: fazer prova de verdade) -- 1-pra-1 real
+#   explorar->guia (mobile explora MATÉRIAS pra estudar, mais perto do
+#     Guia do Estudante do que de qualquer outra página existente)
+#   perfil->analise ("Minha análise" já mostra rank/XP/streak, o mais
+#     parecido com uma tela de perfil que o site tem)
+#   liga->simulados (troféu/conquista -> registro de simulados feitos)
+#   missoes->coletar (o encaixe mais fraco de todos -- sobrou ele,
+#     Missões não tem nada parecido no site hoje)
+#   admin fica de fora deste dict de propósito: não existe no mobile,
+#   ganha o próprio ícone (engrenagem) fixado embaixo, ver a função.
+_PAGINA_POR_ICONE_NAV: dict[str, str] = {
+    "trilha": "cartao", "explorar": "guia", "simulado": "provas_enem",
+    "missoes": "coletar", "liga": "simulados", "perfil": "analise",
+}
+_ICONE_ADMIN = (
+    '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#5B6472" stroke-width="2.2" stroke-linecap="round">'
+    '<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.6 1.6 0 0 0 .32 1.77l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.6 1.6 0 0 0 15 19.4a1.6 1.6 0 0 0-1 1.47V21a2 2 0 1 1-4 0v-.09A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.77.32l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.47-1H3a2 2 0 1 1 0-4h.09A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.32-1.77l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.6 1.6 0 0 0 9 4.6h.09A1.6 1.6 0 0 0 10 3.13V3a2 2 0 1 1 4 0v.09A1.6 1.6 0 0 0 15 4.6a1.6 1.6 0 0 0 1.77-.32l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.6 1.6 0 0 0 19.4 9v.09A1.6 1.6 0 0 0 20.87 10H21a2 2 0 1 1 0 4h-.09a1.6 1.6 0 0 0-1.47 1z"/></svg>'
+)
+
+
+def barra_navegacao_icones(
+    paginas: list[tuple[str, str, str]],
+    pagina_atual: str,
+    tema_atual: str = "escuro",
+) -> None:
+    """Navegação real do app inteiro (App ENEM.dc.html, Turno 4, 4a) --
+    SUBSTITUI navegacao_lateral() por pedido explícito do usuário,
+    2026-09-11: "substitua cartão resposta, prova enem e tudo aquele
+    menu por aqueles ícones", depois ajustado no mesmo dia pra bater
+    com a ORDEM e o SIGNIFICADO reais da barra de baixo do app mobile
+    (mobile/src/components/tab-bar.tsx) em vez de um mapeamento por
+    tema inventado -- ver _ICONE_NAV/_COR_ATIVA_NAV/_PAGINA_POR_ICONE_
+    NAV logo acima pro porquê de cada association. Fixa à esquerda,
+    SEMPRE visível (CSS em ui_theme.py, .barra-nav-icones) -- 82px é
+    estreito o bastante pra não precisar de hambúrguer/gaveta em tela
+    nenhuma, eliminando de vez a classe de bug ("hambúrguer inacessível
+    no celular real") que motivou toda a reescrita anterior de
+    navegacao_lateral().
+
+    Ordem: trilha, explorar, simulado, missões, liga, perfil (idêntica
+    à ITENS_NAV do mobile -- perfil/mascote por ÚLTIMO, não primeiro,
+    pedido explícito do usuário: "o gatinho ele tá no final"), com
+    admin (engrenagem, sem equivalente no mobile) fixado embaixo de
+    tudo via margin-top:auto -- mesmo papel que já tinha antes.
+
+    Zero texto, zero emoji (mesma regra "nunca emoji" de sempre) --
+    `title=` HTML nativo em cada link dá um tooltip no hover, única
+    pista textual, sem virar rótulo permanente na tela."""
+    def _link(nome_icone: str, pagina: str, rotulo: str) -> str:
+        ativo = pagina == pagina_atual
+        cor = _COR_ATIVA_NAV[nome_icone]
+        estilo_ativo = f'border-color:{cor};background:#141821' if ativo else ""
+        return (
+            f'<a href="?pagina={pagina}&tema={tema_atual}" target="_self" title="{rotulo}" '
+            f'style="{estilo_ativo}">{_ICONE_NAV[nome_icone]}</a>'
+        )
+
+    rotulo_por_pagina = {chave: rotulo for chave, _emoji, rotulo in paginas}
+    ordem_icones = ["trilha", "explorar", "simulado", "missoes", "liga", "perfil"]
+    itens_html = "".join(
+        _link(nome, _PAGINA_POR_ICONE_NAV[nome], rotulo_por_pagina.get(_PAGINA_POR_ICONE_NAV[nome], nome))
+        for nome in ordem_icones
+    )
+    admin_ativo = pagina_atual == "admin"
+    estilo_admin = "border-color:#5B6472;background:#141821" if admin_ativo else ""
+    admin_html = (
+        f'<a href="?pagina=admin&tema={tema_atual}" target="_self" title="Admin" '
+        f'style="margin-top:auto;{estilo_admin}">{_ICONE_ADMIN}</a>'
+    )
+    st.markdown(
+        f'<div class="barra-nav-icones">{itens_html}{admin_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def hero(titulo: str, tagline: str = "", icone: str | None = None) -> None:
     """Título de página. Sem `icone`: título + régua lima embaixo,
     opcionalmente com uma legenda ao lado (comportamento original,
@@ -1028,8 +1352,21 @@ def mascote_html(
         for i, angulo in enumerate((13, 0, -13))
     )
 
+    # Div de fora com o tamanho VISUAL de verdade ({size}x104px), .pipo-root
+    # por dentro continua no tamanho nativo 104x104 (todo o resto deste
+    # desenho usa offsets em px pensados pra essa referência) só encolhido
+    # por transform:scale -- que NUNCA muda o espaço reservado em layout,
+    # só o que é pintado na tela. Sem este wrapper, um mascote com
+    # size<1 dentro de uma linha flex (mascote + texto ao lado, como no
+    # cartão "Seu bilhete") reservava 104px de largura mesmo aparentando
+    # ser bem menor -- sobrava pouco espaço de verdade pro texto vizinho,
+    # que quebrava letra por letra (bug real, achado ao vivo no Chrome).
+    # transform-origin:top left (em vez do padrão "center") é o que faz
+    # o conteúdo encolhido bater exatamente com o canto (0,0) do
+    # wrapper, em vez de encolher pro centro e sobrar espaço torto.
     html = f"""
-<div class="pipo-root" style="width:104px;height:104px;transform:scale({size}) rotate({humor['tilt']}deg)">
+<div style="width:{104 * size:.2f}px;height:{104 * size:.2f}px;flex:0 0 auto">
+<div class="pipo-root" style="width:104px;height:104px;transform:scale({size}) rotate({humor['tilt']}deg);transform-origin:top left">
   <div style="position:absolute;right:-18px;top:{humor['tail_top']}px;width:46px;height:13px;border-radius:999px;
        background:{color};box-shadow:0 3px 0 {shadow};transform:rotate({humor['tail_rot']}deg);transform-origin:left center"></div>
 
@@ -1065,6 +1402,7 @@ def mascote_html(
   <div class="pipo-bochecha" style="left:11px"></div>
   <div class="pipo-bochecha" style="right:11px"></div>
   {sparkle_html}
+</div>
 </div>
 """
     # Achatado pra uma linha só (sem quebra/indentação) antes de devolver:
