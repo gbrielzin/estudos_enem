@@ -1,6 +1,6 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mascote } from '@/components/mascote';
@@ -9,6 +9,7 @@ import { Seletor } from '@/components/seletor';
 import { StatusHeader } from '@/components/status-header';
 import { TrilhaPath } from '@/components/trilha-path';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
+import { interpolarSombraBotao, useInteracaoBotao } from '@/hooks/use-interacao-botao';
 import { RESUMOS_TRILHA, ResumoTrilha, TopicoResumo } from '@/constants/resumos-trilha';
 import {
   GrandeArea,
@@ -509,9 +510,7 @@ function TelaApresentacao({
         <Text style={styles.apresentacaoEstatisticaTexto}>{resumo.estatisticaTexto}</Text>
       </View>
 
-      <Pressable style={styles.botao} onPress={onComecar}>
-        <Text style={styles.botaoTexto}>Entendi, começar o Nó 1</Text>
-      </Pressable>
+      <BotaoPrimario onPress={onComecar}>Entendi, começar o Nó 1</BotaoPrimario>
       <Pressable style={styles.apresentacaoReverLink} onPress={onVoltar}>
         <Text style={styles.apresentacaoReverTexto}>Rever depois</Text>
       </Pressable>
@@ -527,6 +526,88 @@ function TelaApresentacao({
  * db.calcular_nivel_jogador() (10 por acerto + 2 por tentativa) só
  * pro delta desta rodada, sem precisar de endpoint novo.
  */
+/**
+ * "XP sobe" -- padrão de movimento 6a do projeto de design (Claude
+ * Design, App ENEM.dc.html, TURNO 6 "Gramática de animação"): no
+ * design é um "+320" que sobe e desbota por cima de um total que já
+ * existe na tela, some no topo, e SÓ ENTÃO o total antigo troca pro
+ * novo -- essa tela de Resultado não tem um "total de XP" visível (só
+ * o delta da rodada), então adaptei pra a entrada do próprio número:
+ * sobe com uma pequena sobra elástica e FICA (sem a fase de sumir no
+ * topo, que não faz sentido aqui -- é o único número de XP da tela,
+ * apagar deixaria o card vazio).
+ */
+function XpSobe({ children }: { children: string }) {
+  const entrada = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(entrada, { toValue: 1, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [entrada]);
+  const translateY = entrada.interpolate({ inputRange: [0, 0.3, 1], outputRange: [14, -4, -10] });
+  const scale = entrada.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.8, 1.08, 1] });
+  const opacity = entrada.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0, 1, 1] });
+  return (
+    <Animated.Text style={[styles.resultadoStatValor, { color: Brand.ouro, opacity, transform: [{ translateY }, { scale }] }]}>
+      {children}
+    </Animated.Text>
+  );
+}
+
+/**
+ * "Lição destrava" -- padrão de movimento 6a do projeto de design
+ * (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de animação"):
+ * nó da trilha concluído -- círculo estufa (340ms), depois o tique
+ * desenha por cima (180ms), com 3 papéis de confete caindo espaçados
+ * (900ms cada, nunca uma chuva -- "o confete cheio fica pro fim da
+ * unidade", ainda não construído). Vive na tela de Resultado (não na
+ * trilha em si) porque é aqui que o momento "acabei de concluir"
+ * acontece de verdade -- a trilha, quando reaberta depois, já mostra
+ * o nó concluído parado, sem transição pra animar.
+ */
+function SeloDestravado() {
+  const pop = useRef(new Animated.Value(0)).current;
+  const tique = useRef(new Animated.Value(0)).current;
+  const confetes = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(pop, { toValue: 1, duration: 340, easing: Easing.out(Easing.back(1.6)), useNativeDriver: true }),
+      Animated.timing(tique, { toValue: 1, duration: 180, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
+    ]).start();
+    confetes.forEach((v, i) => {
+      Animated.timing(v, { toValue: 1, duration: 900, delay: i * 250, easing: Easing.linear, useNativeDriver: true }).start();
+    });
+  }, [pop, tique, confetes]);
+
+  const tiqueEscala = tique.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
+  const tiqueRotacao = tique.interpolate({ inputRange: [0, 1], outputRange: ['-12deg', '0deg'] });
+
+  return (
+    <View style={styles.seloWrap}>
+      {confetes.map((v, i) => {
+        const translateY = v.interpolate({ inputRange: [0, 0.16, 0.88, 1], outputRange: [-26, -10, 40, 120] });
+        const rotacao = v.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '320deg'] });
+        const opacidade = v.interpolate({ inputRange: [0, 0.05, 0.16, 0.88, 1], outputRange: [0, 0, 1, 1, 0] });
+        const cor = [Brand.verde, Brand.ouro, Brand.roxo][i];
+        const deslocamentoX = [-24, -4, 16][i];
+        return (
+          <Animated.View
+            key={i}
+            style={[
+              styles.confete,
+              { backgroundColor: cor, marginLeft: deslocamentoX, opacity: opacidade, transform: [{ translateY }, { rotate: rotacao }] },
+            ]}
+          />
+        );
+      })}
+      <Animated.View style={[styles.seloCirculo, { transform: [{ scale: pop }] }]}>
+        <Animated.View style={{ opacity: tique, transform: [{ scale: tiqueEscala }, { rotate: tiqueRotacao }] }}>
+          <Ionicons name="checkmark" size={30} color="#0D2705" />
+        </Animated.View>
+      </Animated.View>
+    </View>
+  );
+}
+
 function TelaResultado({
   no,
   totalNos,
@@ -556,6 +637,7 @@ function TelaResultado({
     <View style={styles.espaco}>
       <View style={styles.resultadoContainer}>
         <Mascote color={Brand.branco} shadow={Brand.brancoEscuro} beak={Brand.rosa} mood="cheer" size={1.4} />
+        <SeloDestravado />
         <View style={styles.resultadoTitulo}>
           <Text style={styles.resultadoTituloTexto}>Nó {no.indice + 1} concluído!</Text>
           <Text style={styles.textoSuave}>
@@ -571,7 +653,7 @@ function TelaResultado({
             <Text style={styles.resultadoStatLabel}>ACERTOS</Text>
           </View>
           <View style={[styles.resultadoStatCard, styles.resultadoStatCardOuro]}>
-            <Text style={[styles.resultadoStatValor, { color: Brand.ouro }]}>+{xpGanho}</Text>
+            <XpSobe>{`+${xpGanho}`}</XpSobe>
             <Text style={[styles.resultadoStatLabel, { color: '#B08A2A' }]}>XP</Text>
           </View>
           <View style={styles.resultadoStatCard}>
@@ -597,14 +679,98 @@ function TelaResultado({
         )}
       </View>
 
-      <Pressable style={styles.botao} onPress={onVoltar}>
-        <Text style={styles.botaoTexto}>CONTINUAR</Text>
-      </Pressable>
+      <BotaoPrimario onPress={onVoltar}>CONTINUAR</BotaoPrimario>
       {errosNoNo.length > 0 && (
         <Pressable style={styles.botaoSecundario} onPress={() => setMostrarErros((v) => !v)}>
           <Text style={styles.botaoSecundarioTexto}>{mostrarErros ? 'OCULTAR ERROS' : 'REVER OS ERROS'}</Text>
         </Pressable>
       )}
+    </View>
+  );
+}
+
+/**
+ * Botão sólido primário (lima) desta tela -- "Confirmar" é literalmente
+ * o exemplo do card "Botão afunda" no projeto de design (Claude
+ * Design, App ENEM.dc.html, TURNO 6 "Gramática de animação"), reusado
+ * aqui pros outros CTAs de mesma cor/peso ("Entendi, começar o Nó 1",
+ * "CONTINUAR", "Continuar ➜"). Botões secundários/links (`Rever
+ * depois`, `voltarBtn`, alternativas de questão) ficam de fora de
+ * propósito -- no design só o botão SÓLIDO ganha a sombra 3D que
+ * afunda, o resto continua flat.
+ */
+function BotaoPrimario({ children, onPress, disabled }: { children: string; onPress?: () => void; disabled?: boolean }) {
+  const { deslocamentoY, handlers } = useInteracaoBotao({ desativado: disabled });
+  const sombra = interpolarSombraBotao(deslocamentoY, Brand.verdeEscuro);
+  return (
+    <Pressable onPress={onPress} disabled={disabled} {...handlers}>
+      <Animated.View
+        style={[
+          styles.botao,
+          disabled && styles.botaoDesabilitado,
+          { boxShadow: sombra, transform: [{ translateY: deslocamentoY }] },
+        ]}>
+        <Text style={styles.botaoTexto}>{children}</Text>
+      </Animated.View>
+    </Pressable>
+  );
+}
+
+/**
+ * "Acerto estufa" / "Erro treme" -- padrões de movimento 6a do
+ * projeto de design (Claude Design, App ENEM.dc.html, TURNO 6
+ * "Gramática de animação"): o card de feedback da questão já existia
+ * (texto + cor por resultado), só ganhou a ENTRADA animada agora.
+ *
+ * Acerto: aparece com uma pequena "estufada" (escala 0→1.12→1 em
+ * ~260ms) mais um anel verde que expande e desbota atrás do card
+ * (420ms) -- no design o anel é um círculo em volta de um selo/badge
+ * pequeno; aqui o card é um retângulo largo, então o anel virou um
+ * contorno arredondado do MESMO formato do card (mesma ideia -- "sai
+ * de trás e evapora" -- só adaptada ao card em vez de um badge redondo).
+ * Erro: treme só no eixo X, 4 idas com amplitude caindo, ~300ms, e
+ * para sozinha -- o card fica parado pro aluno ler, igual o design
+ * pede ("nunca em vermelho piscante").
+ */
+function CardFeedback({ correto, children }: { correto: boolean; children: string }) {
+  const entrada = useRef(new Animated.Value(0)).current;
+  const anel = useRef(new Animated.Value(0)).current;
+  const tremor = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (correto) {
+      Animated.sequence([
+        Animated.timing(entrada, { toValue: 1.12, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(entrada, { toValue: 1, duration: 110, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+      ]).start();
+      Animated.timing(anel, { toValue: 1, duration: 420, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    } else {
+      entrada.setValue(1);
+      Animated.sequence(
+        [-9, 8, -5, 4, 0].map((v) => Animated.timing(tremor, { toValue: v, duration: 45, easing: Easing.linear, useNativeDriver: true })),
+      ).start();
+    }
+  }, [correto, entrada, anel, tremor]);
+
+  return (
+    <View>
+      {correto && (
+        <Animated.View
+          style={[
+            styles.anelAcerto,
+            { opacity: anel.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.85, 0.5, 0] }) },
+            { transform: [{ scale: anel.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1.06] }) }] },
+          ]}
+        />
+      )}
+      <Animated.View
+        style={[
+          styles.cardFeedback,
+          correto ? styles.feedbackCerto : styles.feedbackErrado,
+          { transform: [{ scale: entrada }, { translateX: tremor }] },
+        ]}>
+        <Text style={styles.feedbackTexto}>{children}</Text>
+      </Animated.View>
     </View>
   );
 }
@@ -633,8 +799,23 @@ function QuestaoAtual({
   const { corpo, alternativas } = separarAlternativas(questao.enunciado_texto ?? '');
   const temAlternativas = Object.keys(alternativas).length === 5;
 
+  // "Questão entra" -- padrão de movimento 6a do projeto de design
+  // (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de
+  // animação"): 240ms, entra pela direita. O design também prevê
+  // "voltar inverte o sentido" (sai pela esquerda), mas esta trilha
+  // ainda não tem como voltar pra uma questão anterior (`posicao` só
+  // anda pra frente, ver TelaExercicio) -- só a metade "entra pela
+  // direita" se aplica de verdade hoje, o resto fica pronto pra
+  // quando existir um "voltar" de verdade entre questões.
+  const entrada = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    entrada.setValue(0);
+    Animated.timing(entrada, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [questao.id_questao, entrada]);
+  const translateX = entrada.interpolate({ inputRange: [0, 1], outputRange: [46, 0] });
+
   return (
-    <View>
+    <Animated.View style={{ opacity: entrada, transform: [{ translateX }] }}>
       <Text style={styles.progressoTexto}>
         Questão {posicao + 1} de {total}
       </Text>
@@ -656,28 +837,21 @@ function QuestaoAtual({
               </Text>
             </Pressable>
           ))}
-          <Pressable
-            style={[styles.botao, (!escolha || enviando) && styles.botaoDesabilitado]}
-            disabled={!escolha || enviando}
-            onPress={() => onConfirmar(questao.id_questao)}>
-            <Text style={styles.botaoTexto}>{enviando ? 'Enviando…' : 'Confirmar'}</Text>
-          </Pressable>
+          <BotaoPrimario disabled={!escolha || enviando} onPress={() => onConfirmar(questao.id_questao)}>
+            {enviando ? 'Enviando…' : 'Confirmar'}
+          </BotaoPrimario>
         </>
       ) : (
         <>
-          <View style={[styles.cardFeedback, resultado.resultado === 'acertou' ? styles.feedbackCerto : styles.feedbackErrado]}>
-            <Text style={styles.feedbackTexto}>
-              {resultado.resultado === 'acertou'
-                ? `✅ Certo! A resposta era ${resultado.alternativa_correta}.`
-                : `❌ Você marcou ${resultado.resposta_escolhida ?? '— (em branco)'}. A resposta certa era ${resultado.alternativa_correta}.`}
-            </Text>
-          </View>
-          <Pressable style={styles.botao} onPress={onContinuar}>
-            <Text style={styles.botaoTexto}>Continuar ➜</Text>
-          </Pressable>
+          <CardFeedback correto={resultado.resultado === 'acertou'}>
+            {resultado.resultado === 'acertou'
+              ? `✅ Certo! A resposta era ${resultado.alternativa_correta}.`
+              : `❌ Você marcou ${resultado.resposta_escolhida ?? '— (em branco)'}. A resposta certa era ${resultado.alternativa_correta}.`}
+          </CardFeedback>
+          <BotaoPrimario onPress={onContinuar}>Continuar ➜</BotaoPrimario>
         </>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -821,6 +995,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 16,
   },
+  seloWrap: {
+    width: 90,
+    height: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seloCirculo: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Brand.verde,
+    boxShadow: `0 6px 0 ${Brand.verdeEscuro}`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confete: {
+    position: 'absolute',
+    top: 24,
+    left: '50%',
+    width: 8,
+    height: 12,
+    borderRadius: 2,
+  },
   resultadoTitulo: {
     alignItems: 'center',
     gap: 4,
@@ -915,6 +1112,16 @@ const styles = StyleSheet.create({
     borderRadius: RaioCard,
     marginVertical: 8,
     borderWidth: 1,
+  },
+  anelAcerto: {
+    position: 'absolute',
+    top: 8,
+    left: 0,
+    right: 0,
+    bottom: 8,
+    borderRadius: RaioCard,
+    borderWidth: 3,
+    borderColor: Brand.verde,
   },
   feedbackTexto: {
     fontFamily: Fontes.corpoNegrito,

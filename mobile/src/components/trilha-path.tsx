@@ -7,6 +7,7 @@ import { Mascote } from '@/components/mascote';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import { ResumoTrilha } from '@/constants/resumos-trilha';
 import { Spacing } from '@/constants/theme';
+import { useInteracaoBotao } from '@/hooks/use-interacao-botao';
 import { NoTrilha } from '@/lib/api';
 
 const AMPLITUDE = 80;
@@ -129,39 +130,44 @@ export function TrilhaPath({ trilha, resumo, onAbrirNo, onAbrirResumo }: TrilhaP
  * é uma parada de leitura.
  */
 function CardApresentacao({ resumo, onPress }: { resumo: ResumoTrilha; onPress: () => void }) {
+  const { deslocamentoY, handlers } = useInteracaoBotao({ quedaPressionado: 3 });
+
   return (
-    <Pressable style={styles.cardApresentacao} onPress={onPress}>
-      <View style={styles.cardApresentacaoIcone}>
-        <Ionicons name="book" size={22} color={Brand.roxoClaro} />
-      </View>
-      <View style={styles.cardApresentacaoTextos}>
-        <Text style={styles.cardApresentacaoRotulo}>
-          APRESENTAÇÃO · {resumo.minutos} MIN
-        </Text>
-        <Text style={styles.cardApresentacaoTitulo}>{resumo.titulo}</Text>
-        <Text style={styles.cardApresentacaoSubtitulo}>Bata o olho antes de começar os nós</Text>
-      </View>
-      <View style={styles.cardApresentacaoBotao}>
-        <Text style={styles.cardApresentacaoBotaoTexto}>VER</Text>
-      </View>
+    <Pressable onPress={onPress} {...handlers}>
+      <Animated.View style={[styles.cardApresentacao, { transform: [{ translateY: deslocamentoY }] }]}>
+        <View style={styles.cardApresentacaoIcone}>
+          <Ionicons name="book" size={22} color={Brand.roxoClaro} />
+        </View>
+        <View style={styles.cardApresentacaoTextos}>
+          <Text style={styles.cardApresentacaoRotulo}>
+            APRESENTAÇÃO · {resumo.minutos} MIN
+          </Text>
+          <Text style={styles.cardApresentacaoTitulo}>{resumo.titulo}</Text>
+          <Text style={styles.cardApresentacaoSubtitulo}>Bata o olho antes de começar os nós</Text>
+        </View>
+        <View style={styles.cardApresentacaoBotao}>
+          <Text style={styles.cardApresentacaoBotaoTexto}>VER</Text>
+        </View>
+      </Animated.View>
     </Pressable>
   );
 }
 
 function NoCirculo({ no, ehAtual, diametro, onPress }: { no: NoTrilha; ehAtual: boolean; diametro: number; onPress: () => void }) {
-  const escala = useRef(new Animated.Value(1)).current;
+  const pulso = useRef(new Animated.Value(1)).current;
+  const { deslocamentoY, handlers } = useInteracaoBotao({ desativado: !no.desbloqueado, quedaPressionado: ALTURA_SOMBRA });
 
   useEffect(() => {
     if (!ehAtual) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(escala, { toValue: 1.08, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(escala, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulso, { toValue: 1.08, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulso, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [ehAtual, escala]);
+  }, [ehAtual, pulso]);
 
   const corFundo = no.concluido ? Brand.ouro : ehAtual ? Brand.verde : '#1F2531';
   const corSombra = no.concluido ? '#8A6300' : ehAtual ? Brand.verdeEscuro : '#14181F';
@@ -169,7 +175,7 @@ function NoCirculo({ no, ehAtual, diametro, onPress }: { no: NoTrilha; ehAtual: 
   const raio = diametro / 2;
 
   return (
-    <Pressable disabled={!no.desbloqueado} onPress={onPress} style={{ width: diametro, height: diametro + ALTURA_SOMBRA }}>
+    <Pressable disabled={!no.desbloqueado} onPress={onPress} style={{ width: diametro, height: diametro + ALTURA_SOMBRA }} {...handlers}>
       {/* camada de baixo = "sombra" sólida, cria o efeito de botão 3D pressionado */}
       <View style={[styles.circuloSombra, { top: ALTURA_SOMBRA, width: diametro, height: diametro, borderRadius: raio, backgroundColor: corSombra }]} />
       <Animated.View
@@ -177,7 +183,7 @@ function NoCirculo({ no, ehAtual, diametro, onPress }: { no: NoTrilha; ehAtual: 
           styles.circulo,
           { width: diametro, height: diametro, borderRadius: raio, backgroundColor: corFundo },
           !no.desbloqueado && styles.circuloBloqueadoBorda,
-          ehAtual && { transform: [{ scale: escala }] },
+          { transform: [{ translateY: deslocamentoY }, { scale: pulso }] },
         ]}>
         {no.concluido ? (
           <Ionicons name="star" size={26} color={corIcone} />

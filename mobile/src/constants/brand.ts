@@ -41,6 +41,7 @@ export const Brand = {
   verdeClaro: '#EAFBDD',
 
   ouro: '#FFC42E',
+  ouroEscuro: '#8A6300',
   ouroBg: '#2A2210',
   ouroBorda: '#4A3B10',
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BarraProgresso } from '@/components/barra-progresso';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import { GrandeArea, MateriaExplorada, getExplorarMaterias } from '@/lib/api';
 
@@ -110,8 +111,8 @@ export default function ExploreScreen() {
                       : `${m.total_questoes} questão(ões)${pct !== null ? ` · ${pct}% de acerto` : ' · ainda não praticada'}`}
                   </Text>
                   {!bloqueada && pct !== null && (
-                    <View style={styles.barraFundo}>
-                      <View style={[styles.barraProgresso, { width: `${pct}%`, backgroundColor: cor }]} />
+                    <View style={{ marginTop: 2 }}>
+                      <BarraProgresso pct={pct} cor={cor} altura={8} />
                     </View>
                   )}
                 </View>
@@ -223,16 +224,5 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.corpo,
     fontSize: 12.5,
     color: Brand.textoSuave,
-  },
-  barraFundo: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: Brand.bordaForte,
-    overflow: 'hidden',
-    marginTop: 2,
-  },
-  barraProgresso: {
-    height: 8,
-    borderRadius: 999,
   },
 });

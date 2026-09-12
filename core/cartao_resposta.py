@@ -162,18 +162,126 @@ def _formatar_tempo_estimado(minutos: int) -> str:
     return f"{horas}h{resto:02d}" if resto else f"{horas}h"
 
 
+def _renderizar_cena_mesa(provas: list[tuple[int, str, str]]) -> None:
+    """Cena decorativa panorâmica (App ENEM.dc.html, Turno 4, 4a) --
+    mesa + relógio + cadernos + Pipoco. Virou o TOPO DE VERDADE da
+    página inteira "Provas ENEM" (pedido do usuário, 2026-09-11): antes
+    disso, o hero genérico (ui_theme.hero() -- título "Provas ENEM" +
+    tagline) e o loader de CSV/seletor de "Modo" ficavam ACIMA dela,
+    duplicando a mesma informação que a própria cena já mostra
+    (título, dias até o ENEM) e "poluindo" o que devia abrir como um
+    cenário panorâmico só, igual à referência de design. `__main__`
+    agora PULA a chamada de ui_theme.hero() especificamente pra
+    "provas_enem" (única página que faz isso), e esta função é
+    chamada incondicionalmente, ANTES do loader de CSV e do radio de
+    "Modo" -- funciona como cabeçalho fixo da página inteira, não só
+    do wizard "Uma prova por vez" (antes só aparecia dentro dele).
+
+    Full-bleed de verdade (classe .cena-mesa-full-bleed, CSS central em
+    ui_theme.py): cancela o padding lateral do .block-container pra
+    encostar nas duas bordas do espaço disponível, como o frame do
+    mockup. (2026-09-11: uma versão com barra de ícones própria +
+    st.columns()+".entrada-bleed" foi tentada e depois revertida a
+    pedido do usuário -- a barra de ícones virou navegação real do app
+    inteiro, ver ui_theme.barra_navegacao_icones(), não mais algo
+    específico desta página.)
+
+    Continua reagindo aos MESMOS 3 campos que o wizard abaixo escolhe
+    -- relógio acende com "Com cronômetro", ícone/legenda da área
+    mudam com a matéria -- lendo session_state ANTES dos widgets
+    correspondentes serem criados mais abaixo no código (Streamlit já
+    preenche session_state antes do script rodar, mesmo padrão de
+    sempre). Sem valor ainda (primeiro load) cai nos defaults reais.
+    Legendas sob o relógio/ícone usam o MODO/ÁREA já escolhidos (texto,
+    não um tempo estimado) em vez do "1h30 NO RELÓGIO" fixo do mockup
+    -- aquele número no mockup é só decorativo pra UM exemplo fixo;
+    aqui ano/área ainda não estão escolhidos neste ponto da página
+    (só o wizard abaixo tem essa info), então uma legenda de tempo
+    seria inventada -- a legenda real (modo/área) já é 100% honesta com
+    o que se sabe até aqui."""
+    dias = db.dias_ate_prova()
+    total_questoes_banco = sum(db.questoes_totais_da_prova(a, c, ar) for a, c, ar in provas)
+    anos = sorted({ano for ano, _, _ in provas})
+    if not anos:
+        return
+
+    modo_previa = st.session_state.get("montar_prova_modo", "cronometro")
+    area_previa = st.session_state.get("montar_prova_area_valor")
+    _ICONE_AREA_MESA = {
+        "matematica": ('#8B93A7', 'MATEMÁTICA', '<path d="M5 7h6M8 4v6"/><path d="M13.5 6.5h5.5"/>'
+                        '<path d="M13.5 15h5.5M13.5 18.5h5.5"/><path d="M5.5 15.5l4.5 4.5M10 15.5l-4.5 4.5"/>'),
+        "ciencias_natureza": ('#6EE12B', 'NATUREZA', '<path d="M12 3v4"/><path d="M9 7h6l2.5 10a5.5 5.5 0 0 1-11 0z"/><path d="M7.6 14h8.8"/>'),
+        "ambas": ('#A594FF', 'AS DUAS', '<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>'),
+    }
+    cor_area_mesa, rotulo_area_mesa, path_area_mesa = _ICONE_AREA_MESA.get(
+        area_previa, ('#5B6472', 'PROVA', '<path d="M8 4h8l4 4v12H8z"/><path d="M16 4v4h4"/>')
+    )
+    rotulo_modo_mesa = {
+        "cronometro": "CRONÔMETRO", "sem_pressa": "SEM PRESSA",
+        "corrige_cada": "CORRIGE JÁ", "so_errei_antes": "SÓ ERROS",
+    }.get(modo_previa, "CRONÔMETRO")
+    cor_relogio = "#FFC42E" if modo_previa == "cronometro" else "#5B6472"
+    bg_relogio = "#2A2210" if modo_previa == "cronometro" else "#171B24"
+    borda_relogio = "#4A3A12" if modo_previa == "cronometro" else "#262C39"
+    st.markdown(
+        f'''<div class="cena-mesa-full-bleed" style="position:relative;height:196px;background:#12161E;border-radius:16px;
+             overflow:hidden;margin-bottom:22px">
+          <div style="position:absolute;left:0;right:0;top:0;height:130px;background:#171C26"></div>
+          <div style="position:absolute;left:0;right:0;top:130px;height:8px;background:#6B4A2F"></div>
+          <div style="position:absolute;left:0;right:0;top:138px;bottom:0;background:#0E1117"></div>
+          <div style="position:absolute;left:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
+          <div style="position:absolute;right:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
+          <div style="position:absolute;left:44px;top:16px;display:flex;flex-direction:column;gap:4px;z-index:2">
+            <div style="font:800 10px 'Nunito';letter-spacing:.16em;color:#5B6472">MONTAR PROVA</div>
+            <div style="font:800 22px 'Baloo 2';color:#F2F4F7;line-height:1.1">Senta que a prova é sua</div>
+          </div>
+          <div style="position:absolute;right:44px;top:16px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;z-index:2">
+            <div style="font:800 11px 'Nunito';color:#FFC42E;background:#2A2210;border:1px solid #4A3A12;
+                 border-radius:999px;padding:5px 12px">{dias["dias_restantes"]} dias até o ENEM</div>
+            <div style="font:700 11px 'Nunito';color:#6B7385">{total_questoes_banco} questões · {min(anos)} a {max(anos)}</div>
+          </div>
+          <div style="position:absolute;left:0;right:0;top:56px;display:flex;align-items:flex-end;justify-content:center;gap:46px;transform:translateX(78px)">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto">
+              <div style="width:44px;height:44px;border-radius:999px;background:{bg_relogio};border:2px solid {borda_relogio};
+                   display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{cor_relogio}" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </div>
+              <div style="font:800 9px 'Nunito';letter-spacing:.06em;color:{cor_relogio};white-space:nowrap">{rotulo_modo_mesa}</div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:2px;flex:0 0 auto">
+              <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(-6deg)"></div>
+              <div style="width:46px;height:60px;border-radius:4px;background:#FFFFFF;box-shadow:0 5px 0 rgba(0,0,0,.32);
+                   display:flex;flex-direction:column;gap:4px;padding:8px 7px;position:relative;z-index:1">
+                <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
+                <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
+                <div style="height:3px;width:60%;border-radius:2px;background:#C8CEDA"></div>
+                <div style="margin-top:auto;height:7px;border-radius:3px;background:{cor_area_mesa}"></div>
+              </div>
+              <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(5deg)"></div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto">
+              <div style="width:44px;height:44px;border-radius:14px;background:#141821;border:2px solid {cor_area_mesa};
+                   display:flex;align-items:center;justify-content:center;flex:0 0 auto">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{cor_area_mesa}" stroke-width="2.1" stroke-linecap="round">{path_area_mesa}</svg>
+              </div>
+              <div style="font:800 9px 'Nunito';letter-spacing:.06em;color:{cor_area_mesa};white-space:nowrap">{rotulo_area_mesa}</div>
+            </div>
+          </div>
+          <div style="position:absolute;left:50%;top:20px;transform:translateX(calc(-50% - 148px));z-index:3">
+            {ui_theme.mascote_html("happy", size=0.92, pattern="tuxedo", patch="#3A4152", collar="#6EE12B")}
+          </div>
+        </div>''',
+        unsafe_allow_html=True,
+    )
+
+
 def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, str, str, str] | None:
-    """Wizard "Montar prova" -- versão unificada do App ENEM.dc.html,
-    Turno 4 "Versão computador", seção 4a "Entrada — cenário
-    panorâmico": cena decorativa no topo (mesa, relógio, cadernos,
-    Pipoco) + os 3 passos à esquerda + o "bilhete" (ficha-resumo que
-    se preenche ao vivo) à direita, terminando no mesmo botão
-    "Sentar e começar". Substitui a versão anterior (Turno 3, 3a/3b
-    alternando duas telas cheias) -- o usuário trouxe esta rodada nova
-    do design e pediu pra seguir ELA fielmente em vez de continuar
-    alternando; a ideia de "casca variando" mora agora só na área/
-    matéria em si (cores diferentes por matéria já mudam o visual a
-    cada prova sem precisar de duas telas inteiras diferentes).
+    """Wizard "Montar prova" -- 3 passos à esquerda + o "bilhete"
+    (ficha-resumo que se preenche ao vivo) à direita, terminando no
+    botão "Sentar e começar". A cena decorativa (mesa/relógio/
+    cadernos/Pipoco) que costumava abrir esta função foi PROMOVIDA a
+    cabeçalho fixo da página inteira -- ver _renderizar_cena_mesa(),
+    chamada uma vez só em render_cartao_resposta(), antes de tudo.
 
     Devolve (ano, caderno, area, modo_resposta) só quando "Sentar e
     começar" é clicado -- `caderno` vem None quando area == "ambas"
@@ -188,101 +296,67 @@ def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, s
     st.radio/st.button dela mesma), renderizada logo depois na MESMA
     página assim que o botão é clicado."""
     with st.container(border=True):
-        dias = db.dias_ate_prova()
         total_questoes_banco = sum(db.questoes_totais_da_prova(a, c, ar) for a, c, ar in provas)
         anos = sorted({ano for ano, _, _ in provas})
-
-        # Cena decorativa (App ENEM.dc.html, 4a) -- mesa + relógio +
-        # cadernos + Pipoco. Ainda estática (sem clique/JS), mas agora
-        # reage aos MESMOS 3 campos que o resto do wizard escolhe --
-        # relógio acende quando "Com cronômetro" já está selecionado,
-        # ícone da área muda com a matéria escolhida -- lendo os valores
-        # de session_state de que os widgets radio/`montar_prova_area_valor`
-        # abaixo vão se servir (Streamlit já preenche session_state ANTES
-        # do script rodar, então ler a chave aqui, antes do widget em si
-        # aparecer mais abaixo no código, reflete a escolha do rerun
-        # anterior -- mesmo padrão já usado noutros lugares deste app).
-        # Sem esses valores ainda (primeiro load da página) cai nos
-        # defaults reais dos radios (index 0 = "cronômetro", primeira
-        # área da lista), nunca inventa um estado que não existe.
-        modo_previa = st.session_state.get("montar_prova_modo", "cronometro")
-        area_previa = st.session_state.get("montar_prova_area_valor")
-        _ICONE_AREA_MESA = {
-            "matematica": ('#8B93A7', '<path d="M5 7h6M8 4v6"/><path d="M13.5 6.5h5.5"/>'
-                            '<path d="M13.5 15h5.5M13.5 18.5h5.5"/><path d="M5.5 15.5l4.5 4.5M10 15.5l-4.5 4.5"/>'),
-            "ciencias_natureza": ('#6EE12B', '<path d="M12 3v4"/><path d="M9 7h6l2.5 10a5.5 5.5 0 0 1-11 0z"/><path d="M7.6 14h8.8"/>'),
-            "ambas": ('#A594FF', '<circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/>'),
-        }
-        cor_area_mesa, path_area_mesa = _ICONE_AREA_MESA.get(area_previa, ('#5B6472', '<path d="M8 4h8l4 4v12H8z"/><path d="M16 4v4h4"/>'))
-        cor_relogio = "#FFC42E" if modo_previa == "cronometro" else "#5B6472"
-        bg_relogio = "#2A2210" if modo_previa == "cronometro" else "#171B24"
-        borda_relogio = "#4A3A12" if modo_previa == "cronometro" else "#262C39"
-        st.markdown(
-            f'''<div style="position:relative;height:196px;background:#12161E;border-radius:16px;
-                 overflow:hidden;margin-bottom:22px">
-              <div style="position:absolute;left:0;right:0;top:0;height:130px;background:#171C26"></div>
-              <div style="position:absolute;left:0;right:0;top:130px;height:8px;background:#6B4A2F"></div>
-              <div style="position:absolute;left:0;right:0;top:138px;bottom:0;background:#0E1117"></div>
-              <div style="position:absolute;left:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
-              <div style="position:absolute;right:calc(50% - 78px);bottom:6px;width:9px;height:40px;border-radius:2px;background:#57391F"></div>
-              <div style="position:absolute;left:44px;top:16px;display:flex;flex-direction:column;gap:4px;z-index:2">
-                <div style="font:800 10px 'Nunito';letter-spacing:.16em;color:#5B6472">MONTAR PROVA</div>
-                <div style="font:800 22px 'Baloo 2';color:#F2F4F7;line-height:1.1">Senta que a prova é sua</div>
-              </div>
-              <div style="position:absolute;right:44px;top:16px;display:flex;flex-direction:column;align-items:flex-end;gap:5px;z-index:2">
-                <div style="font:800 11px 'Nunito';color:#FFC42E;background:#2A2210;border:1px solid #4A3A12;
-                     border-radius:999px;padding:5px 12px">{dias["dias_restantes"]} dias até o ENEM</div>
-                <div style="font:700 11px 'Nunito';color:#6B7385">{total_questoes_banco} questões · {min(anos)} a {max(anos)}</div>
-              </div>
-              <div style="position:absolute;left:0;right:0;top:60px;display:flex;align-items:flex-end;justify-content:center;gap:38px;transform:translateX(78px)">
-                <div style="width:44px;height:44px;border-radius:999px;background:{bg_relogio};border:2px solid {borda_relogio};
-                     display:flex;align-items:center;justify-content:center;flex:0 0 auto">
-                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{cor_relogio}" stroke-width="2.3" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                </div>
-                <div style="display:flex;align-items:flex-end;gap:2px;flex:0 0 auto">
-                  <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(-6deg)"></div>
-                  <div style="width:46px;height:60px;border-radius:4px;background:#FFFFFF;box-shadow:0 5px 0 rgba(0,0,0,.32);
-                       display:flex;flex-direction:column;gap:4px;padding:8px 7px;position:relative;z-index:1">
-                    <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
-                    <div style="height:3px;border-radius:2px;background:#C8CEDA"></div>
-                    <div style="height:3px;width:60%;border-radius:2px;background:#C8CEDA"></div>
-                    <div style="margin-top:auto;height:7px;border-radius:3px;background:{cor_area_mesa}"></div>
-                  </div>
-                  <div style="width:40px;height:52px;border-radius:4px;background:#E8EDF3;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:rotate(5deg)"></div>
-                </div>
-                <div style="width:44px;height:44px;border-radius:14px;background:#141821;border:2px solid {cor_area_mesa};
-                     display:flex;align-items:center;justify-content:center;flex:0 0 auto">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="{cor_area_mesa}" stroke-width="2.1" stroke-linecap="round">{path_area_mesa}</svg>
-                </div>
-              </div>
-              <div style="position:absolute;left:50%;top:20px;transform:translateX(calc(-50% - 148px));z-index:3">
-                {ui_theme.mascote_html("happy", size=0.92, pattern="tuxedo", patch="#3A4152", collar="#6EE12B")}
-              </div>
-            </div>''',
-            unsafe_allow_html=True,
-        )
 
         col_passos, col_bilhete = st.columns([2, 1], gap="large")
 
         with col_passos:
             status_por_ano = _status_provas_por_ano(provas)
             ponto_status = {"feito": "🟢", "parcial": "🟡", "nunca": "⚪"}
+            # Legenda por EXTENSO só quando o ano é o selecionado (pedido
+            # do usuário, 2026-09-11, seguindo à risca a referência
+            # visual: 2025 selecionado mostra "nunca feita" por baixo do
+            # número, os outros só mostram a bolinha colorida) -- os
+            # outros dois nomes seguem a MESMA palavra da legenda acima
+            # ("já fez" -> "já feita", "parou no meio" fica igual).
+            texto_status = {"feito": "já feita", "parcial": "parou no meio", "nunca": "nunca feita"}
 
             st.markdown(
-                '<div class="ano-pills"></div>'
+                '<div class="ano-cards"></div>'
                 '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
-                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">1 · QUAL ANO</div>'
+                '<div style="width:22px;height:22px;border-radius:8px;background:#6EE12B;display:flex;'
+                'align-items:center;justify-content:center;font:800 12px \'Nunito\';color:#0D2705;flex:0 0 auto">1</div>'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">QUAL ANO</div>'
                 '<div style="flex:1;height:1px;background:var(--tema-border)"></div>'
                 f'<div style="font:700 11px \'Nunito\';color:var(--tema-ink-3)">{ponto_status["feito"]} já fez &nbsp; '
                 f'{ponto_status["parcial"]} parou no meio &nbsp; {ponto_status["nunca"]} não abriu</div>'
                 '</div>',
                 unsafe_allow_html=True,
             )
-            ano_sel = st.radio(
-                "Qual ano", anos,
-                format_func=lambda a: f"{ponto_status[status_por_ano.get(a, 'nunca')]} {a}",
-                horizontal=True, key="montar_prova_ano", label_visibility="collapsed",
-            )
+            # Virou grade de st.button (era st.radio) -- MESMO padrão de
+            # "Qual área" logo abaixo (chave própria em session_state,
+            # botão primary/secondary marca a seleção). Pedido do
+            # usuário, 2026-09-11: a referência visual mostra o número
+            # GRANDE dentro do botão e uma bolinha de status PEQUENA
+            # POR FORA, embaixo -- st.radio só aceita texto simples numa
+            # linha só (sem HTML, sem dois tamanhos de fonte diferentes
+            # na mesma label), então não dava pra chegar nesse resultado
+            # só com CSS em cima do radio nativo, por mais que se
+            # corrigisse o seletor -- precisa de HTML de verdade fora do
+            # botão, que só st.markdown ao lado de um st.button permite.
+            chave_ano_valor = "montar_prova_ano_valor"
+            if st.session_state.get(chave_ano_valor) not in anos:
+                st.session_state[chave_ano_valor] = anos[0]
+            cols_ano = st.columns(len(anos))
+            for col, ano in zip(cols_ano, anos):
+                with col:
+                    selecionado = st.session_state[chave_ano_valor] == ano
+                    if st.button(
+                        str(ano), key=f"montar_prova_ano_btn_{ano}",
+                        type="primary" if selecionado else "secondary", use_container_width=True,
+                    ):
+                        st.session_state[chave_ano_valor] = ano
+                        st.rerun()
+                    status = status_por_ano.get(ano, "nunca")
+                    legenda_status = texto_status[status] if selecionado else ponto_status[status]
+                    cor_legenda = "var(--tema-on-lime)" if selecionado else "var(--tema-ink-3)"
+                    st.markdown(
+                        f'<div style="text-align:center;margin-top:4px;font:800 10px \'Nunito\';'
+                        f'color:{cor_legenda}">{legenda_status}</div>',
+                        unsafe_allow_html=True,
+                    )
+            ano_sel = st.session_state[chave_ano_valor]
 
             areas_do_ano = sorted({area for a, c, area in provas if a == ano_sel})
             if not areas_do_ano:
@@ -302,7 +376,9 @@ def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, s
             st.markdown(
                 '<div class="area-cards"></div>'
                 '<div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px">'
-                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">2 · QUAL ÁREA</div>'
+                '<div style="width:22px;height:22px;border-radius:8px;background:#6EE12B;display:flex;'
+                'align-items:center;justify-content:center;font:800 12px \'Nunito\';color:#0D2705;flex:0 0 auto">2</div>'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">QUAL ÁREA</div>'
                 '<div style="flex:1;height:1px;background:var(--tema-border)"></div></div>',
                 unsafe_allow_html=True,
             )
@@ -339,7 +415,9 @@ def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, s
             st.markdown(
                 '<div class="ano-pills"></div>'
                 '<div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px">'
-                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">3 · COMO RESPONDER</div>'
+                '<div style="width:22px;height:22px;border-radius:8px;background:#39435A;display:flex;'
+                'align-items:center;justify-content:center;font:800 12px \'Nunito\';color:#C8CEDA;flex:0 0 auto">3</div>'
+                '<div style="font:800 12px \'Nunito\';letter-spacing:.14em;color:var(--tema-ink-3)">COMO RESPONDER</div>'
                 '<div style="flex:1;height:1px;background:var(--tema-border)"></div></div>',
                 unsafe_allow_html=True,
             )
@@ -423,42 +501,38 @@ def _renderizar_montar_prova(provas: list[tuple[int, str, str]]) -> tuple[int, s
 
 def render_cartao_resposta() -> None:
     db.inicializar_banco()
-    render_carregar_gabarito()
 
+    # O loader de CSV (render_carregar_gabarito) SAIU desta página
+    # (pedido do usuário, 2026-09-11: "isso é uma opção de
+    # administração... pra não embaralhar aí no próprio ENEM" -- Admin
+    # já tem o próprio jeito de carregar gabarito, "Colar gabarito
+    # direto"). A função continua existindo, só não é mais chamada
+    # daqui -- mesmo padrão reversível já usado noutras remoções desta
+    # rodada de simplificação.
     provas = db.listar_provas()
     if not provas:
-        st.info("Nenhuma prova cadastrada ainda — insira questões (com gabarito) antes de responder.")
+        st.info("Nenhuma prova cadastrada ainda — carregue um gabarito na aba Admin antes de responder.")
         return
 
-    modo = st.radio(
-        "Modo",
-        ["Uma prova por vez", "Simulado completo (Matemática + Ciências)",
-         "Revisão de hoje", "Praticar por matéria", "Prova com enunciado"],
-        horizontal=True,
-    )
+    # A barra de ícones que ficava aqui (App ENEM.dc.html, 4a) virou a
+    # navegação de VERDADE do app inteiro (pedido do usuário,
+    # 2026-09-11: "substitua... e tudo aquele menu por aqueles ícones")
+    # -- ver ui_theme.barra_navegacao_icones(), chamada uma vez em
+    # __main__, não mais duplicada aqui dentro de Provas ENEM. Essa
+    # tentativa anterior (st.columns([rail, conteúdo]) + marcador
+    # ".entrada-bleed") saiu "bugada" segundo o usuário e foi revertida
+    # -- a cena volta a ser a única coisa full-bleed nesta página.
+    _renderizar_cena_mesa(provas)
 
-    if modo == "Simulado completo (Matemática + Ciências)":
-        _render_simulado_completo()
-        return
-
-    if modo == "Revisão de hoje":
-        render_revisao_hoje()
-        return
-
-    if modo == "Praticar por matéria":
-        render_praticar_por_materia()
-        return
-
-    if modo == "Prova com enunciado":
-        # Juntada nesta mesma aba (pedido do usuário) em vez de
-        # continuar como página própria no menu -- "prova_beta" ainda
-        # existe como alias de redirect pra "provas_enem" (ver __main__)
-        # pra não quebrar link/favorito salvo, mesmo padrão já usado
-        # por "banco_pratica" → "cartao". render_prova_beta() em si não
-        # mudou nada por dentro, só passou a ser um modo aqui dentro.
-        render_prova_beta()
-        return
-
+    # A barra "Modo" (Simulado completo/Revisão de hoje/Praticar por
+    # matéria/Prova com enunciado) foi tirada da página inteira por
+    # enquanto (pedido do usuário, 2026-09-11: só visual por ora, a
+    # funcionalidade de acessar esses 4 modos de novo fica pra uma
+    # rodada futura, decidida com calma -- não é pra inventar uma
+    # solução funcional agora). `_render_simulado_completo`,
+    # `render_revisao_hoje`, `render_praticar_por_materia` e
+    # `render_prova_beta` continuam existindo, só não são chamadas por
+    # nenhum caminho desta página neste momento.
     selecao = _renderizar_montar_prova(provas)
     if selecao is None:
         return
@@ -2971,16 +3045,24 @@ def _tagline_contagem_regressiva() -> str:
     return f"treino com prova real, corrigido na hora · 🗓️ {prova['dias_restantes']} dias até o ENEM"
 
 
+# Calendário/Objetivos/Redação/Triagem tirados da navegação (pedido do
+# usuário, 2026-09-11): simplificação deliberada pra o app girar em
+# torno do miolo real -- fazer questão, fazer simulado -- alinhado com
+# o que já existe no app mobile. Nenhuma delas foi apagada: as funções
+# (render_calendario, render_objetivos, render_redacao,
+# triagem.render_triagem) continuam inteiras mais abaixo/no módulo
+# triagem.py, só não tem mais link nenhum que leve até elas -- mesmo
+# padrão reversível já usado pra tirar a barra "Modo" de Provas ENEM
+# nesta mesma rodada. Motivo específico da Redação: só faz sentido
+# voltar quando tiver correção por IA -- sem isso, é uma tela sem
+# função real no ciclo "responder → simulado" que o app agora foca.
+# Admin FICA (pedido explícito), só marcado pra uma organizada futura.
 _PAGINAS = [
     ("cartao", "📝", "Cartão-resposta"),
     ("provas_enem", "🗒️", "Provas ENEM"),
     ("analise", "📊", "Minha análise"),
     ("simulados", "🗂️", "Simulados já feitos"),
-    ("calendario", "📅", "Calendário"),
-    ("objetivos", "🎯", "Objetivos"),
-    ("redacao", "✍️", "Redação"),
     ("coletar", "🔗", "Coletar vídeos"),
-    ("triagem", "🏷️", "Triagem"),
     ("admin", "🔐", "Admin"),
     ("guia", "📚", "Guia do Estudante"),
 ]
@@ -3051,15 +3133,18 @@ if __name__ == "__main__":
     if pagina_atual not in valores_validos:
         pagina_atual = "cartao"
 
-    plano = db.plano_periodizacao()
-    dias_restantes_sidebar = plano["dias_restantes"] if plano["dias_restantes"] >= 0 else None
-    dias_totais = plano["dias_decorridos"] + max(plano["dias_restantes"], 0)
-    pct_decorrido = (plano["dias_decorridos"] / dias_totais) if dias_totais else 0.0
-    ui_theme.navegacao_lateral(
-        _PAGINAS, pagina_atual, dias_restantes=dias_restantes_sidebar, pct_decorrido=pct_decorrido,
-        tema_atual=tema_atual,
-    )
-    if pagina_atual != "cartao":
+    # ui_theme.navegacao_lateral() (gaveta de texto + hambúrguer) SAIU
+    # de __main__ -- pedido do usuário, 2026-09-11: "substitua cartão
+    # resposta, prova enem e tudo aquele menu por aqueles ícones".
+    # barra_navegacao_icones() é a navegação real agora, sem o
+    # rodapé "dias até o ENEM" que a gaveta antiga tinha (não sobra
+    # espaço numa barra de 82px só de ícones) -- essa contagem
+    # regressiva continua visível em outros lugares da página (cena
+    # de Provas ENEM, Objetivos), não sumiu do app, só deste rodapé
+    # específico. navegacao_lateral() continua definida, só não é mais
+    # chamada -- mesmo padrão reversível de toda esta rodada.
+    ui_theme.barra_navegacao_icones(_PAGINAS, pagina_atual, tema_atual=tema_atual)
+    if pagina_atual not in ("cartao", "provas_enem"):
         # "Cartão-resposta" (agora a home, com a trilha gamificada --
         # ver render_banco_pratica) usa o header próprio do enem_theme
         # (ícone + título + streak/rank, ver design_handoff_enem_
@@ -3072,6 +3157,14 @@ if __name__ == "__main__":
         # trilha pra cá). O hambúrguer/gaveta acima continua igual em
         # toda página: é navegação entre as seções do app, não faz
         # parte do redesign de nenhum mockup específico.
+        #
+        # "provas_enem" também PULA este hero genérico (pedido do
+        # usuário, 2026-09-11): a cena panorâmica que abre a própria
+        # página (_renderizar_cena_mesa(), dentro de render_cartao_
+        # resposta()) já mostra título e "dias até o ENEM" -- manter o
+        # hero aqui em cima duplicava a mesma informação e "poluía" o
+        # topo que devia começar direto no cenário escuro, igual à
+        # referência de design.
         titulo_pagina = next(rotulo for chave, _, rotulo in _PAGINAS if chave == pagina_atual)
         ui_theme.hero(
             titulo_pagina, _tagline_contagem_regressiva(),
