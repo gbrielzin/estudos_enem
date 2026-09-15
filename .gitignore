@@ -14,6 +14,11 @@ core/scratch_enunciados_*.txt
 core/enem.db
 core/enem.db.bak_pre_import
 
+# Material pessoal de candidatura/marketing (LinkedIn), não documentação
+# de projeto -- fica só local, não faz sentido num repositório que
+# recrutador vai abrir.
+docs/linkedin_projeto.md
+
 # Logs de debug de sessão de teste, não são código.
 *.log
 
