@@ -28,6 +28,24 @@ export function getApiBaseUrl(): string {
   return `http://localhost:${API_PORT}`;
 }
 
+/**
+ * Header de autenticação da trava simples do backend (ver
+ * core/api.py `_verificar_autenticacao` e
+ * adr/0009-trava-simples-antes-de-autenticacao-real.md). Lê
+ * `EXPO_PUBLIC_API_AUTH_TOKEN` -- prefixo `EXPO_PUBLIC_` é a convenção
+ * do próprio Expo pra variável inlined no bundle do cliente (SDK 57,
+ * ver docs de Environment Variables); ATENÇÃO: isso significa que o
+ * valor fica visível em texto puro no app compilado -- não é segredo
+ * de verdade, é só a mesma trava contra acesso não convidado que o
+ * backend já documenta como limitação conhecida, não uma credencial
+ * de usuário. Sem a variável configurada, não manda header nenhum --
+ * mesmo comportamento de hoje (backend aberto).
+ */
+export function cabecalhosAutenticacao(): HeadersInit {
+  const token = process.env.EXPO_PUBLIC_API_AUTH_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // ============================================================
 // Tipos -- espelham os dicts que core/db.py já devolve (ver
 // _linha_para_questao_grade e trilha_banco_pratica em db.py). Nenhuma
@@ -126,7 +144,7 @@ async function buscarJson<T>(caminho: string): Promise<T> {
   const url = `${getApiBaseUrl()}${caminho}`;
   let resposta: Response;
   try {
-    resposta = await fetch(url);
+    resposta = await fetch(url, { headers: cabecalhosAutenticacao() });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);
     throw new ErroApi(`Não consegui alcançar o backend em ${url} (${mensagem}). Confere se está na mesma wifi do computador e se o servidor está rodando.`);
@@ -201,7 +219,7 @@ export async function registrarTentativa(idQuestao: string, respostaEscolhida: s
   const url = `${getApiBaseUrl()}/tentativas`;
   const resposta = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
     body: JSON.stringify({ id_questao: idQuestao, resposta_escolhida: respostaEscolhida }),
   });
   if (!resposta.ok) {

@@ -30,7 +30,11 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# local env files (.env.example fica de fora de propósito -- é o
+# template versionado; qualquer outro .env* pode ter EXPO_PUBLIC_API_AUTH_TOKEN
+# de verdade, ver adr/0009)
+.env
+.env.local
 .env*.local
 
 # typescript
