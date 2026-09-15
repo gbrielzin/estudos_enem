@@ -1561,6 +1561,27 @@ def atualizar_enunciado(id_questao: str, texto: str | None = None, imagem_path: 
         )
 
 
+def atualizar_topico(id_questao: str, topico: str | None) -> None:
+    """Marca (ou limpa, com topico=None) o padrão de cobrança de uma
+    questão que já existe, sem mexer em matéria/gabarito/status -- por
+    isso não passa por inserir_questao()/historico_alteracoes, mesma
+    lógica de atualizar_enunciado() acima.
+
+    topico é texto livre, não uma taxonomia fechada como materia: é o
+    campo mínimo pra testar a hipótese (ainda não validada) de que
+    repetição concentrada num padrão específico de cobrança da banca
+    -- não só na matéria inteira -- é o que ensina o aluno a reconhecer
+    o distrator típico daquele padrão. Ver desempenho_por_topico()."""
+    with _conectar() as conn:
+        existe = conn.execute("SELECT 1 FROM questoes WHERE id_questao = ?", (id_questao,)).fetchone()
+        if not existe:
+            raise ValueError(f"Questão '{id_questao}' não existe.")
+        conn.execute(
+            "UPDATE questoes SET topico = ? WHERE id_questao = ?",
+            (topico.strip() if topico else None, id_questao),
+        )
+
+
 def prioridade_de_estudo(grande_area: str, peso_recorrencia: float = 0.5) -> dict:
     """Cruza recorrência (recorrencia_por_materia) com desempenho
     (taxa_acerto_por_materia) num ranking único de prioridade de
@@ -2010,6 +2031,59 @@ def taxa_acerto_por_materia(grande_area: str) -> list[dict]:
     ]
 
 
+def desempenho_por_topico(grande_area: str, materia: str) -> dict:
+    """Um nível abaixo de taxa_acerto_por_materia(): taxa de acerto
+    agrupada por questoes.topico DENTRO de uma matéria já escolhida --
+    o experimento mínimo pra testar a hipótese (ainda não validada, ver
+    Central ENEM GI, seção 'Hipótese central de produto') de que
+    repetição concentrada num padrão específico de cobrança da banca
+    ensina mais do que praticar a matéria inteira sem foco.
+
+    topico é texto livre (marcado à mão via atualizar_topico(), ou na
+    hora de inserir a questão) -- não é uma taxonomia fechada como
+    materia, então não passa por canonicalizar_materia() nem por
+    TAXONOMIA_VALIDA. Duas grafias diferentes do "mesmo" padrão
+    aparecem como duas entradas distintas; isso é uma limitação
+    conhecida, não um bug -- normalizar automaticamente inventaria uma
+    correspondência que ninguém validou.
+
+    Questão sem topico marcado entra em 'sem_topico', fora do ranking
+    -- mesmo princípio do sem_dados em prioridade_de_estudo(): não
+    inventa um padrão que ninguém etiquetou ainda."""
+    grande_area_norm = normalizar_texto(grande_area)
+    materia_norm = canonicalizar_materia(normalizar_texto(materia))
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT q.topico,
+                   COUNT(*) AS total_tentativas,
+                   SUM(CASE WHEN t.resultado = 'acertou' THEN 1 ELSE 0 END) AS acertos
+            FROM tentativas_usuario t
+            JOIN questoes q ON q.id_questao = t.id_questao
+            WHERE q.grande_area = ? AND q.materia = ?
+            GROUP BY q.topico
+            """,
+            (grande_area_norm, materia_norm),
+        ).fetchall()
+
+    ranking, sem_topico = [], None
+    for topico, total, acertos in linhas:
+        entrada = {
+            "topico": topico,
+            "total_tentativas": total,
+            "acertos": acertos,
+            "taxa_acerto": round(acertos / total, 3) if total else None,
+            "amostra_pequena": total < MIN_AMOSTRA_CONFIAVEL,
+        }
+        if topico is None:
+            sem_topico = entrada
+        else:
+            ranking.append(entrada)
+
+    ranking.sort(key=lambda r: r["taxa_acerto"])
+    return {"materia": materia_norm, "ranking": ranking, "sem_topico": sem_topico}
+
+
 def explorar_materias(grande_area: str) -> list[dict]:
     """Lista TODAS as matérias válidas da área (não só as que já têm
     tentativa, diferente de taxa_acerto_por_materia) com contagem de
@@ -2243,7 +2317,7 @@ def detalhe_questao(id_questao: str) -> dict | None:
         linha = conn.execute(
             "SELECT ano, caderno, numero_questao, grande_area, materia, "
             "alternativa_correta, status_classificacao, enunciado_texto, "
-            "enunciado_imagem_path FROM questoes WHERE id_questao = ?",
+            "enunciado_imagem_path, topico FROM questoes WHERE id_questao = ?",
             (id_questao,),
         ).fetchone()
     if linha is None:
@@ -2253,6 +2327,7 @@ def detalhe_questao(id_questao: str) -> dict | None:
         "numero_questao": linha[2], "grande_area": linha[3], "materia": linha[4],
         "alternativa_correta": linha[5], "status_classificacao": linha[6],
         "enunciado_texto": linha[7], "enunciado_imagem_path": linha[8],
+        "topico": linha[9],
     }
 
 

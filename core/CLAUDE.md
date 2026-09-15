@@ -80,6 +80,12 @@ Four additions on top of `prioridade_de_estudo()`, added together (2026-09) to t
 
 Deliberately **not** built alongside these: a hierarchical tema→subtema→habilidade taxonomy (would mean reclassifying all 754 already-classified questions against a new schema, which needs the same kind of human judgment call that `triagem.py` already exists for — not something to migrate unilaterally), and any ML/LLM-based version of confiança/evolução (587 tentativas, single user, is still the same "not enough data to justify it yet" situation `SYSTEM_DEEP_DIVE.md`'s section 10 already covers — these four additions are still the deterministic-heuristics side of that line, just a level up from Leitner/prioridade alone).
 
+### Padrão de cobrança (`topico`) — piloto de uma hipótese de produto, não taxonomia nova
+
+`questoes.topico` (TEXT, nullable) existed in `schema.sql` since before this note, already threaded through `inserir_questao()`/`inserir_questao_pratica()`, but until 2026-09-12 nothing read it back. Two additions make it usable: `atualizar_topico(id_questao, topico)` (set/clear on an existing question, same COALESCE-free pattern as `atualizar_enunciado()` — doesn't touch `materia`/gabarito, doesn't go through `historico_alteracoes`) and `desempenho_por_topico(grande_area, materia)` (accuracy grouped by `topico` *within* one already-chosen matéria, same shape as `taxa_acerto_por_materia()` one level down; a question with no `topico` set is excluded from the ranking into a separate `sem_topico` entry, mirroring `prioridade_de_estudo()`'s own `sem_dados` split).
+
+This is explicitly **not** the hierarchical taxonomy the paragraph above says was deliberately skipped — see `adr/0005-topico-como-padrao-de-cobranca.md` for the full reasoning. `topico` is free text (no `canonicalizar_materia()`-equivalent pipeline), used to test a still-unvalidated product hypothesis (repetição concentrada num padrão específico de cobrança da banca — não a matéria inteira — ensina o reconhecimento de distrator) with the smallest possible schema footprint: zero migration, reuse of an already-existing nullable column. Two different spellings of "the same" pattern show up as two separate ranking entries — a known limitation, not a bug, documented in the function's own docstring. Covered by `test_db.py`'s `TestAtualizarTopico`/`TestDesempenhoPorTopico`.
+
 ### `gabaritos_reais/` naming convention
 
 Source-of-truth CSVs consumed by `reconstruir_base.py`, matched by filename regex:
