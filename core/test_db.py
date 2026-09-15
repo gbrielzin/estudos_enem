@@ -792,5 +792,155 @@ class TestFontesEListarBancoPratica(_TestComBancoTemporario):
         self.assertEqual([q["id_questao"] for q in banco], [id_2, id_1])
 
 
+# ============================================================
+# PADRÃO DE COBRANÇA (topico) -- piloto da hipótese central de produto
+# documentada na Central ENEM GI ("aprender por padrão de banca, não
+# só por matéria"): desempenho_por_topico() e atualizar_topico().
+# ============================================================
+
+class TestAtualizarTopico(_TestComBancoTemporario):
+    def setUp(self):
+        super().setUp()
+        self.id_q, _ = db.inserir_questao(
+            ano=2022, caderno="Azul", numero=93,
+            grande_area="ciencias_natureza", materia="Optica",
+            alternativa_correta="A",
+        )
+
+    def test_marca_topico_em_questao_existente(self):
+        db.atualizar_topico(self.id_q, "espelho esferico - sinal do aumento")
+        self.assertEqual(db.detalhe_questao(self.id_q)["topico"], "espelho esferico - sinal do aumento")
+
+    def test_none_limpa_topico_ja_marcado(self):
+        db.atualizar_topico(self.id_q, "algum padrao")
+        db.atualizar_topico(self.id_q, None)
+        self.assertIsNone(db.detalhe_questao(self.id_q)["topico"])
+
+    def test_questao_inexistente_levanta_valueerror(self):
+        with self.assertRaises(ValueError):
+            db.atualizar_topico("2099_azul_999", "qualquer padrao")
+
+
+class TestDesempenhoPorTopico(_TestComBancoTemporario):
+    def setUp(self):
+        super().setUp()
+        # 2 questões do mesmo padrão ("sinal do aumento"), 1 de outro padrão,
+        # 1 ainda sem topico marcado -- mesma materia nas 4.
+        self.id_a, _ = db.inserir_questao(
+            ano=2022, caderno="Azul", numero=93,
+            grande_area="ciencias_natureza", materia="Optica",
+            alternativa_correta="A", topico="espelho esferico - sinal do aumento",
+        )
+        self.id_b, _ = db.inserir_questao(
+            ano=2023, caderno="Azul", numero=94,
+            grande_area="ciencias_natureza", materia="Optica",
+            alternativa_correta="B", topico="espelho esferico - sinal do aumento",
+        )
+        self.id_c, _ = db.inserir_questao(
+            ano=2024, caderno="Azul", numero=95,
+            grande_area="ciencias_natureza", materia="Optica",
+            alternativa_correta="C", topico="lei de snell - refracao oblíqua",
+        )
+        self.id_sem, _ = db.inserir_questao(
+            ano=2025, caderno="Azul", numero=96,
+            grande_area="ciencias_natureza", materia="Optica",
+            alternativa_correta="D",  # sem topico
+        )
+
+    def test_agrupa_por_topico_dentro_da_materia(self):
+        db.registrar_tentativa(self.id_a, "A")  # acertou
+        db.registrar_tentativa(self.id_b, "A")  # errou -- gabarito de id_b é B (mesmo topico de id_a)
+        db.registrar_tentativa(self.id_c, "C")  # acertou (outro topico)
+
+        resultado = db.desempenho_por_topico("ciencias_natureza", "Optica")
+        topicos = {r["topico"]: r for r in resultado["ranking"]}
+
+        self.assertEqual(topicos["espelho esferico - sinal do aumento"]["total_tentativas"], 2)
+        self.assertEqual(topicos["espelho esferico - sinal do aumento"]["acertos"], 1)
+        self.assertEqual(topicos["lei de snell - refracao oblíqua"]["acertos"], 1)
+
+    def test_questao_sem_topico_fica_fora_do_ranking(self):
+        db.registrar_tentativa(self.id_sem, "D")
+        resultado = db.desempenho_por_topico("ciencias_natureza", "Optica")
+        topicos_no_ranking = [r["topico"] for r in resultado["ranking"]]
+        self.assertNotIn(None, topicos_no_ranking)
+        self.assertIsNotNone(resultado["sem_topico"])
+        self.assertEqual(resultado["sem_topico"]["total_tentativas"], 1)
+
+    def test_amostra_pequena_abaixo_do_minimo_confiavel(self):
+        db.registrar_tentativa(self.id_c, "C")  # só 1 tentativa nesse topico
+        resultado = db.desempenho_por_topico("ciencias_natureza", "Optica")
+        entrada = next(r for r in resultado["ranking"] if r["topico"] == "lei de snell - refracao oblíqua")
+        self.assertTrue(entrada["amostra_pequena"])
+
+    def test_sem_nenhuma_tentativa_ranking_vazio(self):
+        resultado = db.desempenho_por_topico("ciencias_natureza", "Optica")
+        self.assertEqual(resultado["ranking"], [])
+        self.assertIsNone(resultado["sem_topico"])
+
+
+# ============================================================
+# IDEMPOTÊNCIA DO CARREGAMENTO DE GABARITO -- a propriedade da qual
+# reconstruir_base.py depende pra poder ser reexecutado sem duplicar
+# questão nem perder dado (ver docstring do próprio script). Testa o
+# primitivo reutilizável (carregar_gabarito_texto), não o script --
+# reconstruir_base.py roda como módulo de topo, contra CSVs reais em
+# disco, então não é seguro nem prático importá-lo num teste.
+# ============================================================
+
+class TestCarregarGabaritoEIdempotente(_TestComBancoTemporario):
+    CSV = (
+        "numero,materia,gabarito\n"
+        "136,Funcao Afim,A\n"
+        "137,Geometria Plana,B\n"
+    )
+
+    def test_carregar_duas_vezes_nao_duplica_questao(self):
+        db.carregar_gabarito_texto(self.CSV, ano=2024, caderno="Azul")
+        db.carregar_gabarito_texto(self.CSV, ano=2024, caderno="Azul", sobrescrever=True)
+
+        with db._conectar() as conn:
+            total = conn.execute("SELECT COUNT(*) FROM questoes").fetchone()[0]
+        self.assertEqual(total, 2)  # não virou 4
+
+    def test_recarregar_preserva_tentativa_ja_registrada(self):
+        """Rodar o carregamento de novo (ex: gabarito corrigido) não
+        pode apagar/perder tentativa que o usuário já registrou pra
+        essa prova -- mesma garantia que reconstruir_base.py promete
+        no próprio docstring ('idempotente... não perde tentativa')."""
+        db.carregar_gabarito_texto(self.CSV, ano=2024, caderno="Azul")
+        id_q = db.gerar_id_canonico(2024, "Azul", 136)
+        db.registrar_tentativa(id_q, "A")
+
+        db.carregar_gabarito_texto(self.CSV, ano=2024, caderno="Azul", sobrescrever=True)
+
+        with db._conectar() as conn:
+            total_tentativas = conn.execute(
+                "SELECT COUNT(*) FROM tentativas_usuario WHERE id_questao = ?", (id_q,)
+            ).fetchone()[0]
+        self.assertEqual(total_tentativas, 1)
+
+    def test_preservar_materia_classificada_nao_regride_classificacao_manual(self):
+        """preservar_materia_classificada=True (o flag que
+        reconstruir_base.py sempre passa) não pode deixar um
+        placeholder de CSV sobrescrever uma matéria já classificada de
+        verdade -- ver core/CLAUDE.md, seção de triagem manual."""
+        db.carregar_gabarito_texto(self.CSV, ano=2024, caderno="Azul")
+        id_q = db.gerar_id_canonico(2024, "Azul", 136)
+        db.inserir_questao(
+            ano=2024, caderno="Azul", numero=136, grande_area="matematica",
+            materia="Funcao Afim", alternativa_correta="A", sobrescrever=True,
+        )
+        self.assertEqual(db.detalhe_questao(id_q)["status_classificacao"], "classificado")
+
+        csv_com_placeholder = "numero,materia,gabarito\n136,SEM_VIDEO_PENDENTE,A\n"
+        db._carregar_gabarito_de_texto(
+            csv_com_placeholder, ano=2024, caderno="Azul",
+            grande_area_padrao="matematica", sobrescrever=True,
+            preservar_materia_classificada=True,
+        )
+        self.assertEqual(db.detalhe_questao(id_q)["status_classificacao"], "classificado")
+
+
 if __name__ == "__main__":
     unittest.main()
