@@ -139,3 +139,10 @@ For a UI-only request:
 3. Preserve existing functionality.
 4. Do not refactor unrelated code.
 5. Do not modify backend/database logic unless necessary.
+
+## NUNCA UTILIZAR COMANDOS GIT
+
+Claude nunca roda `git` (add, commit, push, branch, ou qualquer outro) neste
+projeto, em nenhuma pasta — vale pro repositório inteiro, não só `core/`.
+Editar/criar/apagar arquivo continua normal. Staging, commit e push ficam
+100% com o Gabriel, no momento e do jeito que ele quiser.
