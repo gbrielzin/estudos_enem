@@ -700,7 +700,7 @@ def render_banco_pratica() -> None:
     resto do sistema (que corrige em lote via
     _renderizar_grade_questoes) -- fluxo de exercício, não de prova.
 
-    Reimplementado seguindo design_handoff_enem_gamificado/README.md
+    Reimplementado seguindo docs/design_handoff_enem_gamificado/README.md
     (handoff formal, 2026-09) -- router entre duas telas com estado
     próprio em session_state, igual o handoff descreve Home e Trilha
     como telas SEPARADAS (a matéria só vira "conteúdo de primeira
@@ -1369,7 +1369,7 @@ def _renderizar_grade_questoes(
     cada rádio -- caso em que colar sequência é exatamente a ferramenta
     certa, mesmo no estilo "uma questão por vez com enunciado".
 
-    Modo Cartão/Foco (design_handoff_enem_gamificado/App ENEM.dc.html,
+    Modo Cartão/Foco (docs/design_handoff_enem_gamificado/App ENEM.dc.html,
     Turno 2 -- ver DesignSync 2026-09-09): só aparece quando
     estilo_exame=False (a prova beta já mostra a questão inteira, uma
     de cada vez, não precisa de um segundo "modo foco" por cima). Os
@@ -3115,7 +3115,7 @@ if __name__ == "__main__":
     valores_validos = {chave for chave, _, _ in _PAGINAS}
     pagina_atual = st.query_params.get("pagina", "cartao")
     # "banco_pratica" era o item de 1a classe antes da 3a rodada do
-    # handoff (design_handoff_enem_gamificado/RELATORIO-RODADA-2.md,
+    # handoff (docs/design_handoff_enem_gamificado/RELATORIO-RODADA-2.md,
     # seção "Mudança estrutural") -- agora é só um alias que redireciona
     # pra "cartao" (a nova home), pra não quebrar um link/favorito salvo
     # com a chave antiga.
