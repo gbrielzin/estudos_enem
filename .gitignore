@@ -6,6 +6,14 @@ core/backups/
 core/vision_board/
 core/scratch_enunciados_*.txt
 
+# Removidos do histórico do Git em 2026-09-15 (ver ADR-0002 e a decisão de
+# publicação em GitHub) -- contêm dado pessoal de uso real (tentativas,
+# streak, configuração). Continuam existindo em disco pra uso local; quem
+# clonar o repo do zero recria via `python reconstruir_base.py` (ver
+# README).
+core/enem.db
+core/enem.db.bak_pre_import
+
 # Logs de debug de sessão de teste, não são código.
 *.log
 
