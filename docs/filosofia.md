@@ -39,10 +39,12 @@ Nosso diferencial competitivo contra aplicativos gerados por IAs genéricas e li
 
 ## 🛠️ 4. Fluxo de Execução do Algoritmo de Transição (A Trilha Intercalada)
 
-O código rodando no `localhost:8502` deve obedecer a seguinte ordem de destravamento de nós, garantindo que o usuário mude de matéria assim que o ROI da atual bater no teto:
+O algoritmo de trilha, exposto pelo backend FastAPI (`core/api.py`, endpoint `/trilha`) e consumido pelo app Expo/React Native (`mobile/src/components/trilha-path.tsx`), deve obedecer a seguinte ordem de destravamento de nós, garantindo que o usuário mude de matéria assim que o ROI da atual bater no teto:
 
 ```text
 [Nó 1: Ecologia F1] ➔ [Nó 2: Óptica F1] ➔ [Nó 3: Ecologia F4 (28%)] ➔ [Nó 4: Cinemática F1] ➔ [Nó 5: Ecologia F3] ➔ [Nó 6: Eletrodinâmica F1 (SVG)]
 ```
 
 Se o estudante tentar avançar linearmente para uma fase de baixo ROI (ex: Saneamento) antes de garantir a base de uma matéria de alta incidência (ex: Cinemática), o sistema dispara o **Bloqueio Informativo do Pipoco**, redirecionando o usuário para a pista mais lucrativa de pontos.
+
+> **Status de implementação:** este entrelaçamento entre matérias ainda não existe em código. Hoje `db.trilha_banco_pratica()` monta a trilha de **uma matéria por vez** (nós sequenciais de tamanho fixo, com fase opcional só pra Ecologia via `FASES_ECOLOGIA`) — sem peso de incidência, sem gating por pré-requisito, sem a interrupção de fluxo descrita acima. Este documento é a especificação-alvo; a implementação (generalizar fases pra outras matérias + uma função de trilha por ROI) é o próximo passo depois que a tabela de pesos da seção 2 tiver fonte citada e cobrir mais que Ecologia.
