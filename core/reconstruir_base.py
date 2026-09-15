@@ -1,39 +1,38 @@
 """
 reconstruir_base.py — carrega/atualiza o banco a partir de fontes
-verificadas: gabarito oficial (PDF do INEP) + matéria real dos vídeos
-(questoes_enem.csv) + as respostas reais do usuário na prova de
-Matemática 2019 + correções manuais de triagem já feitas antes.
+verificadas: gabarito oficial (PDF do INEP) + as respostas reais do
+usuário na prova de Matemática 2019 + correções manuais de triagem já
+feitas antes.
 
 Pensado pra ser reexecutado sempre que houver gabarito novo —
 idempotente: NÃO apaga enem.db (só faz backup e atualiza em cima do que
-já existe), então rodar de novo não perde vídeo coletado depois, nem
-tentativa de outras provas, nem matéria preenchida via título de vídeo.
+já existe), então rodar de novo não perde tentativa de outras provas
+nem correção manual de triagem já feita.
 
 ############################################################
 # Histórico: até 2026-08 este script apagava enem.db e reconstruía do
-# zero. Verificado então que isso destruía de verdade: resoluções
-# ligadas depois do último snapshot de questoes_enem.csv (coletar_
-# videos.py grava direto no banco, nunca mais nesse CSV), tentativas
-# de qualquer prova fora do bloco hardcoded de 2019 abaixo, e matéria
-# só preenchida via título de vídeo (coletar_videos.py só atualiza
-# quando a questão ainda está 'nao_classificado' — o rebuild antigo
-# não repetia esse passo, então tudo voltava a pendente).
+# zero. Verificado então que isso destruía de verdade: tentativas de
+# qualquer prova fora do bloco hardcoded de 2019 abaixo, e matéria já
+# corrigida manualmente na triagem (o rebuild antigo não repetia esse
+# passo, então tudo voltava a pendente).
 #
 # A partir daqui: sem DELETE do banco. inicializar_banco() é
 # idempotente por design (só CREATE TABLE IF NOT EXISTS). O passo de
-# resoluções e o de tentativas de 2019 agora conferem o que já existe
-# antes de inserir, pra rodar de novo sem duplicar. Ainda assim faz
-# backup automático no início, porque "idempotente na teoria" não vale
-# tanto quanto ter um arquivo pra voltar caso algo saia diferente do
-# esperado.
+# tentativas de 2019 confere o que já existe antes de inserir, pra
+# rodar de novo sem duplicar. Ainda assim faz backup automático no
+# início, porque "idempotente na teoria" não vale tanto quanto ter um
+# arquivo pra voltar caso algo saia diferente do esperado.
+#
+# 2026-09-15: removido o passo que ligava resoluções em vídeo a partir
+# de questoes_enem.csv (scraping de canal do YouTube) -- descontinuado
+# por decisão de produto (ver adr/0008-descontinuar-vinculo-youtube.md).
+# O arquivo questoes_enem.csv foi removido do repositório junto.
 ############################################################
 """
 import csv
 import glob
 import re
 from pathlib import Path
-
-import pandas as pd
 
 import db
 import backup_db
@@ -48,7 +47,7 @@ if db.DB_PATH.exists():
 db.inicializar_banco()
 
 # ============================================================
-# 1. GABARITO OFICIAL (2019-2025), com matéria real do vídeo onde existe
+# 1. GABARITO OFICIAL (2019-2025)
 # ============================================================
 print("=== Carregando gabarito oficial ===")
 resumo_total = {"classificadas": 0, "nao_classificadas": 0}
@@ -115,55 +114,7 @@ else:
     print("\n(nenhum correcoes_manuais.csv encontrado ainda — sem correção manual pra reaplicar)")
 
 # ============================================================
-# 2. RESOLUÇÕES (vídeos reais do questoes_enem.csv)
-# ============================================================
-print("\n=== Ligando resoluções em vídeo ===")
-videos_df = pd.read_csv(PASTA / "questoes_enem.csv", encoding="utf-8-sig")
-
-
-def extrair_numero(t):
-    m = re.search(r"Quest[ãa]o\s+(\d+)", t, re.IGNORECASE)
-    return int(m.group(1)) if m else None
-
-
-def extrair_ano(t):
-    anos = re.findall(r"\b((?:19|20)\d{2})\b", t)
-    return int(anos[-1]) if anos else None
-
-
-def eh_digital(t):
-    return "DIGITAL" in t.upper()
-
-
-videos_df["numero"] = videos_df["titulo"].apply(extrair_numero)
-videos_df["ano_extraido"] = videos_df["titulo"].apply(extrair_ano)
-videos_df["digital"] = videos_df["titulo"].apply(eh_digital)
-
-# Só vídeos regulares (não digital) na faixa de Matemática. Os vídeos
-# dizem "Caderno Azul" -- então só ligam contra id_questao gerado com
-# caderno="Azul". 2023 (Cinza) nunca vai bater aqui, de propósito.
-candidatos = videos_df[(~videos_df["digital"]) & (videos_df["numero"].between(136, 180))]
-
-ligadas, ja_existentes, sem_questao, digital_ignorados = 0, 0, 0, 0
-for _, linha in candidatos.iterrows():
-    id_q = db.gerar_id_canonico(int(linha["ano_extraido"]), "Azul", int(linha["numero"]))
-    try:
-        if db.inserir_resolucao(id_q, "video", linha["link"], canal=linha["canal"]):
-            ligadas += 1
-        else:
-            ja_existentes += 1
-    except ValueError:
-        sem_questao += 1
-
-digital_ignorados = int(videos_df["digital"].sum())
-
-print(f"  Resoluções novas ligadas: {ligadas}")
-print(f"  Já existentes (idempotente, não duplicou): {ja_existentes}")
-print(f"  Sem questão correspondente (anuladas, ou fora de cobertura): {sem_questao}")
-print(f"  Vídeos DIGITAL ignorados de propósito (sem gabarito da aplicação digital ainda): {digital_ignorados}")
-
-# ============================================================
-# 3. TENTATIVAS REAIS -- Matemática 2019, do gabarito consolidado do usuário
+# 2. TENTATIVAS REAIS -- Matemática 2019, do gabarito consolidado do usuário
 # ============================================================
 print("\n=== Registrando tentativas reais (Matemática 2019) ===")
 
@@ -224,7 +175,7 @@ else:
     print(f"  Fora do escopo, sem resposta confiável: 136, 137, 146, 154, 157, 178, 177(?), 179(?) -- 8 questões")
 
 # ============================================================
-# 4. VERIFICAÇÃO FINAL
+# 3. VERIFICAÇÃO FINAL
 # ============================================================
 print("\n=== Verificação ===")
 with db._conectar() as conn:

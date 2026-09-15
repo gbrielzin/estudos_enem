@@ -25,7 +25,6 @@ from pathlib import Path
 import streamlit as st
 
 import db
-import coletar_videos
 import triagem
 import backup_db
 import ui_theme
@@ -3062,7 +3061,6 @@ _PAGINAS = [
     ("provas_enem", "🗒️", "Provas ENEM"),
     ("analise", "📊", "Minha análise"),
     ("simulados", "🗂️", "Simulados já feitos"),
-    ("coletar", "🔗", "Coletar vídeos"),
     ("admin", "🔐", "Admin"),
     ("guia", "📚", "Guia do Estudante"),
 ]
@@ -3080,7 +3078,6 @@ _ICONE_PAGINA = {
     "calendario": "calendar",
     "objetivos": "target",
     "redacao": "pen",
-    "coletar": "link",
     "triagem": "tag",
     "admin": "shield",
     "guia": "book",
@@ -3185,8 +3182,6 @@ if __name__ == "__main__":
         render_objetivos()
     elif pagina_atual == "redacao":
         render_redacao()
-    elif pagina_atual == "coletar":
-        coletar_videos.render_coletar_videos()
     elif pagina_atual == "triagem":
         triagem.render_triagem()
     elif pagina_atual == "admin":

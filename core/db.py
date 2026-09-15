@@ -2298,9 +2298,8 @@ def resolucoes_da_questao(id_questao: str) -> list[dict]:
 
 def apagar_resolucao(id_resolucao: int) -> None:
     """Remove UMA resolução (vídeo ou texto) -- pra tirar um link
-    errado/quebrado (ex: o cruzamento automático entre cadernos de
-    coletar_videos.py ligou o vídeo certo na cor errada) sem precisar
-    apagar a questão inteira."""
+    errado/quebrado ligado à questão errada, sem precisar apagar a
+    questão inteira."""
     with _conectar() as conn:
         conn.execute("DELETE FROM resolucoes WHERE id_resolucao = ?", (id_resolucao,))
 
@@ -3138,7 +3137,7 @@ if __name__ == "__main__":
     )
     print(f"Questão inserida: {id_q} (status={status})")
 
-    inserir_resolucao(id_q, "video", "https://www.youtube.com/watch?v=exemplo", canal="Xequemat ENEM")
+    inserir_resolucao(id_q, "video", "https://www.youtube.com/watch?v=exemplo", canal="Canal de exemplo")
     inserir_resolucao(id_q, "texto", "Resolução escrita: usar combinação simples C(n,k)...")
 
     # tentativa errada, depois duas certas seguidas

@@ -97,4 +97,4 @@ if __name__ == "__main__":
             w.writerow([numero, "SEM_VIDEO_PENDENTE", gabarito[numero]])
 
     print(f"{destino}: {len(gabarito)} questões, {len(anuladas)} anulada(s) {sorted(anuladas)}")
-    print("Matéria de cada questão fica pendente até vídeo (coletar_videos.py) ou triagem manual.")
+    print("Matéria de cada questão fica pendente até triagem manual (triagem.py).")
