@@ -23,15 +23,19 @@ o notebook ligado), é a opção 2.
 
 ## De qualquer lugar, de graça: Streamlit Community Cloud
 
-Free, incluindo repositório **privado** (importante — seu `enem.db` tem
-seus dados reais de desempenho, não é algo pra deixar público). O que
-eu já deixei pronto:
+Free. O que eu já deixei pronto:
 
 - `requirements.txt` na raiz, completo.
-- `main.py` (usado por `core/coletar_videos.py`) já lê a API key dos
-  **Secrets** do Streamlit Cloud quando existem, e cai pro `.env` local
-  quando não — mesmo código funciona nos dois lugares.
-- `.env` está no `.gitignore` — sua API key não vai pro GitHub junto.
+
+> **Nota (2026-09-15):** este documento foi escrito quando `core/enem.db`
+> ainda ia junto no `git push` (por isso a recomendação de repositório
+> privado abaixo). Isso mudou — `enem.db` não é mais versionado (contém
+> dado pessoal de uso real; ver `.gitignore` e `adr/0008`). Rodando este
+> passo a passo hoje, o deploy sobe sem banco nenhum — rode
+> `python reconstruir_base.py` (de dentro de `core/`, ou via um passo de
+> build equivalente no Streamlit Cloud) pra gerar `enem.db` a partir dos
+> gabaritos oficiais versionados em `core/gabaritos_reais/`, antes de o
+> app funcionar de verdade lá.
 
 O que só você pode fazer (login/conta):
 
@@ -76,22 +80,15 @@ GitHub, sem precisar desconectar de novo:
   `enem_gi` na lista de repositórios selecionados → Save.
 - Volta pro share.streamlit.io e tenta "New app" de novo.
 
-### 3. Configurar a API key
-
-- No painel do app recém-criado → ⚙️ Settings → Secrets → cola:
-  ```toml
-  YOUTUBE_API_KEY = "sua_chave_aqui"
-  ```
-- Salva. O app reinicia sozinho.
-
 ### Bom saber
 
 - O plano gratuito **hiberna o app depois de um tempo sem visita** — a
   primeira abertura do dia pode demorar uns segundos pra "acordar".
   Normal, não é bug.
 - Todo `git push` novo pro GitHub atualiza o app na nuvem sozinho.
-- `core/enem.db` vai junto no push (é como o banco chega no servidor
-  da nuvem) — por isso o repositório **precisa** ser privado.
+- `core/enem.db` não vai mais junto no push (ver nota no topo deste
+  documento) — o deploy precisa rodar `reconstruir_base.py` (ou
+  equivalente) pra ter banco.
 
 Se quiser, eu te acompanho passo a passo enquanto você faz o login —
 só não consigo fazer o login por você.

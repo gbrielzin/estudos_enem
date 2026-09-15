@@ -13,8 +13,15 @@ processo de fundo próprio, free tier com recurso limitado.
 ## Decisão
 
 Quando essa integração for implementada, usar uma API hospedada (ex: Claude)
-via `ANTHROPIC_API_KEY` em `.env`/Secrets — mesmo padrão já usado pra
-`YOUTUBE_API_KEY` — em vez de um modelo local via Ollama/Llama.
+via `ANTHROPIC_API_KEY` em `.env`/Secrets — mesmo padrão de carregar chave
+por variável de ambiente já usado no projeto — em vez de um modelo local
+via Ollama/Llama.
+
+> **Nota (2026-09-15):** o precedente original citado aqui (`YOUTUBE_API_KEY`,
+> lida por `main.py`) não existe mais — a automação de vínculo de vídeo do
+> YouTube foi descontinuada (ver `adr/0008`). O raciocínio de "API hospedada
+> em vez de modelo local" continua valendo por si só, independente desse
+> precedente.
 
 ## Alternativas consideradas
 
