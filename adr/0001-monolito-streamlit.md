@@ -1,7 +1,17 @@
 # ADR-0001: Monolito Streamlit em vez de API + front separado
 
-Status: aceito
+Status: superado por ADR-0007 (2026-09-15) — ver nota abaixo
 Data: 2026-09-12 (retroativo — decisão já em vigor desde a criação de `core/`)
+
+> **Nota (2026-09-15):** o "Custa" desta decisão, descrito abaixo, já se
+> concretizou — o app mobile (`mobile/`) precisou ler os mesmos dados do
+> Streamlit, e isso disparou exatamente o gatilho de "quando revisitar"
+> que este documento já previa. `core/db.py` ganhou uma API REST por cima
+> (`core/api.py`) sem precisar ser reescrito. Ver ADR-0007 para a decisão
+> nova; este documento continua valendo como registro de por que o
+> monolito foi a escolha certa NAQUELE momento (1 usuário, sem cliente
+> além do próprio navegador) — não foi um erro, foi uma decisão que
+> cumpriu seu prazo de validade.
 
 ## Contexto
 

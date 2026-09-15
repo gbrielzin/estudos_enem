@@ -30,11 +30,13 @@ Status possíveis:
 
 | ADR | Título | Status |
 |---|---|---|
-| [0001](0001-monolito-streamlit.md) | Monolito Streamlit em vez de API separada | aceito |
+| [0001](0001-monolito-streamlit.md) | Monolito Streamlit em vez de API separada | superado por ADR-0007 |
 | [0002](0002-sqlite-em-vez-de-postgres.md) | SQLite via stdlib em vez de Postgres | aceito |
 | [0003](0003-heuristica-em-vez-de-ml.md) | Heurística (Leitner + prioridade ponderada) em vez de ML | aceito |
 | [0004](0004-log-imutavel-e-estado-projetado.md) | Log imutável + estado projetado, em vez de 1 tabela só | aceito |
 | [0005](0005-topico-como-padrao-de-cobranca.md) | Reusar a coluna `topico` como padrão de cobrança da banca | aceito |
 | [0006](0006-ia-hospedada-para-proxima-integracao.md) | IA hospedada (não local) para a próxima integração | proposto |
+| [0007](0007-api-rest-mais-cliente-expo.md) | API REST (FastAPI) + cliente Expo/React Native, em vez do monolito | aceito |
+| [0008](0008-descontinuar-vinculo-youtube.md) | Descontinuar a automação de vínculo de vídeo do YouTube | proposto |
 
 Template pra um ADR novo: [`0000-template.md`](0000-template.md).
