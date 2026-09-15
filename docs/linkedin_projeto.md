@@ -104,9 +104,12 @@ Itens já decididos/planejados no projeto, ainda não implementados:
   — decisão já tomada via ADR de usar API hospedada em vez de modelo
   local (Llama/Ollama), justamente pra funcionar igual local ou em
   produção na nuvem.
-- **Testes automatizados** na camada de regra de negócio (`db.py` já é
-  isolado o suficiente pra isso ser barato — zero dependência externa).
+- ~~Testes automatizados~~ — feito: 93 testes (72 na regra de negócio,
+  16 na API, 5 no app mobile). Falta ampliar cobertura de componentes/
+  telas do mobile.
 - **CI** rodando os testes a cada push.
+- **Autenticação na API** — em preparação (hoje sem auth nenhuma, ver
+  `adr/0007` e a seção "Limitações conhecidas" do README).
 - **Deploy em nuvem própria do backend FastAPI** (hoje só roda local/wifi
   doméstica) — candidatos naturais: Render/Railway/Fly.io ou um free tier
   de AWS/GCP, com o SQLite trocado por Postgres se o projeto crescer pra

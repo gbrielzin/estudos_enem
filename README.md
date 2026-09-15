@@ -1,4 +1,4 @@
-# ENEM GI
+# ENEM_APP
 
 Sistema pessoal de estudo pro ENEM (Matemática e Ciências da Natureza),
 com foco em decisão orientada a dado: o que estudar agora, calculado a
@@ -17,8 +17,9 @@ oficiais do INEP.
 - **658 tentativas** de usuário registradas
 - **13 endpoints REST** (`core/api.py`)
 - **9 tabelas** relacionais (SQLite)
-- **72 testes automatizados**, cobrindo a camada de regra de negócio
-  (`core/test_db.py`)
+- **93 testes automatizados** — 72 na regra de negócio (`core/test_db.py`)
+  + 16 na camada HTTP (`core/test_api.py`) + 5 no app mobile
+  (`mobile/src/lib/alternativas.test.ts`, Jest)
 - **8 ADRs** documentando as principais decisões de arquitetura (`adr/`)
 
 ## Stack
@@ -101,10 +102,16 @@ npm install
 npx expo start --web   # ou --android / --ios
 ```
 
-Rodar os testes automatizados:
+Rodar os testes automatizados (backend):
 ```
 cd core
-python -m unittest test_db
+python -m unittest discover -p "test_*.py"
+```
+
+Rodar os testes automatizados (mobile):
+```
+cd mobile
+npm test
 ```
 
 Ferramenta pessoal (Streamlit, legado — ver [`core/CLAUDE.md`](core/CLAUDE.md)):
@@ -150,4 +157,5 @@ produção multiusuário — e isso molda decisões deliberadas, não descuidos:
   [`prioridade_de_estudo()`], mas a trilha por fase ainda cobre 1 matéria
   por vez)
 - Correção de redação por IA hospedada (`adr/0006`)
-- Testes automatizados no app mobile e na API
+- Ampliar cobertura de teste no app mobile (hoje só `lib/alternativas.ts`
+  tem teste — componentes e telas ainda não)
