@@ -17,10 +17,9 @@ oficiais do INEP.
 - **658 tentativas** de usuário registradas
 - **13 endpoints REST** (`core/api.py`)
 - **9 tabelas** relacionais (SQLite)
-- **93 testes automatizados** — 72 na regra de negócio (`core/test_db.py`)
-  + 16 na camada HTTP (`core/test_api.py`) + 5 no app mobile
-  (`mobile/src/lib/alternativas.test.ts`, Jest)
-- **8 ADRs** documentando as principais decisões de arquitetura (`adr/`)
+- **100 testes automatizados** — 72 na regra de negócio + 21 na camada
+  HTTP (`core/test_db.py`/`test_api.py`) + 7 no app mobile (Jest)
+- **9 ADRs** documentando as principais decisões de arquitetura (`adr/`)
 
 ## Stack
 
@@ -84,7 +83,11 @@ questão (que dependem de PDF baixado à parte, não incluso aqui) podem ser
 preenchidos depois com `extrair_enunciados_pdf.py`/`importar_enem_dev.py`
 (ver `core/CLAUDE.md`).
 
-Não é preciso nenhuma variável de ambiente pra rodar o projeto hoje.
+Nenhuma variável de ambiente é obrigatória pra rodar o projeto. A única
+opcional hoje é `API_AUTH_TOKEN` (ver `.env.example` na raiz e em
+`mobile/`, e [`adr/0009`](adr/0009-trava-simples-antes-de-autenticacao-real.md))
+— liga uma trava simples na API; sem configurar, tudo roda aberto como
+sempre rodou.
 
 ## Rodar o app
 
@@ -133,20 +136,25 @@ Cada decisão técnica relevante — e por que a alternativa foi descartada —
 está documentada em `adr/`: SQLite em vez de Postgres, heurística em vez
 de ML, log imutável de tentativas separado de estado mutável de revisão,
 IA hospedada em vez de modelo local para a próxima integração planejada,
-e a migração de monolito Streamlit para API + app mobile. Ver
+a migração de monolito Streamlit para API + app mobile, e a trava simples
+por chave compartilhada antes de autenticação de usuário de verdade. Ver
 [`adr/README.md`](adr/README.md) para o índice completo.
 
 ## Limitações conhecidas
 
-Este é um projeto pessoal para um único usuário, não um serviço em
-produção multiusuário — e isso molda decisões deliberadas, não descuidos:
+Este é um projeto pessoal migrando pra multiusuário, não um serviço em
+produção ainda — e isso molda decisões deliberadas, não descuidos:
 
-- A API não tem autenticação nem controle de acesso, e roda com CORS
-  aberto (`allow_origins=["*"]`) — adequado hoje porque o único cliente é
-  o próprio celular do usuário, na mesma wifi doméstica.
+- A API tem uma trava opcional simples por chave compartilhada
+  (`API_AUTH_TOKEN`, ver [`adr/0009`](adr/0009-trava-simples-antes-de-autenticacao-real.md)),
+  **não autenticação de usuário de verdade** — não existe tabela de
+  usuário no schema, então não há como diferenciar quem está chamando,
+  só se tem ou não tem o segredo.
+- CORS continua aberto (`allow_origins=["*"]`) — adequado hoje porque o
+  único cliente é o próprio celular do usuário, na mesma wifi doméstica.
 - O banco (SQLite) suporta um único escritor por vez — adequado para 1
   usuário, sem escrita concorrente real.
-- Autenticação, controle de acesso e configuração restritiva de CORS
+- Login/sessão de usuário de verdade e configuração restritiva de CORS
   fazem parte da evolução natural para um cenário multiusuário, ainda não
   implementada.
 
@@ -155,7 +163,11 @@ produção multiusuário — e isso molda decisões deliberadas, não descuidos:
 - Trilha de estudo entrelaçada entre matérias, ponderada por incidência
   histórica (`docs/filosofia.md` — hoje a priorização já existe
   [`prioridade_de_estudo()`], mas a trilha por fase ainda cobre 1 matéria
-  por vez)
+  por vez); bloqueada por conteúdo, não por algoritmo — precisa de mais
+  questões de banco de prática além de Ecologia/Óptica
 - Correção de redação por IA hospedada (`adr/0006`)
-- Ampliar cobertura de teste no app mobile (hoje só `lib/alternativas.ts`
-  tem teste — componentes e telas ainda não)
+- Modelo de usuário de verdade (tabela + login/sessão), pré-requisito
+  pra multiusuário real e pra "Liga"/ranking (hoje decorativo) virar
+  social de verdade
+- Ampliar cobertura de teste no app mobile (hoje só `lib/` tem teste —
+  componentes e telas ainda não)
