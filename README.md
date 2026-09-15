@@ -1,35 +1,44 @@
 # ENEM_APP
 
-Sistema pessoal de estudo pro ENEM (Matemática e Ciências da Natureza),
-com foco em decisão orientada a dado: o que estudar agora, calculado a
-partir de recorrência histórica e da própria taxa de erro — não um
-cronograma genérico. Prova em 08/11/2026.
+Sistema de estudo pro ENEM orientado a dado: decide o que estudar agora
+a partir de recorrência histórica de incidência × taxa de erro pessoal,
+não por cronograma genérico. App mobile/web (React Native + Expo) sobre
+uma API REST própria (Python + FastAPI + SQLite), alimentada por um
+pipeline próprio de extração de questões a partir de PDFs oficiais do
+INEP e de uma API pública externa.
 
-App mobile/web (React Native + Expo) consumindo uma API REST própria
-(Python + FastAPI + SQLite), com repetição espaçada (Leitner), correção
-automática e um pipeline próprio de extração de questões a partir de PDFs
-oficiais do INEP.
+## Problema
 
-## Estado atual (verificado em 2026-09-15 — ver auditoria completa)
+Decidir o que estudar pra um exame de larga escala (ENEM) é, na prática,
+um problema de dado: qual assunto tem mais incidência histórica, em qual
+matéria a taxa de erro pessoal é mais alta, e onde o tempo de estudo
+rende mais pontos por hora investida. A maioria das ferramentas de
+estudo trata isso como cronograma fixo, sem cruzar dado real de
+desempenho com dado real de incidência da prova.
 
-- **946 questões** no banco (754 de provas oficiais 2019-2025 + 192 de
-  banco de prática próprio)
-- **658 tentativas** de usuário registradas
-- **13 endpoints REST** (`core/api.py`)
-- **9 tabelas** relacionais (SQLite)
-- **100 testes automatizados** — 72 na regra de negócio + 21 na camada
-  HTTP (`core/test_db.py`/`test_api.py`) + 7 no app mobile (Jest)
-- **9 ADRs** documentando as principais decisões de arquitetura (`adr/`)
+## Solução
 
-## Stack
+Um pipeline de dados que transforma PDF oficial (e uma API pública
+externa) em banco relacional, uma camada de regra de negócio que
+calcula prioridade de estudo e repetição espaçada em cima desse banco, e
+um app (mobile + web, mesmo código) que consome tudo isso via API REST
+própria. A migração de um protótipo em CSV único, depois um monolito
+Streamlit, até a arquitetura atual (API + app nativo) está documentada
+decisão por decisão em `adr/` — cada trade-off tem o motivo e a
+alternativa descartada registrados, não só o resultado final.
 
+## Tecnologias
+
+- **Dados / backend:** Python, SQLite, SQL puro (sem ORM), FastAPI,
+  Pydantic
+- **Pipeline de dados:** PyMuPDF (parsing de PDF), pandas, requests
+  (consumo de API externa)
 - **Mobile/Web:** React Native, Expo (Expo Router), TypeScript,
-  React Native Reanimated, `react-native-web` (mesmo código gera app nativo
-  e site)
-- **Backend:** Python, FastAPI, Pydantic
-- **Banco:** SQLite (SQL puro, sem ORM — decisão documentada em
-  [`adr/0002`](adr/0002-sqlite-em-vez-de-postgres.md))
-- **Pipeline de dados:** PyMuPDF (extração de PDF), pandas, requests
+  `react-native-web` (mesmo código gera app nativo e site)
+- **Testes:** unittest (`fastapi.testclient.TestClient` pro backend),
+  Jest (mobile)
+- **Documentação de decisão técnica:** Architecture Decision Records
+  (`adr/`)
 - **Ferramenta pessoal legada (ainda em uso, sem mais investimento
   visual):** Streamlit
 
@@ -58,38 +67,49 @@ em aberto) — decisão documentada de usar heurística em vez de ML, dado o
 volume de dado de um único usuário (ver
 [`adr/0003`](adr/0003-heuristica-em-vez-de-ml.md)).
 
-## Dados
+A API tem uma trava simples por chave compartilhada (`API_AUTH_TOKEN`,
+opcional), não autenticação de usuário de verdade — não existe tabela de
+usuário no schema hoje (ver [`adr/0009`](adr/0009-trava-simples-antes-de-autenticacao-real.md)
+e "Limitações conhecidas" abaixo).
 
-`core/enem.db` **não é versionado no repositório** (dado pessoal de uso
-real — tentativas, streak, configuração). Pra rodar o projeto do zero:
+## Pipeline de dados
+
+Duas fases, sempre separadas — gabarito primeiro, enunciado depois, nunca
+misturadas:
 
 ```
-cd core
-python reconstruir_base.py
+PDF oficial do INEP / API pública enem.dev
+   ↓  extração  (extrair_gabarito_pdf.py, PyMuPDF + pdftotext)
+CSV de gabarito versionado (core/gabaritos_reais/*.csv, 17 arquivos)
+   ↓  carga idempotente  (reconstruir_base.py)
+core/enem.db (SQLite, 9 tabelas relacionais)
+   ↓  enriquecimento  (extrair_enunciados_pdf.py / extrair_figuras_pdf.py / importar_enem_dev.py)
+enunciado, imagem, validação cruzada de gabarito
+   ↓
+indicadores derivados ao vivo (prioridade de estudo, recorrência,
+taxa de acerto, evolução semanal — nunca pré-calculado/cacheado)
 ```
 
-**Faça um backup primeiro se já tiver um `enem.db` local** (o script já
-faz isso sozinho, mas uma cópia extra não faz mal): botão "📦 Fazer
-backup agora" na tela Admin do cartão-resposta, ou `python backup_db.py`
-de dentro de `core/`. `reconstruir_base.py` não apaga o banco — atualiza
-em cima do que já existe, sem perder tentativa registrada nem correção
-manual de triagem (idempotente, seguro rodar de novo).
+Validações no meio do caminho: `importar_enem_dev.py` só aceita dado da
+API externa se ≥90% das respostas baterem com o gabarito oficial já
+carregado, abortando em vez de gravar sob identificador errado.
+Classificação de matéria passa por um pipeline de normalização
+(remove acento, casa contra taxonomia fechada de 89 matérias) antes de
+entrar no banco — questão fora da taxonomia é marcada `nao_classificado`
+em vez de rejeitada, alimentando uma fila de triagem manual.
 
-Isso carrega o banco a partir dos gabaritos oficiais já versionados em
-`core/gabaritos_reais/*.csv` (17 arquivos, cobrindo 2019-2025) — o mesmo
-pipeline usado pra manter o banco real atualizado, não uma cópia
-simplificada. O resultado tem o gabarito completo; enunciado/imagem de
-questão (que dependem de PDF baixado à parte, não incluso aqui) podem ser
-preenchidos depois com `extrair_enunciados_pdf.py`/`importar_enem_dev.py`
-(ver `core/CLAUDE.md`).
+## Principais resultados
 
-Nenhuma variável de ambiente é obrigatória pra rodar o projeto. A única
-opcional hoje é `API_AUTH_TOKEN` (ver `.env.example` na raiz e em
-`mobile/`, e [`adr/0009`](adr/0009-trava-simples-antes-de-autenticacao-real.md))
-— liga uma trava simples na API; sem configurar, tudo roda aberto como
-sempre rodou.
+- **946 questões** no banco (754 de provas oficiais 2019-2025 + 192 de
+  banco de prática próprio)
+- **658 tentativas** de usuário processadas pelo sistema
+- **13 endpoints REST** (`core/api.py`)
+- **9 tabelas** relacionais (SQLite)
+- **100 testes automatizados** — 72 na regra de negócio + 21 na camada
+  HTTP (`core/test_db.py`/`test_api.py`) + 7 no app mobile (Jest)
+- **9 ADRs** documentando as principais decisões de arquitetura (`adr/`)
 
-## Rodar o app
+## Como executar
 
 Backend:
 ```
@@ -123,42 +143,39 @@ cd core
 streamlit run cartao_resposta.py
 ```
 
-## Rodar de qualquer lugar (celular, sem notebook ligado)
+**Banco de dados:** `core/enem.db` não é versionado no repositório
+(dado pessoal de uso real). Pra recriar do zero, a partir dos gabaritos
+oficiais já versionados em `core/gabaritos_reais/`:
+```
+cd core
+python reconstruir_base.py
+```
+Nenhuma variável de ambiente é obrigatória — `API_AUTH_TOKEN` (ver
+`.env.example`) é opcional, liga a trava simples da API.
 
-Ver [`docs/DEPLOY.md`](docs/DEPLOY.md) — tem uma opção que já funciona
-agora (mesma wifi, zero configuração) e uma de deploy de verdade, de
-graça (Streamlit Community Cloud), com os passos que só você pode fazer
-(login em conta) separados do que já está pronto no código.
-
-## Decisões de arquitetura
-
-Cada decisão técnica relevante — e por que a alternativa foi descartada —
-está documentada em `adr/`: SQLite em vez de Postgres, heurística em vez
-de ML, log imutável de tentativas separado de estado mutável de revisão,
-IA hospedada em vez de modelo local para a próxima integração planejada,
-a migração de monolito Streamlit para API + app mobile, e a trava simples
-por chave compartilhada antes de autenticação de usuário de verdade. Ver
-[`adr/README.md`](adr/README.md) para o índice completo.
+**Rodar de qualquer lugar (celular, sem notebook ligado):** ver
+[`docs/DEPLOY.md`](docs/DEPLOY.md).
 
 ## Limitações conhecidas
 
 Este é um projeto pessoal migrando pra multiusuário, não um serviço em
 produção ainda — e isso molda decisões deliberadas, não descuidos:
 
-- A API tem uma trava opcional simples por chave compartilhada
-  (`API_AUTH_TOKEN`, ver [`adr/0009`](adr/0009-trava-simples-antes-de-autenticacao-real.md)),
-  **não autenticação de usuário de verdade** — não existe tabela de
-  usuário no schema, então não há como diferenciar quem está chamando,
-  só se tem ou não tem o segredo.
+- A trava da API (`API_AUTH_TOKEN`) não é autenticação de usuário de
+  verdade — não há como diferenciar quem está chamando, só se tem ou
+  não tem o segredo (ver `adr/0009`).
 - CORS continua aberto (`allow_origins=["*"]`) — adequado hoje porque o
   único cliente é o próprio celular do usuário, na mesma wifi doméstica.
 - O banco (SQLite) suporta um único escritor por vez — adequado para 1
   usuário, sem escrita concorrente real.
-- Login/sessão de usuário de verdade e configuração restritiva de CORS
-  fazem parte da evolução natural para um cenário multiusuário, ainda não
-  implementada.
 
-## Roadmap
+Cada decisão técnica relevante — e por que a alternativa foi descartada —
+está documentada em [`adr/README.md`](adr/README.md): SQLite em vez de
+Postgres, heurística em vez de ML, log imutável de tentativas separado
+de estado mutável de revisão, IA hospedada em vez de modelo local, e a
+migração de monolito Streamlit para API + app mobile.
+
+## Próximos passos
 
 - Trilha de estudo entrelaçada entre matérias, ponderada por incidência
   histórica (`docs/filosofia.md` — hoje a priorização já existe
@@ -167,7 +184,7 @@ produção ainda — e isso molda decisões deliberadas, não descuidos:
   questões de banco de prática além de Ecologia/Óptica
 - Correção de redação por IA hospedada (`adr/0006`)
 - Modelo de usuário de verdade (tabela + login/sessão), pré-requisito
-  pra multiusuário real e pra "Liga"/ranking (hoje decorativo) virar
-  social de verdade
+  pra multiusuário real e pra login/sessão substituir a trava simples
+  atual
 - Ampliar cobertura de teste no app mobile (hoje só `lib/` tem teste —
   componentes e telas ainda não)
