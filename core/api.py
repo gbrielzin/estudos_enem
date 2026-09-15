@@ -84,8 +84,15 @@ def materias_com_banco_pratica(grande_area: str) -> list[str]:
 
 
 @app.get("/trilha")
-def trilha(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
-    return db.trilha_banco_pratica(grande_area, materia, fonte=fonte)
+def trilha(grande_area: str, materia: str, fonte: str | None = None, fase: int | None = None) -> list[dict]:
+    return db.trilha_banco_pratica(grande_area, materia, fonte=fonte, fase=fase)
+
+
+@app.get("/fases")
+def fases(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
+    """Fases de uma matéria (hoje só ecologia tem) -- lista vazia pra
+    matéria sem fase mapeada, ver db.fases_disponiveis()."""
+    return db.fases_disponiveis(grande_area, materia, fonte=fonte)
 
 
 class TentativaRequest(BaseModel):

@@ -58,6 +58,14 @@ export interface NoTrilha {
   desbloqueado: boolean;
 }
 
+export interface FaseInfo {
+  fase: number;
+  nome: string;
+  total: number;
+  respondidas: number;
+  concluida: boolean;
+}
+
 export interface ResultadoTentativa {
   id_tentativa: number;
   id_questao: string;
@@ -141,10 +149,28 @@ export function getMateriasComBancoPratica(grandeArea: GrandeArea): Promise<stri
   return buscarJson(`/materias-com-banco-pratica?grande_area=${grandeArea}`);
 }
 
-export function getTrilha(grandeArea: GrandeArea, materia: string, fonte: string | null): Promise<NoTrilha[]> {
+export function getTrilha(
+  grandeArea: GrandeArea,
+  materia: string,
+  fonte: string | null,
+  fase?: number | null,
+): Promise<NoTrilha[]> {
   const query = new URLSearchParams({ grande_area: grandeArea, materia });
   if (fonte) query.set('fonte', fonte);
+  if (fase != null) query.set('fase', String(fase));
   return buscarJson(`/trilha?${query.toString()}`);
+}
+
+/**
+ * Fases de uma matéria (hoje só ecologia tem -- ver
+ * core/db.py FASES_ECOLOGIA). Devolve lista vazia pra matéria sem
+ * fase mapeada (ex: 'optica') -- UI só deve oferecer o seletor de
+ * fase quando esta lista não vier vazia.
+ */
+export function getFases(grandeArea: GrandeArea, materia: string, fonte?: string | null): Promise<FaseInfo[]> {
+  const query = new URLSearchParams({ grande_area: grandeArea, materia });
+  if (fonte) query.set('fonte', fonte);
+  return buscarJson(`/fases?${query.toString()}`);
 }
 
 export function getStreak(): Promise<Streak> {

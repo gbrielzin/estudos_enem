@@ -620,6 +620,110 @@ def inserir_questao(
 ANO_BANCO_PRATICA = 0
 CADERNO_BANCO_PRATICA = "banco_pratica"
 
+# Mapeamento topico -> fase, só pra ecologia por enquanto. Conteúdo
+# AUTORAL (mesma categoria de RESUMOS_TRILHA em
+# mobile/src/constants/resumos-trilha.ts e de manual_prioridade_de_estudo.md):
+# espelha as 6 fases e pesos de incidência definidos em
+# docs/filosofia.md, não é taxonomia derivada do TAXONOMIA_VALIDA
+# acima (que só sabe "materia", nunca "fase dentro da materia"). Uma
+# matéria sem entrada aqui (ex: 'optica', que ainda é uma trilha única
+# sem fase) simplesmente não tem fase -- fase_de_topico() devolve None
+# e trilha_banco_pratica(fase=...) não filtra nada pra ela.
+FASES_ECOLOGIA: dict[int, set[str]] = {
+    1: {"magnificacao_trofica", "dissipacao_termica", "fragmentacao_de_habitat", "eutrofizacao"},
+    2: {
+        "competicao_interespecifica", "mutualismo", "protocooperacao", "inquilinismo",
+        "epifitismo", "comensalismo", "predacao", "parasitismo", "amensalismo",
+        "sucessao_primaria", "sucessao_secundaria", "canibalismo",
+        "capacidade_de_suporte", "potencial_biotico",
+    },
+    3: {
+        "fixacao_biologica", "nitrificacao", "desnitrificacao",
+        "piramide_numeros_invertida", "piramide_energia_direta",
+        "respiracao_celular", "fotossintese",
+    },
+    4: {"chuva_acida", "destruicao_camada_ozonio", "inversao_termica", "aquecimento_global"},
+    5: {"filtracao_e_cloracao", "coagulacao_decantacao", "decomposicao_aerobica", "chorume", "gas_metano"},
+    6: {"ilha_de_calor", "chuva_de_conveccao", "evapotranspiracao", "albedo", "pegada_de_carbono"},
+}
+
+NOMES_FASES_ECOLOGIA: dict[int, str] = {
+    1: "Cadeias Alimentares e Fluxo de Energia",
+    2: "Relações Ecológicas e Sucessão",
+    3: "Ciclos Biogeoquímicos e Pirâmides",
+    4: "Poluição Atmosférica",
+    5: "Saneamento Básico, Lixo e Resíduos",
+    6: "Impactos Urbanos",
+}
+
+_FASES_POR_MATERIA: dict[str, dict[int, set[str]]] = {"ecologia": FASES_ECOLOGIA}
+
+
+def fase_de_topico(materia: str, topico: str | None) -> int | None:
+    """Devolve o número da fase (1-6) que um `topico` pertence, pra
+    quem chamou uma matéria com fases definidas (hoje só 'ecologia').
+    Devolve None pra matéria sem fases mapeadas, ou pra questão sem
+    `topico` preenchido, ou cujo `topico` não bate com nenhuma fase
+    conhecida (ex: questão antiga inserida antes deste mapeamento
+    existir) -- nesses casos ela fica de fora de qualquer fase
+    específica em vez de quebrar a consulta."""
+    mapa = _FASES_POR_MATERIA.get(materia)
+    if not mapa or not topico:
+        return None
+    for fase, topicos in mapa.items():
+        if topico in topicos:
+            return fase
+    return None
+
+
+def fases_disponiveis(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
+    """Lista as fases de uma matéria com fase mapeada (hoje só
+    'ecologia'), cada uma com quantas questões tem e quantas dessas já
+    foram respondidas ao menos uma vez -- alimenta uma futura tela de
+    'escolher a fase' no app mobile. Matéria sem fase mapeada (ex:
+    'optica') devolve lista vazia -- comportamento explícito, não
+    erro, pra UI decidir mostrar ou não esse seletor.
+
+    Cada entrada: {'fase', 'nome', 'total', 'respondidas', 'concluida'}."""
+    materia_norm = canonicalizar_materia(normalizar_texto(materia))
+    mapa = _FASES_POR_MATERIA.get(materia_norm)
+    if not mapa:
+        return []
+
+    questoes = questoes_por_materia(grande_area, materia_norm, origem="banco_pratica")
+    if fonte:
+        questoes = [q for q in questoes if q.get("fonte") == fonte]
+
+    ids_por_fase: dict[int, list[str]] = {fase: [] for fase in mapa}
+    for q in questoes:
+        fase = fase_de_topico(materia_norm, q.get("topico"))
+        if fase is not None:
+            ids_por_fase[fase].append(q["id_questao"])
+
+    todos_ids = [id_q for ids in ids_por_fase.values() for id_q in ids]
+    respondidas_geral: set[str] = set()
+    if todos_ids:
+        with _conectar() as conn:
+            marcadores = ",".join("?" * len(todos_ids))
+            linhas = conn.execute(
+                f"SELECT DISTINCT id_questao FROM tentativas_usuario WHERE id_questao IN ({marcadores})",
+                todos_ids,
+            ).fetchall()
+        respondidas_geral = {r[0] for r in linhas}
+
+    resultado = []
+    for fase in sorted(mapa):
+        ids = ids_por_fase[fase]
+        respondidas = sum(1 for id_q in ids if id_q in respondidas_geral)
+        resultado.append({
+            "fase": fase,
+            "nome": NOMES_FASES_ECOLOGIA.get(fase, f"Fase {fase}"),
+            "total": len(ids),
+            "respondidas": respondidas,
+            "concluida": len(ids) > 0 and respondidas == len(ids),
+        })
+    return resultado
+
 
 def gerar_id_pratica(numero: int) -> str:
     """Gera o id_questao de uma questão do banco de prática, ex:
@@ -799,11 +903,21 @@ def fontes_banco_pratica() -> list[str]:
 
 def trilha_banco_pratica(
     grande_area: str, materia: str, tamanho_no: int = 5, fonte: str | None = None,
+    fase: int | None = None,
 ) -> list[dict]:
     """Divide as questões do banco de prática de uma matéria em 'nós'
     sequenciais de tamanho_no questões — a trilha estilo Duolingo
     (pedido explícito do usuário: "em cada ponto que separa se tem
     que fazer 5 exercícios, aí depois vai pros próximos 5").
+
+    `fase`, quando passado, restringe a trilha às questões daquela
+    fase (ver FASES_ECOLOGIA/fase_de_topico) antes de dividir em nós
+    -- pra matéria sem fase mapeada (ex: 'optica'), passar fase=None
+    (padrão) preserva o comportamento antigo de trilha única; passar
+    um fase para essa matéria devolveria lista vazia (nenhuma questão
+    tem fase_de_topico() != None), então a UI só deve oferecer o
+    seletor de fase pra matéria que fases_disponiveis() não devolve
+    vazio.
 
     Cada nó vem com:
       - 'indice': posição do nó na trilha (0, 1, 2...)
@@ -826,9 +940,12 @@ def trilha_banco_pratica(
     banco_pratica (todo mundo tem ano=0, então o ORDER BY ano DESC não
     discrimina) -- que é exatamente a ordem de inserção/criação, a
     ordem certa pra uma trilha sequencial."""
-    questoes = questoes_por_materia(grande_area, materia, origem="banco_pratica")
+    materia_norm = canonicalizar_materia(normalizar_texto(materia))
+    questoes = questoes_por_materia(grande_area, materia_norm, origem="banco_pratica")
     if fonte:
         questoes = [q for q in questoes if q.get("fonte") == fonte]
+    if fase is not None:
+        questoes = [q for q in questoes if fase_de_topico(materia_norm, q.get("topico")) == fase]
     if not questoes:
         return []
 
@@ -1454,7 +1571,7 @@ def progresso_simulados() -> list[dict]:
 
 _COLUNAS_QUESTAO_GRADE = (
     "id_questao, numero_questao, materia, status_classificacao, "
-    "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path, origem, fonte"
+    "ano, caderno, grande_area, enunciado_texto, enunciado_imagem_path, origem, fonte, topico"
 )
 
 
@@ -1462,12 +1579,16 @@ def _linha_para_questao_grade(r: tuple) -> dict:
     """Mapeia uma linha de _COLUNAS_QUESTAO_GRADE pro dict que a grade
     do cartão-resposta (e o enunciado inline) esperam -- um lugar só
     pra esse formato, usado por toda consulta que alimenta a grade
-    (prova inteira, revisão do dia, prática por matéria)."""
+    (prova inteira, revisão do dia, prática por matéria).
+
+    'topico' foi adicionado (2026-09) só pra alimentar
+    fase_de_topico()/fases_disponiveis() -- nenhum caller existente
+    quebra por causa disso, todos acessam por chave de dict."""
     return {
         "id_questao": r[0], "numero_questao": r[1], "materia": r[2],
         "status_classificacao": r[3], "ano": r[4], "caderno": r[5],
         "grande_area": r[6], "enunciado_texto": r[7], "enunciado_imagem_path": r[8],
-        "origem": r[9], "fonte": r[10],
+        "origem": r[9], "fonte": r[10], "topico": r[11],
     }
 
 
