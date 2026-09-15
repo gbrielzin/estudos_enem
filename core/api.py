@@ -21,13 +21,48 @@ com `ipconfig` (Windows) -- é esse IP que o app no celular usa, não
 """
 from __future__ import annotations
 
-from fastapi import FastAPI, HTTPException
+import os
+
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import db
 
-app = FastAPI(title="ENEM GI API")
+# Carrega o .env da raiz do projeto pra dentro de os.environ -- é assim
+# que API_AUTH_TOKEN (ver _verificar_autenticacao abaixo) chega até
+# aqui sem precisar exportar a variável manualmente no shell toda vez.
+# Não sobrescreve uma variável já setada de outra forma (comportamento
+# padrão do load_dotenv).
+load_dotenv()
+
+
+def _verificar_autenticacao(authorization: str | None = Header(default=None)) -> None:
+    """Trava simples por chave compartilhada (Bearer token) -- NÃO é
+    autenticação de usuário de verdade, só barra quem não tem o
+    segredo (ver adr/0009 pro raciocínio completo e por que um sistema
+    de conta/login de verdade ainda não tem onde pendurar dado: não
+    existe tabela de usuário nenhuma hoje).
+
+    Lê `API_AUTH_TOKEN` do ambiente a CADA chamada (não cacheia em
+    import) -- de propósito, pra dar pra testar com
+    `unittest.mock.patch.dict(os.environ, ...)` sem precisar recarregar
+    o módulo, mesmo espírito de `db.DB_PATH` ser reatribuível de fora
+    pros testes de banco.
+
+    Sem a variável configurada, a API roda ABERTA -- mesmo
+    comportamento de hoje (uso pessoal, wifi doméstica). Configurar a
+    variável é o que liga a trava; não quebra ninguém que ainda não
+    setou nada."""
+    token_esperado = os.environ.get("API_AUTH_TOKEN")
+    if not token_esperado:
+        return
+    if authorization != f"Bearer {token_esperado}":
+        raise HTTPException(status_code=401, detail="Token de autenticação ausente ou inválido.")
+
+
+app = FastAPI(title="ENEM GI API", dependencies=[Depends(_verificar_autenticacao)])
 
 # CORS liberado geral: uso pessoal/local (mesma wifi de casa), sem usuário
 # de terceiros nem dado sensível exposto pra internet -- não é uma API

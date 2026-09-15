@@ -20,10 +20,12 @@ Rodar (de dentro de core/):
     python -m unittest test_api
     python -m unittest test_api -v
 """
+import os
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -197,6 +199,42 @@ class TestPerfilEExplorar(_TestComBancoTemporario):
         corpo = resposta.json()
         self.assertGreater(len(corpo), 0)
         self.assertIn("total_questoes", corpo[0])
+
+
+class TestAutenticacao(_TestComBancoTemporario):
+    """A trava (ver adr/0009) só entra em vigor quando API_AUTH_TOKEN
+    está configurado -- todo o resto desta suíte roda sem a variável
+    setada de propósito, provando que o comportamento de hoje (API
+    aberta) continua intacto quando ninguém configurou nada."""
+
+    def test_sem_variavel_configurada_continua_aberta(self):
+        # Garante que a env de teste não vaza um token de outra parte.
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("API_AUTH_TOKEN", None)
+            resposta = self.client.get("/health")
+        self.assertEqual(resposta.status_code, 200)
+
+    def test_com_variavel_configurada_barra_sem_header(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            resposta = self.client.get("/health")
+        self.assertEqual(resposta.status_code, 401)
+
+    def test_com_variavel_configurada_barra_token_errado(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            resposta = self.client.get("/health", headers={"Authorization": "Bearer errado"})
+        self.assertEqual(resposta.status_code, 401)
+
+    def test_com_variavel_configurada_libera_token_certo(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            resposta = self.client.get(
+                "/health", headers={"Authorization": "Bearer segredo-de-teste"}
+            )
+        self.assertEqual(resposta.status_code, 200)
+
+    def test_trava_vale_pra_qualquer_endpoint_nao_so_health(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            resposta = self.client.get("/materias", params={"grande_area": "matematica"})
+        self.assertEqual(resposta.status_code, 401)
 
 
 if __name__ == "__main__":
