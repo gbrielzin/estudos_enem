@@ -20,7 +20,7 @@ import enem_theme
 
 _CSS = """
 <style>
-/* Design tokens -- vêm de design_handoff_enem_gamificado/README.md
+/* Design tokens -- vêm de docs/design_handoff_enem_gamificado/README.md
    (handoff formal, 2026-09), a fonte da verdade agora pra nome e valor
    de token (antes vinha só de um mockup solto). MESMOS valores do app
    mobile (mobile/src/constants/brand.ts) -- mantenha os dois em
@@ -251,7 +251,7 @@ header[data-testid="stHeader"] { background: transparent; }
 .nav-drawer .nav-footer-track { height: 9px; border-radius: 999px; background: var(--tema-surface-3); overflow: hidden; }
 .nav-drawer .nav-footer-fill { height: 100%; background: var(--tema-amber); }
 
-/* >= 1100px (mesmo corte de design_handoff_enem_gamificado/README.md,
+/* >= 1100px (mesmo corte de docs/design_handoff_enem_gamificado/README.md,
    seção "Interactions & Behavior", e do app mobile --
    mobile/src/components/app-tabs.web.tsx usa o mesmo número pro
    mesmo motivo): a gaveta vira sidebar FIXA sempre aberta, como no
@@ -478,7 +478,7 @@ button[kind="primary"]:active, button[kind="primaryFormSubmit"]:active {
 
 /* Formulários (o cartão-resposta inteiro é um st.form) com cara de
    cartão -- sem isso, a grade de questões fica "boiando" no fundo.
-   Raio 22px = token "card" do handoff (design_handoff_enem_gamificado/
+   Raio 22px = token "card" do handoff (docs/design_handoff_enem_gamificado/
    README.md, seção Raio de canto). */
 div[data-testid="stForm"] {
     border: 1px solid var(--tema-border);

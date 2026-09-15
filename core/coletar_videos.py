@@ -1,7 +1,7 @@
 """
 coletar_videos.py — liga vídeo (ou texto) de resolução às questões do
 enem.db. Não escreve em CSV nenhum -- é o substituto direto dos 4 modos
-de coleta que existiam no app.py legado da raiz (playlist, lote, junção,
+de coleta que existiam no legacy/app.py (playlist, lote, junção,
 avulso), reescritos aqui pra gravar direto no banco.
 
 Reaproveita autenticação e busca do main.py (mesma lógica testada da v1)
@@ -13,8 +13,8 @@ da descrição citasse um "nível de dificuldade" -- e dificuldade não é
 mais um atributo salvo da questão aqui (ver o comentário de
 normalizar_nivel() em db.py: ela é derivada do desempenho real do
 usuário, não de opinião de vídeo). Sem esse conceito, a busca automática
-não tem uma tradução direta pro modelo atual -- ficou só no app.py
-legado, sem equivalente aqui.
+não tem uma tradução direta pro modelo atual -- ficou só no
+legacy/app.py, sem equivalente aqui.
 """
 import re
 import sys
@@ -22,7 +22,7 @@ from pathlib import Path
 
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # pra achar main.py na raiz do projeto
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "legacy"))  # pra achar main.py em legacy/
 import main as coletor_youtube  # autenticar_youtube, extrair_playlist_id, buscar_todos_os_videos
 
 import db
