@@ -1,5 +1,15 @@
 # Revisão geral do projeto — ENEM GI
 
+> ⚠️ **Documento histórico, desatualizado na arquitetura.** Retrato de
+> **2026-09-02** — descreve o sistema como um monólito Streamlit sem API
+> nem HTTP. Isso mudou: hoje existe uma API REST própria (`core/api.py`,
+> FastAPI) e um app Expo/React Native como produto principal (ver
+> `adr/0007`). `enem.db` também não é mais versionado no Git (ver
+> `.gitignore` e `adr/0009`) — este documento ainda descreve a versão
+> antiga desse ponto. **Para o estado atual, ver `README.md` (raiz) e
+> `adr/`.** Mantido aqui só como registro histórico de raciocínio válido
+> à época.
+
 Retrato de **2026-09-02**. Como o próprio `core/manual_prioridade_de_estudo.md`
 já avisa sobre os números que cita: isto é uma fotografia do estado do código
 e do banco *agora* — contagens de linhas/questões vão mudar. O raciocínio

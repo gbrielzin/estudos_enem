@@ -1,5 +1,15 @@
 # SYSTEM_DEEP_DIVE.md — ENEM GI, por dentro
 
+> ⚠️ **Documento histórico, desatualizado na arquitetura.** Escrito em
+> 2026-09-02, quando o sistema era um monólito Streamlit sem API nem
+> HTTP e `enem.db` era versionado no Git (a seção sobre isso, incluindo
+> a recomendação de manter o repositório sempre privado, não vale mais
+> — ver `adr/0009` e `.gitignore`). Hoje existe uma API REST própria
+> (`core/api.py`) e um app Expo/React Native como produto principal
+> (`adr/0007`). **Para explicar o sistema hoje, use `README.md` (raiz)
+> e `adr/`, não este documento.** Mantido como registro histórico do
+> raciocínio da época, não como referência atual.
+
 Documento de estudo, não documentação de produto. O objetivo não é descrever
 "o que o código faz" (isso o `core/CLAUDE.md` já faz, e continua sendo a
 referência oficial pra manutenção). O objetivo aqui é outro: te dar munição
