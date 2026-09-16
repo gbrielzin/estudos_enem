@@ -7,6 +7,7 @@ import { Mascote } from '@/components/mascote';
 import { MissoesCard } from '@/components/missoes-card';
 import { Seletor } from '@/components/seletor';
 import { StatusHeader } from '@/components/status-header';
+import { TrilhaFixaPath } from '@/components/trilha-fixa-path';
 import { TrilhaPath } from '@/components/trilha-path';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import { interpolarSombraBotao, useInteracaoBotao } from '@/hooks/use-interacao-botao';
@@ -16,6 +17,7 @@ import {
   MissaoDoDia,
   Nivel,
   NoTrilha,
+  NoTrilhaFixa,
   ResultadoTentativa,
   Streak,
   getFontesBancoPratica,
@@ -25,8 +27,27 @@ import {
   getNivel,
   getStreak,
   getTrilha,
+  getTrilhaFixa,
   registrarTentativa,
 } from '@/lib/api';
+
+/**
+ * Reatribui `indice` de cada bloco pra uma sequência ÚNICA e GLOBAL
+ * através de todas as matérias da trilha fixa -- os blocos que vêm da
+ * API já têm `indice` correto DENTRO da própria matéria (0, 1, 2...),
+ * mas repetido entre matérias diferentes. Precisamos de um índice
+ * global porque a tela de exercício/resultado (`tela.noIndice`)
+ * endereça um array achatado (`trilhaFlat` abaixo), não a estrutura
+ * aninhada por matéria -- sem isso, abrir o nó 0 da 2ª matéria
+ * reabriria por engano o nó 0 da 1ª.
+ */
+function comIndicesGlobais(trilhaFixa: NoTrilhaFixa[]): NoTrilhaFixa[] {
+  let contador = 0;
+  return trilhaFixa.map((materiaNo) => ({
+    ...materiaNo,
+    blocos: materiaNo.blocos.map((bloco) => ({ ...bloco, indice: contador++ })),
+  }));
+}
 import { separarAlternativas } from '@/lib/alternativas';
 
 const ROTULO_AREA: Record<GrandeArea, string> = {
@@ -56,6 +77,12 @@ export default function TrilhaScreen() {
   const [fonte, setFonte] = useState<string | null>(null);
 
   const [trilha, setTrilha] = useState<NoTrilha[] | null>(null);
+  // Só preenchido quando area === 'ciencias_natureza': estrutura
+  // aninhada por matéria, usada só pra renderizar o mapa
+  // (TrilhaFixaPath). `trilha` acima fica com a versão ACHATADA dos
+  // mesmos blocos (ver comIndicesGlobais) -- é o que a tela de
+  // exercício/resultado usa, sem precisar saber que existe trilha fixa.
+  const [trilhaFixa, setTrilhaFixa] = useState<NoTrilhaFixa[] | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -92,6 +119,13 @@ export default function TrilhaScreen() {
   const [acertosNoNo, setAcertosNoNo] = useState(0);
   const [errosNoNo, setErrosNoNo] = useState<number[]>([]);
   const [inicioNo, setInicioNo] = useState<number | null>(null);
+  // Tempo gasto (ms) em cada questão JÁ CONFIRMADA neste nó, na ordem
+  // em que foram respondidas -- alimenta o cronômetro/estimativa de
+  // QuestaoAtual (média das já respondidas × questões restantes).
+  // Deliberadamente só em memória (pedido explícito do usuário: não
+  // precisa persistir no banco, é só pra dar noção de ritmo durante a
+  // sessão) -- some ao trocar de nó ou fechar o app.
+  const [temposQuestoesNoNo, setTemposQuestoesNoNo] = useState<number[]>([]);
 
   function atualizarStatus() {
     getStreak().then(setStreak).catch(() => {});
@@ -104,6 +138,13 @@ export default function TrilhaScreen() {
   useEffect(() => {
     setMateria(null);
     setTrilha(null);
+    setTrilhaFixa(null);
+    if (area === 'ciencias_natureza') {
+      // Ciências da Natureza usa a trilha fixa entrelaçada (efeito
+      // abaixo) -- não precisa de seletor de matéria, então nem chama
+      // getMaterias/getMateriasComBancoPratica aqui.
+      return;
+    }
     // Mesmo padrão de db._padrao_materia_banco_pratica() (Streamlit):
     // prefere a matéria com MAIS questão de banco de prática já
     // cadastrada, não a 1a em ordem alfabética da taxonomia inteira
@@ -123,6 +164,27 @@ export default function TrilhaScreen() {
         setErro(e instanceof Error ? e.message : String(e));
         setMostrarHome(true);
       });
+  }, [area]);
+
+  async function carregarTrilhaFixa() {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const dados = comIndicesGlobais(await getTrilhaFixa());
+      setTrilhaFixa(dados);
+      setTrilha(dados.flatMap((materiaNo) => materiaNo.blocos));
+      setMostrarHome(false);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : String(e));
+      setTrilhaFixa(null);
+      setTrilha(null);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    if (area === 'ciencias_natureza') carregarTrilhaFixa();
   }, [area]);
 
   useEffect(() => {
@@ -158,6 +220,7 @@ export default function TrilhaScreen() {
     setResultado(null);
     setAcertosNoNo(0);
     setErrosNoNo([]);
+    setTemposQuestoesNoNo([]);
     setInicioNo(Date.now());
   }
 
@@ -165,10 +228,14 @@ export default function TrilhaScreen() {
     setTela({ tipo: 'mapa' });
     setEscolha(null);
     setResultado(null);
-    await carregarTrilha();
+    if (area === 'ciencias_natureza') {
+      await carregarTrilhaFixa();
+    } else {
+      await carregarTrilha();
+    }
   }
 
-  async function confirmarResposta(idQuestao: string) {
+  async function confirmarResposta(idQuestao: string, duracaoMs: number) {
     if (!escolha || tela.tipo !== 'exercicio') return;
     setEnviando(true);
     try {
@@ -179,6 +246,7 @@ export default function TrilhaScreen() {
       } else {
         setErrosNoNo((atual) => [...atual, tela.posicao + 1]);
       }
+      setTemposQuestoesNoNo((atual) => [...atual, duracaoMs]);
       atualizarStatus();
     } catch (e) {
       setErro(e instanceof Error ? e.message : String(e));
@@ -274,7 +342,26 @@ export default function TrilhaScreen() {
 
           {!mostrarHome && carregando && <ActivityIndicator style={styles.espaco} color={Brand.verde} />}
 
-          {trilha && trilha.length > 0 && tela.tipo === 'mapa' && (
+          {area === 'ciencias_natureza' && trilhaFixa && trilhaFixa.length > 0 && tela.tipo === 'mapa' && (
+            <View style={styles.espaco}>
+              {/* Mesmo papel do bannerMateria abaixo (voltar pra Home
+                  pra trocar de Área), mas sem seletor de Matéria -- a
+                  trilha fixa não tem matéria pra escolher, a ordem é
+                  fixa entre todas elas (ver TRILHA_FIXA_NOS). */}
+              <Pressable style={styles.bannerMateria} onPress={() => setMostrarHome(true)}>
+                <View style={styles.bannerMateriaTextos}>
+                  <Text style={styles.bannerMateriaLabel}>TRILHA FIXA</Text>
+                  <Text style={styles.bannerMateriaTexto}>Ciências da Natureza</Text>
+                </View>
+                <View style={styles.bannerMateriaBotao}>
+                  <Feather name="sliders" size={20} color={Brand.roxoClaro} />
+                </View>
+              </Pressable>
+              <TrilhaFixaPath trilhaFixa={trilhaFixa} onAbrirNo={abrirNo} />
+            </View>
+          )}
+
+          {area !== 'ciencias_natureza' && trilha && trilha.length > 0 && tela.tipo === 'mapa' && (
             <View style={styles.espaco}>
               {/* Banner verde clicável (8.2), visual da tela "Trilha" do
                   projeto de design: reforça o dropdown "Matéria" de cima
@@ -327,9 +414,14 @@ export default function TrilhaScreen() {
               escolha={escolha}
               resultado={resultado}
               enviando={enviando}
-              materia={materia ?? ''}
+              materia={
+                materia ??
+                trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === tela.noIndice))?.nome ??
+                ''
+              }
               acertosNoNo={acertosNoNo}
               errosNoNo={errosNoNo}
+              temposQuestoesNoNo={temposQuestoesNoNo}
               inicioNo={inicioNo}
               streak={streak}
               onEscolher={setEscolha}
@@ -354,6 +446,7 @@ function TelaExercicio({
   materia,
   acertosNoNo,
   errosNoNo,
+  temposQuestoesNoNo,
   inicioNo,
   streak,
   onEscolher,
@@ -370,10 +463,11 @@ function TelaExercicio({
   materia: string;
   acertosNoNo: number;
   errosNoNo: number[];
+  temposQuestoesNoNo: number[];
   inicioNo: number | null;
   streak: Streak | null;
   onEscolher: (letra: string) => void;
-  onConfirmar: (idQuestao: string) => void;
+  onConfirmar: (idQuestao: string, duracaoMs: number) => void;
   onContinuar: () => void;
   onVoltar: () => void;
 }) {
@@ -405,6 +499,7 @@ function TelaExercicio({
         escolha={escolha}
         resultado={resultado}
         enviando={enviando}
+        temposAnteriores={temposQuestoesNoNo}
         onEscolher={onEscolher}
         onConfirmar={onConfirmar}
         onContinuar={onContinuar}
@@ -775,6 +870,12 @@ function CardFeedback({ correto, children }: { correto: boolean; children: strin
   );
 }
 
+// Acima disso o cronômetro por questão muda de cor pra avisar que
+// passou do razoável -- 10 minutos, número que o próprio usuário deu
+// como teto ao pedir essa métrica (não é um limite que bloqueia nada,
+// só um alerta visual).
+const LIMITE_AVISO_QUESTAO_MS = 10 * 60 * 1000;
+
 function QuestaoAtual({
   questao,
   posicao,
@@ -782,6 +883,7 @@ function QuestaoAtual({
   escolha,
   resultado,
   enviando,
+  temposAnteriores,
   onEscolher,
   onConfirmar,
   onContinuar,
@@ -792,12 +894,36 @@ function QuestaoAtual({
   escolha: string | null;
   resultado: ResultadoTentativa | null;
   enviando: boolean;
+  temposAnteriores: number[];
   onEscolher: (letra: string) => void;
-  onConfirmar: (idQuestao: string) => void;
+  onConfirmar: (idQuestao: string, duracaoMs: number) => void;
   onContinuar: () => void;
 }) {
   const { corpo, alternativas } = separarAlternativas(questao.enunciado_texto ?? '');
   const temAlternativas = Object.keys(alternativas).length === 5;
+
+  // Cronômetro por questão -- pedido explícito do usuário: saber
+  // quanto tempo está gastando em CADA questão (não só no nó inteiro,
+  // que já existia via `inicioNo`/TelaResultado), com aviso visual
+  // passando de 10min e uma estimativa de quanto falta pro fim do
+  // bloco baseada na média das já respondidas. Só em memória, de
+  // propósito (ver decisão do usuário: não precisa persistir).
+  const inicioQuestaoRef = useRef(Date.now());
+  const [agora, setAgora] = useState(Date.now());
+  useEffect(() => {
+    inicioQuestaoRef.current = Date.now();
+    setAgora(Date.now());
+    const id = setInterval(() => setAgora(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [questao.id_questao]);
+
+  const decorridoMs = agora - inicioQuestaoRef.current;
+  const passouDoLimite = !resultado && decorridoMs > LIMITE_AVISO_QUESTAO_MS;
+  const mediaMs =
+    temposAnteriores.length > 0 ? temposAnteriores.reduce((soma, t) => soma + t, 0) / temposAnteriores.length : null;
+  // Estimativa cobre a questão atual + as que ainda faltam depois
+  // dela -- por isso `total - posicao`, não `total - posicao - 1`.
+  const restantesMs = mediaMs !== null ? mediaMs * (total - posicao) : null;
 
   // "Questão entra" -- padrão de movimento 6a do projeto de design
   // (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de
@@ -816,9 +942,21 @@ function QuestaoAtual({
 
   return (
     <Animated.View style={{ opacity: entrada, transform: [{ translateX }] }}>
-      <Text style={styles.progressoTexto}>
-        Questão {posicao + 1} de {total}
-      </Text>
+      <View style={styles.progressoLinha}>
+        <Text style={styles.progressoTexto}>
+          Questão {posicao + 1} de {total}
+        </Text>
+        {!resultado && (
+          <Text style={[styles.cronometroTexto, passouDoLimite && styles.cronometroTextoAviso]}>
+            ⏱ {formatarTempo(decorridoMs)}
+          </Text>
+        )}
+      </View>
+      {mediaMs !== null && restantesMs !== null && !resultado && (
+        <Text style={styles.estimativaTexto}>
+          média {formatarTempo(mediaMs)}/questão · faltam ~{formatarTempo(restantesMs)} pro fim do bloco
+        </Text>
+      )}
 
       <View style={styles.cardEnunciado}>
         {questao.fonte && <Text style={styles.fonteTexto}>🧠 Banco de prática · fonte: {questao.fonte}</Text>}
@@ -837,7 +975,9 @@ function QuestaoAtual({
               </Text>
             </Pressable>
           ))}
-          <BotaoPrimario disabled={!escolha || enviando} onPress={() => onConfirmar(questao.id_questao)}>
+          <BotaoPrimario
+            disabled={!escolha || enviando}
+            onPress={() => onConfirmar(questao.id_questao, Date.now() - inicioQuestaoRef.current)}>
             {enviando ? 'Enviando…' : 'Confirmar'}
           </BotaoPrimario>
         </>
@@ -955,6 +1095,25 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.corpoNegrito,
     fontSize: 13,
     color: Brand.textoSuave,
+  },
+  progressoLinha: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cronometroTexto: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 13,
+    color: Brand.textoSuave,
+  },
+  cronometroTextoAviso: {
+    color: Brand.laranja,
+  },
+  estimativaTexto: {
+    fontFamily: Fontes.corpo,
+    fontSize: 12,
+    color: Brand.textoApagado,
+    marginTop: -4,
   },
   avisoErro: {
     padding: 12,
