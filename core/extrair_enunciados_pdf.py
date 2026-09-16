@@ -43,7 +43,7 @@ import pymupdf
 
 import db
 
-_PADRAO_QUESTAO = re.compile(r"Questão\s+(\d+)\s*\n")
+_PADRAO_QUESTAO = re.compile(r"quest[ãa]o\s+(\d+)\s*\n", re.IGNORECASE)
 _PADRAO_CABECALHO_PAGINA = re.compile(r"(CN|MT|LC|CH|CN|MT) - 2° dia \| Caderno \d+ - \w+ - Página \d+\n?")
 _PADRAO_BARCODE = re.compile(r"\*\d+\w*\*\n?")
 _PADRAO_SECAO = re.compile(r"(CIÊNCIAS DA NATUREZA|MATEMÁTICA)( E SUAS TECNOLOGIAS)?\nQuestões de \d+ a \d+\n?")
