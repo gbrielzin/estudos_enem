@@ -34,7 +34,15 @@ export function useInteracaoBotao({
       toValue: alvo,
       duration: pressionado ? 160 : 220,
       easing: CURVA_AFUNDA,
-      useNativeDriver: true,
+      // false, não true: este MESMO deslocamentoY também alimenta
+      // interpolarSombraBotao() abaixo, que produz um `boxShadow`
+      // (style não suportado pelo driver nativo do Animated) -- misturar
+      // native driver num valor que também dirige um style não-nativo
+      // gera o aviso "style property 'boxShadow' is not supported by
+      // native animated module" no console (funciona mesmo assim, mas
+      // suja o log). Roda tudo em JS aqui; é uma animação de ~200ms, sem
+      // impacto perceptível de performance.
+      useNativeDriver: false,
     }).start();
   }, [hover, pressionado, desativado, quedaPressionado, deslocamentoY]);
 

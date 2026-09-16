@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,6 +49,32 @@ function comIndicesGlobais(trilhaFixa: NoTrilhaFixa[]): NoTrilhaFixa[] {
     blocos: materiaNo.blocos.map((bloco) => ({ ...bloco, indice: contador++ })),
   }));
 }
+
+/**
+ * Máscara do modo admin/teste pra trilha fixa: força TODA matéria e
+ * TODO bloco a aparecer desbloqueado no mapa, mesmo que a matéria
+ * anterior não tenha sido concluída de verdade. `concluido` também
+ * vira `false` em todo mundo -- senão uma matéria já 100% feita
+ * continuaria colapsando no card resumido (SecaoConcluida em
+ * trilha-fixa-path.tsx), escondendo os nós dela. Só afeta o que é
+ * RENDERIZADO -- o dado real que veio da API (e o que vai ser
+ * persistido ao responder) não muda em nada.
+ */
+function desbloquearTudoFixa(trilhaFixa: NoTrilhaFixa[]): NoTrilhaFixa[] {
+  return trilhaFixa.map((materiaNo) => ({
+    ...materiaNo,
+    concluido: false,
+    desbloqueado: true,
+    blocos: materiaNo.blocos.map((bloco) => ({ ...bloco, desbloqueado: true })),
+  }));
+}
+
+/** Mesma ideia de desbloquearTudoFixa(), só que pra trilha de UMA
+ * matéria só (modo antigo, fora de Ciências da Natureza). */
+function desbloquearTudoFlat(trilha: NoTrilha[]): NoTrilha[] {
+  return trilha.map((bloco) => ({ ...bloco, desbloqueado: true }));
+}
+
 import { separarAlternativas } from '@/lib/alternativas';
 
 const ROTULO_AREA: Record<GrandeArea, string> = {
@@ -90,6 +117,21 @@ export default function TrilhaScreen() {
   const [escolha, setEscolha] = useState<string | null>(null);
   const [resultado, setResultado] = useState<ResultadoTentativa | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Modo admin/teste -- pedido explícito do usuário pra conseguir
+  // testar o app melhor: com isto ligado, TODO nó/matéria aparece
+  // desbloqueado no mapa (mesmo os que dependeriam de terminar algo
+  // antes) e a tela de exercício ganha um botão "Pular" que avança pra
+  // próxima questão sem responder. Não muda NADA na regra de negócio
+  // do backend (db.trilha_fixa()/trilha_banco_pratica() continuam
+  // calculando o desbloqueio real) -- é só uma máscara na hora de
+  // RENDERIZAR o mapa (ver desbloquearTudoFixa/desbloquearTudoFlat
+  // abaixo) e no fluxo de exercício. Responder de verdade (Confirmar)
+  // continua chamando confirmarResposta() normalmente -- streak,
+  // Leitner, tempo por questão, tudo grava igual; só o "Pular" não
+  // registra tentativa nenhuma, de propósito, pra não sujar as
+  // estatísticas reais com respostas puladas em teste.
+  const [modoAdmin, setModoAdmin] = useState(false);
 
   const [streak, setStreak] = useState<Streak | null>(null);
   const [nivel, setNivel] = useState<Nivel | null>(null);
@@ -262,6 +304,19 @@ export default function TrilhaScreen() {
     setResultado(null);
   }
 
+  // Só existe com modoAdmin ligado (botão "Pular" em QuestaoAtual):
+  // avança sem chamar registrarTentativa -- de propósito, não conta
+  // como tentativa de verdade (não mexe em acerto/erro, Leitner nem
+  // duracao_segundos). É especificamente pra pular questão que o
+  // usuário não quer resolver de verdade só pra testar o resto do
+  // fluxo (ex: chegar rápido no fim de um bloco de 10 questões).
+  function pularQuestao() {
+    if (tela.tipo !== 'exercicio') return;
+    setTela({ ...tela, posicao: tela.posicao + 1 });
+    setEscolha(null);
+    setResultado(null);
+  }
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -342,6 +397,15 @@ export default function TrilhaScreen() {
 
           {!mostrarHome && carregando && <ActivityIndicator style={styles.espaco} color={Brand.verde} />}
 
+          {!mostrarHome && tela.tipo === 'mapa' && (trilhaFixa || trilha) && (
+            <Pressable style={styles.modoAdminToggle} onPress={() => setModoAdmin((v) => !v)}>
+              <Feather name={modoAdmin ? 'unlock' : 'lock'} size={14} color={modoAdmin ? Brand.verde : Brand.textoApagado} />
+              <Text style={[styles.modoAdminTexto, modoAdmin && styles.modoAdminTextoAtivo]}>
+                Modo teste {modoAdmin ? '(tudo desbloqueado)' : ''}
+              </Text>
+            </Pressable>
+          )}
+
           {area === 'ciencias_natureza' && trilhaFixa && trilhaFixa.length > 0 && tela.tipo === 'mapa' && (
             <View style={styles.espaco}>
               {/* Mesmo papel do bannerMateria abaixo (voltar pra Home
@@ -357,7 +421,7 @@ export default function TrilhaScreen() {
                   <Feather name="sliders" size={20} color={Brand.roxoClaro} />
                 </View>
               </Pressable>
-              <TrilhaFixaPath trilhaFixa={trilhaFixa} onAbrirNo={abrirNo} />
+              <TrilhaFixaPath trilhaFixa={modoAdmin ? desbloquearTudoFixa(trilhaFixa) : trilhaFixa} onAbrirNo={abrirNo} />
             </View>
           )}
 
@@ -389,7 +453,7 @@ export default function TrilhaScreen() {
                 {trilha.filter((n) => n.concluido).length} de {trilha.length} nó(s) concluído(s)
               </Text>
               <TrilhaPath
-                trilha={trilha}
+                trilha={modoAdmin ? desbloquearTudoFlat(trilha) : trilha}
                 resumo={materia ? RESUMOS_TRILHA[materia] : undefined}
                 onAbrirNo={abrirNo}
                 onAbrirResumo={() => setTela({ tipo: 'apresentacao' })}
@@ -424,9 +488,11 @@ export default function TrilhaScreen() {
               temposQuestoesNoNo={temposQuestoesNoNo}
               inicioNo={inicioNo}
               streak={streak}
+              modoAdmin={modoAdmin}
               onEscolher={setEscolha}
               onConfirmar={confirmarResposta}
               onContinuar={continuar}
+              onPular={pularQuestao}
               onVoltar={voltarPraTrilha}
             />
           )}
@@ -449,9 +515,11 @@ function TelaExercicio({
   temposQuestoesNoNo,
   inicioNo,
   streak,
+  modoAdmin,
   onEscolher,
   onConfirmar,
   onContinuar,
+  onPular,
   onVoltar,
 }: {
   no: NoTrilha;
@@ -466,9 +534,11 @@ function TelaExercicio({
   temposQuestoesNoNo: number[];
   inicioNo: number | null;
   streak: Streak | null;
+  modoAdmin: boolean;
   onEscolher: (letra: string) => void;
   onConfirmar: (idQuestao: string, duracaoMs: number) => void;
   onContinuar: () => void;
+  onPular: () => void;
   onVoltar: () => void;
 }) {
   if (posicao >= no.questoes.length) {
@@ -500,9 +570,11 @@ function TelaExercicio({
         resultado={resultado}
         enviando={enviando}
         temposAnteriores={temposQuestoesNoNo}
+        modoAdmin={modoAdmin}
         onEscolher={onEscolher}
         onConfirmar={onConfirmar}
         onContinuar={onContinuar}
+        onPular={onPular}
       />
     </View>
   );
@@ -884,9 +956,11 @@ function QuestaoAtual({
   resultado,
   enviando,
   temposAnteriores,
+  modoAdmin,
   onEscolher,
   onConfirmar,
   onContinuar,
+  onPular,
 }: {
   questao: NoTrilha['questoes'][number];
   posicao: number;
@@ -895,9 +969,11 @@ function QuestaoAtual({
   resultado: ResultadoTentativa | null;
   enviando: boolean;
   temposAnteriores: number[];
+  modoAdmin: boolean;
   onEscolher: (letra: string) => void;
   onConfirmar: (idQuestao: string, duracaoMs: number) => void;
   onContinuar: () => void;
+  onPular: () => void;
 }) {
   const { corpo, alternativas } = separarAlternativas(questao.enunciado_texto ?? '');
   const temAlternativas = Object.keys(alternativas).length === 5;
@@ -924,6 +1000,28 @@ function QuestaoAtual({
   // Estimativa cobre a questão atual + as que ainda faltam depois
   // dela -- por isso `total - posicao`, não `total - posicao - 1`.
   const restantesMs = mediaMs !== null ? mediaMs * (total - posicao) : null;
+
+  // Som de acerto -- pedido explícito do usuário ("que nem o
+  // Duolingo tem"): um "ding" curto de duas notas quando a resposta
+  // está certa (assets/sounds/acerto.wav, sintetizado, sem depender de
+  // rede). useAudioPlayer mantém UMA instância do player pelo tempo de
+  // vida do componente (QuestaoAtual não desmonta entre questões do
+  // mesmo nó -- só troca de props), então cada acerto só precisa
+  // voltar o player pro início e tocar de novo, sem recarregar o
+  // arquivo. Silencioso em erro -- se o áudio falhar (autoplay
+  // bloqueado no navegador antes de qualquer interação, plataforma sem
+  // suporte etc.), não pode quebrar o fluxo de responder questão.
+  const somAcerto = useAudioPlayer(require('@/assets/sounds/acerto.wav'));
+  useEffect(() => {
+    if (resultado?.resultado === 'acertou') {
+      try {
+        somAcerto.seekTo(0);
+        somAcerto.play();
+      } catch {
+        // silencioso de propósito, ver comentário acima
+      }
+    }
+  }, [resultado, somAcerto]);
 
   // "Questão entra" -- padrão de movimento 6a do projeto de design
   // (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de
@@ -980,6 +1078,12 @@ function QuestaoAtual({
             onPress={() => onConfirmar(questao.id_questao, Date.now() - inicioQuestaoRef.current)}>
             {enviando ? 'Enviando…' : 'Confirmar'}
           </BotaoPrimario>
+          {modoAdmin && (
+            <Pressable style={styles.botaoPular} onPress={onPular}>
+              <Feather name="fast-forward" size={14} color={Brand.textoApagado} />
+              <Text style={styles.botaoPularTexto}>Pular (não conta tentativa)</Text>
+            </Pressable>
+          )}
         </>
       ) : (
         <>
@@ -1245,6 +1349,39 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.titulo,
     fontSize: 14,
     color: Brand.textoSuave,
+  },
+  modoAdminToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    backgroundColor: Brand.bgCard,
+  },
+  modoAdminTexto: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 11.5,
+    color: Brand.textoApagado,
+  },
+  modoAdminTextoAtivo: {
+    color: Brand.verde,
+  },
+  botaoPular: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    marginTop: 4,
+  },
+  botaoPularTexto: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 12.5,
+    color: Brand.textoApagado,
   },
   cardEnunciado: {
     padding: 18,
