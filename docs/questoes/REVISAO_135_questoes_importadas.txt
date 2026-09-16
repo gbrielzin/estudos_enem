@@ -1,0 +1,1779 @@
+
+======================================================================
+MATERIA: acustica
+======================================================================
+
+--------------------------------------------------
+[pratica_00285] topico=frequencia_constante_na_refracao
+Durante um exame de ecocardiograma, o transdutor do aparelho encostado no peito do paciente emite ondas de ultrassom que penetram no corpo humano. Ao passar do tecido muscular do coração para o sangue contido no interior das cavidades cardíacas, a onda acústica sofre uma alteração drástica em sua velocidade de propagação e no seu comprimento de onda devido à diferença de densidade dos meios, enquanto o parâmetro de oscilação do aparelho permanece rigorosamente inalterado.
+
+O parâmetro físico das ondas de ultrassom que permanece rigorosamente constante ao cruzar a fronteira entre o músculo e o sangue do paciente é a:
+
+A) amplitude
+B) velocidade
+C) frequência
+D) intensidade
+E) elongação
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00308] topico=efeito_doppler
+Engenheiros biomédicos projetaram um sensor de monitoramento cardíaco que é posicionado sobre a pele do pulso de um paciente. O aparelho dispara continuamente um feixe de ultrassom invisível. Esse feixe atravessa os tecidos e, ao atingir as hemácias (células do sangue) que estão se movimentando rapidamente no interior dos vasos, sofre uma alteração sutil em sua frequência e comprimento de onda ao retornar para o detector. O computador usa essa variação de frequência detectada para calcular a velocidade do fluxo sanguíneo em tempo real.
+
+O funcionamento do sensor de fluxo sanguíneo baseia-se diretamente na aplicação do fenômeno do(a):
+
+A) difração de ondas
+B) refração acústica
+C) efeito Doppler
+D) ressonância mecânica
+E) interferência destrutiva
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00309] topico=efeito_doppler
+Um motorista trafegando por uma avenida urbana é monitorado por um policial rodoviário posicionado na calçada com um radar portátil em formato de pistola. O equipamento dispara ondas eletromagnéticas na direção do veículo em movimento. Ao colidirem com o capô metálico do carro que se aproxima, as ondas rebatem e retornam para o aparelho com uma taxa de oscilação por segundo maior do que o sinal originalmente emitido. O radar converte essa alteração de frequência na velocidade exata do carro.
+
+A alteração da frequência da onda detectada pelo radar portátil devido à aproximação do veículo ocorre por conta do(a):
+
+A) efeito Doppler
+B) difração de onda
+C) refração atmosférica
+D) interferência construtiva
+E) absorção eletromagnética
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00310] topico=eco
+Um engenheiro civil inspeciona o interior de um imenso galpão industrial recém-construído, totalmente vazio e com comprimento de 80 metros. Ao gritar uma palavra em uma das extremidades do pavilhão, ele percebe que, exatamente 0,3 segundos depois, consegue ouvir a sua própria voz repetida de forma perfeitamente limpa e separada do som inicial, refletida na parede oposta de concreto.
+
+A repetição distinta e cronologicamente separada da voz do engenheiro no interior do galpão vazio é explicada pelo fenômeno do(a):
+
+A) refração sonora
+B) reverberação
+C) difração do som
+D) eco
+E) ressonância
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00312] topico=efeito_doppler
+Um pedestre parado próximo à pista de cabeceira de um aeroporto observa a decolagem de um caça supersônico. À medida que o avião passa voando em alta velocidade diretamente acima de sua cabeça e começa a se afastar em direção ao horizonte, o pedestre percebe que o ronco estridente e agudo dos motores sofre uma transição abrupta, tornando-se muito mais grave e encorpado.
+
+A transição do som dos motores para uma tonalidade mais grave à medida que o caça se afasta do observador deve-se à(ao):
+
+A) diminuição da velocidade do som no ar
+B) redução da frequência aparente por efeito Doppler
+C) difração das ondas nas asas da aeronave
+D) interferência destrutiva gerada pelos gases
+E) absorção da energia sonora pela atmosfera
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00313] topico=efeito_doppler
+Astrônomos operando telescópios de alta resolução constataram que as linhas de emissão do espectro de luz vindo de galáxias distantes apresentavam um desvio sistemático em direção a frequências mais baixas, fenômeno conhecido na física como redshift (desvio para o vermelho). Os cientistas explicaram que esse desvio ocorre porque essas galáxias estão se distanciando da Terra em alta velocidade, esticando as ondas de luz emitidas.
+
+O desvio do espectro luminoso das galáxias para frequências menores devido ao distanciamento espacial em relação à Terra baseia-se no:
+
+A) efeito Doppler
+B) processo de refração
+C) fenômeno da difração
+D) espalhamento por absorção
+E) princípio da interferência
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00316] topico=eco
+O operador de um navio de pesquisa oceanográfica utiliza um equipamento de sonar instalado no casco da embarcação para mapear a topografia do fundo do mar. O aparelho emite um pulso de som direcionado verticalmente para baixo e cronometra o tempo que a onda gasta para colidir com o leito rochoso oceânico e retornar na forma de um sinal refletido perfeitamente discernível ao receptor.
+
+O princípio operacional do sonar para detectar e calcular a distância do fundo do mar baseia-se diretamente no fenômeno do(a):
+
+A) refração
+B) reverberação
+C) eco
+D) difração
+E) polarização
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00317] topico=reverberacao
+Em testes de calibração de salas de audiometria, fonoaudiólogos medem o tempo que um som de clique gasta para cair de intensidade até se tornar imperceptível. Se as paredes da sala forem de material liso e rígido, as ondas sonoras rebatem sucessivamente e retornam ao ouvido do paciente em menos de 0,1 segundos, fazendo o clique parecer "arrastado" e prejudicando a precisão dos exames auditivos.
+
+O aspecto arrastado sofrido pelo som do clique devido ao tempo de retorno ultrarrápido das ondas refletidas caracteriza a:
+
+A) difração
+B) refração
+C) reverberação
+D) polarização
+E) ressonância
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00318] topico=efeito_doppler
+Moradores de uma cidade litorânea escutam o som de uma sirene de ambulância de resgate que se desloca em alta velocidade por uma avenida em direção ao hospital. Um pedestre parado na calçada percebe que, enquanto o veículo corre em sua direção, o som da sirene parece muito mais agudo e estridente do que o normal, mudando de tom imediatamente após passar por ele.
+
+O fato de o som da sirene parecer mais agudo durante a aproximação do veículo é explicado pela ocorrência de:
+
+A) um aumento na velocidade de propagação do som no ar local
+B) uma elevação na frequência aparente gerada pelo efeito Doppler
+C) uma interferência construtiva com o eco das paredes dos prédios
+D) uma difração das ondas sonoras ao contornarem a lataria do carro
+E) uma absorção seletiva das frequências graves pela atmosfera úmida
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00321] topico=eco
+Durante o mapeamento de uma imensa caverna de calcário profunda, um geólogo grita em direção a um paredão de rochas localizado na extremidade oposta da galeria. Exatamente 0,5 segundos após o término do seu grito, ele consegue escutar a sua própria voz retornando de forma perfeitamente limpa, idêntica e cronologicamente isolada do som emitido inicialmente.
+
+A audição isolada e perfeitamente separada da própria voz refletida no paredão da caverna ocorre devido ao fenômeno do(a):
+
+A) refração
+B) reverberação
+C) difração
+D) eco
+E) ressonância
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00322] topico=efeito_doppler
+Um pedestre parado na calçada de uma grande avenida observa um helicóptero de resgate médico voando baixo. Enquanto a aeronave avança rapidamente em sua direção, o pedestre percebe que o som das pás do rotor principal parece nitidamente mais agudo e estridente. No exato instante em que o helicóptero ultrapassa a vertical do pedestre e começa a se distanciar, o tom do barulho sofre uma transição imediata para um som mais grave.
+
+A variação de tom percebida pelo pedestre (som agudo na aproximação e grave no afastamento) é explicada pela ocorrência do:
+
+A) efeito Doppler
+B) processo de refração
+C) fenômeno da difração
+D) princípio da interferência
+E) mecanismo de absorção
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00323] topico=efeito_doppler
+Inspetores de segurança de uma plataforma de petróleo utilizam um aparelho de ultrassom móvel para detectar trincas internas em tubulações de aço em movimento na esteira de produção. O transdutor dispara ondas acústicas contra o metal. Se a tubulação estiver se deslocando na direção do sensor, as ondas retornam com uma frequência maior do que a emitida, variação que o software calcula para mapear a integridade estrutural das peças em movimento.
+
+A detecção de mudanças na frequência das ondas de ultrassom refletidas devido ao deslocamento físico da tubulação de aço baseia-se no:
+
+A) fenômeno da difração
+B) processo de refração
+C) efeito Doppler
+D) princípio da ressonância
+E) mecanismo de absorção
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00325] topico=reverberacao
+Durante a reforma de um tradicional teatro de ópera, arquitetos instalaram painéis de madeira convexos e difusores nas paredes laterais da plateia. O objetivo do projeto foi fazer com que as ondas sonoras emitidas pelos cantores líricos rebatessem e retornassem aos ouvidos do público espalhadas de forma rápida, evitando que o som ficasse muito prolongado ou "borrado" nas primeiras fileiras, o que prejudicaria a nitidez da apresentação.
+
+Os painéis difusores de madeira foram instalados nas paredes do teatro com o objetivo específico de reduzir a:
+
+A) difração
+B) refração
+C) reverberação
+D) polarização
+E) ressonância
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00326] topico=eco
+Um veículo robótico autônomo projetado para explorar tubulações subterrâneas de esgoto utiliza um emissor acústico frontal. O robô dispara bipes de som em linha reta e monitora o tempo necessário para que o sinal colida com bloqueios ou desmoronamentos à distância e retorne na forma de uma onda refletida totalmente discernível e isolada, calculando o espaço livre restante no duto.
+
+O princípio físico utilizado pelo robô autônomo para detectar os bloqueios à distância através do retorno isolado do sinal baseia-se no(a):
+
+A) refração
+B) reverberação
+C) difração
+D) eco
+E) polarização
+GABARITO: D
+
+======================================================================
+MATERIA: cinematica
+======================================================================
+
+--------------------------------------------------
+[pratica_00193] topico=velocidade_media_mru
+Um motorista de caminhão de entregas parte de um centro de distribuição e precisa percorrer uma distância total de 120 quilômetros até o destino final por uma rodovia. Ele mantém uma velocidade constante de 80 km/h durante os primeiros 80 quilômetros, mas é obrigado a fazer uma parada de exatamente 30 minutos (0,5 hora) em um posto de combustíveis para conferir os lacres da carga. Logo após a pausa, ele faz o restante do percurso rodando no mesmo ritmo de 80 km/h.
+
+A velocidade média desenvolvida pelo caminhão ao longo de todo o trajeto de 120 km, considerando o tempo total gasto na viagem com a parada inclusa, foi de:
+
+A) 40 km/h
+B) 60 km/h
+C) 80 km/h
+D) 100 km/h
+E) 120 km/h
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00194] topico=velocidade_media_mru
+Sistemas de monitoramento de trânsito em rodovias modernas utilizam radares de velocidade média em substituição aos pardais tradicionais. Dois sensores eletrônicos são instalados em postes distantes 4 quilômetros um do outro. Um carro de passeio cruza o primeiro sensor e, exatamente 2 minutos depois, cruza o segundo sensor. O computador calcula o tempo gasto e emite a multa se o limite for violado.
+
+Sabendo que o limite máximo de velocidade permitido nessa rodovia é de 110 km/h, o motorista do carro de passeio:
+
+A) não foi multado, pois sua velocidade média foi de 60 km/h
+B) não foi multado, pois sua velocidade média foi de 90 km/h
+C) foi multado, pois sua velocidade média foi de 120 km/h
+D) foi multado, pois sua velocidade média foi de 140 km/h
+E) foi multado, pois sua velocidade média foi de 160 km/h
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00195] topico=velocidade_media_mru
+Engenheiros ferroviários projetaram uma nova linha de metrô de superfície interligando duas estações terminais. O trem parte da primeira estação e viaja mantendo um ritmo constante ao longo dos trilhos. O painel eletrônico de controle registra que o metrô gasta exatamente 15 minutos para atravessar o circuito até a plataforma de desembarque, desenvolvendo uma velocidade operacional constante de 16 metros por segundo (m/s).
+
+A distância física total que separa as duas estações de metrô na cidade é de:
+
+A) 240 metros
+B) 1 440 metros
+C) 9 600 metros
+D) 14 400 metros
+E) 24 000 metros
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00196] topico=velocidade_media_mru
+Um maratonista disputa uma prova de corrida de rua em um circuito plano de 10 quilômetros de extensão. O atleta mantém um ritmo forte e constante, completando a primeira metade do percurso (5 km) em exatamente 15 minutos. No entanto, devido ao desgaste físico e ao calor, ele reduz o ritmo na segunda metade do trajeto, gastando 25 minutos para completar os 5 quilômetros finais e cruzar a linha de chegada.
+
+A velocidade média desenvolvida pelo maratonista ao longo de toda a prova de 10 quilômetros foi de:
+
+A) 12,5 km/h
+B) 15,0 km/h
+C) 17,5 km/h
+D) 20,0 km/h
+E) 22,5 km/h
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00197] topico=velocidade_media_mru
+Uma equipe de logística monitora o deslocamento de uma balsa de carga que navega subindo o leito de um rio amazônico contra a correnteza. A balsa possui motores que a impulsionam com uma velocidade constante de 15 km/h em relação à água. No entanto, a velocidade da correnteza do rio no sentido oposto é de 5 km/h estável. O operador calcula o tempo que a embarcação gastará para atingir uma comunidade localizada a 40 quilômetros de distância rio acima.
+
+A velocidade real de deslocamento da balsa em relação às margens da terra fixa, utilizada para calcular o tempo de viagem até a comunidade, é de:
+
+A) 5 km/h
+B) 10 km/h
+C) 15 km/h
+D) 20 km/h
+E) 25 km/h
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00198] topico=velocidade_media_mru
+Um satélite de monitoramento meteorológico estacionado em órbita baixa envia dados para uma antena receptora na Terra através de pulsos de ondas eletromagnéticas que viajam na velocidade da luz (\(3 \times 10^8 \text{ m/s}\)). O centro de controle registra que o sinal de rádio gasta exatamente 0,002 segundos para realizar a trajetória retilínea do espaço até atingir o detector na superfície do planeta.
+
+A distância vertical que separa o satélite meteorológico da antena receptora na superfície da Terra é de:
+
+A) 150 quilômetros
+B) 300 quilômetros
+C) 600 quilômetros
+D) 1 500 quilômetros
+E) 3 000 quilômetros
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00199] topico=velocidade_media_mru
+Um trabalhador utiliza uma bicicleta elétrica para ir de sua residência até o escritório, percorrendo uma distância total de 18 quilômetros. No primeiro trecho de 9 quilômetros, ele pedala por ciclovias livres mantendo uma velocidade constante de 27 km/h. No entanto, no trecho restante de 9 quilômetros, ele entra em vias compartilhadas pesadas e sua velocidade cai para um ritmo constante de 9 km/h.
+
+A velocidade média desenvolvida pelo ciclista ao longo de todo o percurso de 18 quilômetros foi de:
+
+A) 13,5 km/h
+B) 15,0 km/h
+C) 18,0 km/h
+D) 22,5 km/h
+E) 27,0 km/h
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00200] topico=velocidade_media_mru
+Engenheiros navais utilizam um sensor de sonar instalado na base de uma embarcação para medir a profundidade de um canal portuário. O sonar emite um pulso de ultrassom que viaja na água com uma velocidade constante de 1 500 m/s. O aparelho registra que o sinal gasta um tempo total de exatamente 0,04 segundos entre o instante da emissão e o retorno do eco refletido pelo leito de rochas após bater no fundo.
+
+A profundidade real do canal portuário medida pelo sensor sonar no casco do navio é de:
+
+A) 15 metros
+B) 30 metros
+C) 60 metros
+D) 120 metros
+E) 300 metros
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00201] topico=velocidade_media_mru
+Um avião comercial realiza um voo direto entre duas capitais distantes 2 400 quilômetros em linha reta. O comandante mantém a aeronave em velocidade de cruzeiro constante. O plano de voo indica que a viagem foi completada em exatamente 3 horas e 20 minutos de duração total do relógio, sem atrasos nas manobras de pouso e decolagem.
+
+A velocidade média de cruzeiro mantida pela aeronave ao longo do voo entre as duas capitais foi de:
+
+A) 600 km/h
+B) 720 km/h./
+C) 800 km/h
+D) 840 km/h
+E) 900 km/h
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00202] topico=velocidade_media_mru
+Durante um teste de colisão (crash-test) em um laboratório industrial, os engenheiros monitoram o deslocamento de um veículo em uma pista retilínea paralela a uma parede de impacto. Os sensores registram que o carro percorre uma distância de 45 metros gastando exatamente 1,5 segundo até colidir com a barreira de concreto.
+
+A velocidade do veículo imediatamente antes do impacto, expressa na unidade comercial de quilômetros por hora (km/h), era de:
+
+A) 30 km/h
+B) 45 km/h
+C) 72 km/h
+D) 108 km/h
+E) 120 km/h
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00203] topico=velocidade_media_mru
+Uma chata (embarcação de carga de fundo chato) precisa descer um trecho retilíneo de um rio para entregar mantimentos. Ela navega mantendo um ritmo constante, percorrendo os primeiros 60 quilômetros em exatamente 2 horas. Ao atingir um posto de fiscalização intermediário, a embarcação permanece atracada por 1 hora completa para a conferência das notas fiscais. Logo após a liberação, a balsa percorre os 60 quilômetros restantes gastando mais 2 horas até atingir o destino.
+
+A velocidade média de deslocamento desenvolvida pela balsa ao longo de todo o percurso de 120 km, considerando o tempo total com a parada de fiscalização inclusa, foi de:
+
+A) 24 km/h
+B) 30 km/h
+C) 40 km/h
+D) 60 km/h
+E) 120 km/h
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00204] topico=velocidade_media_mru
+Biólogos monitorando a migração de aves marinhas instalaram um minúsculo rastreador via satélite no dorso de um albatroz. O sistema de telemetria registrou que a ave voou em linha reta sobre o oceano mantendo um ritmo firme. Os dados digitais mostraram que o albatroz percorreu uma distância de 144 quilômetros em um intervalo de tempo de exatamente 2 horas e 24 minutos (2,4 horas).
+
+A velocidade média de voo mantida pelo albatroz ao longo do monitoramento, expressa na unidade de metros por segundo (m/s), foi de:
+
+A) 10 m/s
+B) 16 m/s
+C) 20 m/s
+D) 36 m/s
+E) 60 m/s
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00205] topico=velocidade_media_mru
+Em uma rodovia monitorada por radares de trecho, um caminhoneiro passa pelo primeiro pórtico de leitura de placas e acelera seu veículo, rodando 30 quilômetros a uma velocidade constante de 90 km/h. Preocupado com a multa, ele encosta o caminhão no acostamento e permanece totalmente parado por 10 minutos para tomar um café. Logo após a pausa, ele liga o motor e percorre os 10 quilômetros finais até o segundo pórtico rodando a 60 km/h.
+
+O tempo total gasto pelo caminhoneiro para cruzar o trecho fiscalizado entre os dois pórticos, desde o instante da primeira leitura até a saída no segundo ponto, foi de:
+
+A) 30 minutos
+B) 40 minutos
+C) 50 minutos
+D) 60 minutos
+E) 70 minutes
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00206] topico=velocidade_media_mru
+Engenheiros projetaram um sensor para drones baseado no sistema de ecolocalização dos morcegos. O dispositivo emite bipes de ultrassom que viajam no ar com velocidade constante de 340 m/s. Durante um voo de teste em um galpão, o drone dispara um pulso sonoro em linha reta contra uma parede de metal e o receptor eletrônico capta o retorno do eco refletido exatamente 0,06 segundos após a emissão.
+
+A distância real de segurança que separava o drone da parede de metal no instante em que o bipe foi disparado era de:
+
+A) 5,1 metros
+B) 10,2 metros
+C) 20,4 metros
+D) 40,8 metros
+E) 102 metros
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00207] topico=velocidade_media_mru
+Durante uma etapa de uma corrida de ciclismo, um atleta de elite percorre um circuito de 60 quilômetros dividido em duas seções de tamanhos iguais. Na primeira metade (30 km), aproveitando uma descida de serra, ele mantém uma velocidade média de 60 km/h. Na segunda metade (30 km), enfrentando uma subida íngreme, seu ritmo cai e ele desenvolve uma velocidade média de 20 km/h.
+
+A velocidade média desenvolvida pelo ciclista ao longo de todo o circuito de 60 quilômetros foi de:
+
+A) 30 km/h
+B) 40 km/h
+C) 45 km/h
+D) 50 km/h
+E) 55 km/h
+GABARITO: A
+
+======================================================================
+MATERIA: ecologia
+======================================================================
+
+--------------------------------------------------
+[pratica_00208] topico=chuva_acida
+Em uma região de intensa atividade agrícola, uma usina termelétrica movida a carvão mineral de baixa qualidade foi instalada para fornecer energia aos secadores de grãos. Meses após o início da operação da usina, silvicultores de uma reserva de eucaliptos localizada a 40 quilômetros de distância notaram que as folhas das árvores apresentavam necrose e caíam precocemente. Análises foliares indicaram danos químicos severos nas cutículas vegetais provocados pela alteração na acidez da água das chuvas gerada pela oxigenação de gases industriais na atmosfera.
+
+A deposição ácida que causou a queima das folhas na plantação de eucaliptos decorre da liberação atmosférica de gases do tipo:
+
+A) clorofluorcarbono (CFC)
+B) dióxido de carbono (\(CO_{2}\))
+C) óxidos de enxofre (\(SO_{2}\))
+D) gás metano (\(CH_{4}\))
+E) ozônio troposférico (\(O_{3}\))
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00209] topico=chuva_acida
+Uma empresa de transportes substituiu sua frota de caminhões antigos por veículos novos movidos a biodiesel, visando reduzir sua "Pegada de Carbono". No entanto, a antiga frota de motores a óleo diesel convencional despejou durante anos toneladas de poluentes gasosos que reagiam diretamente com o vapor de água das nuvens nas rodovias. Engenheiros ambientais constataram que essa reação química contínua alterou o pH do solo de matas ciliares vizinhas, reduzindo a biodiversidade local.
+
+O impacto ambiental verificado nas matas ciliares ao longo da rodovia foi provocado por precipitações associadas ao fenômeno da:
+
+A) inversão térmica
+B) ilha de calor urbana
+C) chuva ácida
+D) destruição do ozônio
+E) magnificação trófica
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00210] topico=chuva_acida
+Turistas que visitavam um sítio arqueológico com ruínas e estátuas esculpidas em pedra calcária e mármore notaram que os detalhes das escritas antigas estavam desaparecendo rapidamente, apresentando um aspectro corroído. O guia explicou que o complexo industrial siderúrgico construído na macrorregião portuária vizinha lança na atmosfera gases poluentes que alteram as características naturais da água da chuva, gerando compostos que corroem os minerais da rocha.
+
+Para mitigar especificamente a reação química que causa a corrosão das estátuas de pedra calcária nas ruínas, as indústrias portuárias devem adotar filtros capazes de reter emissões de:
+
+A) metano e clorofluorcarbono
+B) dióxido de carbono e vapor de água
+C) monóxido de carbono e hélio
+D) óxidos de enxofre e de nitrogênio
+E) gás argônio e ozônio
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00211] topico=destruicao_camada_ozonio
+Durante a auditoria ambiental de uma fábrica metalúrgica desativada, técnicos identificaram o vazamento contínuo de fluidos refrigerantes de aparelhos de ar-condicionado industriais fabricados na década de 1980. O relatório técnico apontou que esses gases da família dos clorofluorcarbonos (CFC) evaporaram e migraram para a estratosfera, provocando alterações moleculares em uma barreira de gás natural e elevando os índices de radiação nociva incidente no terreno da fábrica.
+
+O aumento da radiação energética nociva na superfície do terreno da fábrica ocorre porque os gases vazados atuam diretamente na:
+
+A) intensificação do efeito estufa global
+B) formação de chuvas ácidas regionais
+C) destruição da camada de ozônio
+D) aceleração da inversão térmica no solo
+E) retenção de ondas de calor na troposfera
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00212] topico=destruicao_camada_ozonio
+Um grupo de pesquisadores em uma expedição científica em uma ilha de alta latitude registrou um aumento estatístico imprevisto nos casos de queimaduras solares graves e lesões de córnea em animais silvestres locais. Os cientistas associaram o fenômeno à redução na concentração do gás ozônio na alta atmosfera daquela coordenada geográfica, desregulada pela ação histórica de compostos de cloro produzidos pela atividade humana no século passado.
+
+O impacto na saúde dos animais silvestres na ilha ocorre devido à perda da proteção atmosférica contra a incidência direta de:
+
+A) raios infravermelhos
+B) raios ultravioleta
+C) ondas de rádio e TV
+D) calor por convecção
+E) material particulado
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00213] topico=chuva_acida
+Uma montadora de automóveis lançou uma campanha publicitária afirmando que seus novos motores flex minimizam o aquecimento global porque o dióxido de carbono (\(CO_{2}\)) liberado pelo escapamento ao queimar etanol é reabsorvido pelo crescimento das plantações de cana-de-açúcar na safra seguinte. O engenheiro ambiental da marca explicou que isso evita o acúmulo líquido do gás estufa que atua retendo a energia térmica emitida pelo planeta.
+
+O acúmulo do gás carbônico na atmosfera contribui para as mudanças climáticas globais porque ele possui a propriedade física de:
+
+A) quebrar as moléculas de ozônio por reações catalíticas
+B) reagir com a água gerando chuva ácida de baixo pH
+C) absorver o calor irradiado pela superfície da Terra
+D) bloquear a entrada de luz solar durante o dia na cidade
+E) condensar o vapor de água nas camadas mais frias do ar
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00214] topico=chuva_acida
+Cientistas monitorando uma fazenda de pecuária bovina intensiva instalaram biodigestores para captar os gases gerados pela decomposição bacteriana do esterco dos animais na ausência de oxigênio. Eles explicaram que, se esse gás metano (\(CH_{4}\)) for lançado diretamente na atmosfera sem ser queimado, seu impacto no aprisionamento de calor na troposfera é cerca de vinte vezes mais agressivo do que o do próprio dióxido de carbono.
+
+A captação e queima do gás metano dos biodigestores na fazenda reduzem o impacto ambiental relacionado diretamente ao(à):
+
+A) ocorrência de chuvas ácidas na lavoura
+B) buraco na camada de ozônio estratosférico
+C) intensificação do efeito estufa
+D) fenômeno da inversão térmica de inverno
+E) processo de eutrofização dos rios locais
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00215] topico=inversao_termica
+Durante uma madrugada extremamente fria de julho, os hospitais de uma metrópole industrial registraram um pico nos atendimentos de crianças e idosos com crises severas de asma, rinite alérgica e bronquite. Os plantonistas notaram que uma névoa escura e densa de fumaça de escapamentos flutuava estagnada na altura dos prédios. Os meteorologistas confirmaram que o solo resfriou muito rápido, gerando uma camada de ar frio colada ao chão que não conseguiu subir, sendo sobreposta por ar quente.
+
+O surto de problemas respiratórios na população urbana foi agravado pelo aprisionamento da poluição devido ao fenômeno natural da:
+
+A) inversão térmica
+B) ilha de calor urbana
+C) chuva de convecção
+D) destruição do ozônio
+E) calagem atmosférica
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00216] topico=inversao_termica
+Técnicos instalados em uma torre de observação de um polo industrial químico usam sensores para alertar a população sobre os riscos de dispersão de gases poluentes. Em uma manhã fria e sem ventos, o sensor apontou que a fumaça das chaminés parou de subir verticalmente e começou a se espalhar horizontalmente, acumulando-se perigosamente perto das casas. O chefe da equipe explicou que isso ocorre por um comportamento físico natural de massas de ar com densidades diferentes no inverno, que funciona como uma tampa invisível sobre a cidade.
+
+O comportamento físico natural das massas de ar que cria a "tampa invisível" e retém a poluição perto das casas caracteriza a:
+
+A) ocorrência de chuva ácida regional
+B) intensificação do efeito estufa global
+C) inversão térmica
+D) taxa de albedo asfáltico
+E) destruição do ozônio troposférico
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00217] topico=inversao_termica
+Em um painel de discussão sobre novas metas de redução de emissões industriais, um representante corporativo argumentou que sua fábrica de fundição não deveria ser punida pela ocorrência da inversão térmica na cidade. Ele apresentou dados científicos provando que a formação das camadas de ar com temperaturas invertidas acontece por fatores geográficos e meteorológicos da própria natureza, e que a fábrica não é a criadora do mecanismo de inversão térmica.
+
+O argumento do representante corporativo sustenta-se do ponto de vista ecológico porque a inversão térmica é:
+
+A) gerada exclusivamente pelo calor dissipado pelas chaminés industriais
+B) um fenômeno climático natural cuja gravidade é ampliada pelos poluentes retidos
+C) provocada pela reação química entre o gás carbônico e o vapor de água
+D) uma consequência direta do buraco na camada de ozônio sobre as cidades
+E) um impacto artificial gerado pelo baixo índice de albedo do asfalto escuro
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00218] topico=chuva_acida
+Uma auditoria técnica em um polo siderúrgico mapeou as emissões gasosas geradas nos altos-fornos. Os engenheiros registraram que, apesar dos filtros reterem o material particulado pesado, toneladas de dióxido de nitrogênio (\(NO_{2}\)) gasoso escapavam pelas chaminés secundárias. O relatório alertou que esse composto, ao reagir quimicamente com as gotículas de água em suspensão na atmosfera, precipita sobre as lavouras vizinhas, desregulando o pH da água celular das culturas e gerando prejuízos agrícolas crônicos.
+
+O impacto fisiológico negativo gerado nas lavouras pela precipitação do composto nitrogenado alterado é uma consequência direta do fenômeno da:
+
+A) inversão térmica na bacia
+B) ilha de calor urbana
+C) chuva ácida
+D) destruição da camada de ozônio
+E) intensificação do efeito estufa
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00219] topico=destruicao_camada_ozonio
+Fiscais alfandegários retiveram um lote de cilindros de gases pressurizados importados ilegalmente para uso em sistemas antigos de climatização veicular. A retenção ocorreu porque a composição química do produto continha compostos do tipo clorofluorcarbono (CFC), cuja distribuição é severamente restrita por tratados internacionais. A legislação proíbe a circulação desse fluido devido ao risco de vazamento e posterior migração das moléculas de cloro para a estratosfera, gerando danos severos à barreira de proteção de gás natural da Terra.
+
+A restrição legal à importação desses fluidos refrigerantes justifica-se porque o vazamento de CFC atua diretamente na:
+
+A) intensificação do efeito estufa global
+B) formação de chuvas ácidas nas grandes metrópoles
+C) destruição da camada de ozônio
+D) aceleração da inversão térmica no inverno
+E) retenção de radiação infravermelha na troposfera
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00220] topico=destruicao_camada_ozonio
+Uma rede de supermercados instalou sistemas modernos de refrigeração que utilizam gases do tipo hidrofluorcarbono (HFC) em substituição aos antigos sistemas baseados em CFC. O engenheiro responsável explicou que o HFC foi adotado porque suas moléculas não contêm os átomos de cloro que atacam o filtro gasoso da alta atmosfera. No entanto, ele alertou que o HFC ainda exige descarte controlado porque, se vazar, funciona capturando a radiação infravermelha refletida pelo solo, agindo como um potente gás estufa de curto prazo.
+
+A substituição do gás CFC pelo HFC resolveu o problema ecológico relacionado à incidência de raios UV, mas o novo gás ainda precisa ser controlado devido ao seu impacto potencial na:
+
+A) ocorrência de chuvas ácidas regionais
+B) destruição do ozônio estratosférico
+C) intensificação do efeito estufa
+D) dinâmica natural da inversão térmica
+E) acidificação imediata do solo urbano
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00221] topico=destruicao_camada_ozonio
+Biólogos monitorando uma espécie endêmica de anfíbios em uma ilha oceânica isolada registraram uma queda abrupta na taxa de eclosão dos ovos, que ficam expostos em poças d'água rasas. Exames cromossômicos revelaram um alto índice de mutações genéticas e lesões celulares nos tecidos dos girinos. Análises físicas indicaram que a ilha estava recebendo uma carga excessiva de radiação ultravioleta (UV-B) vinda diretamente do Sol devido a uma redução severa na espessura da barreira gasosa de ozônio naquela latitude.
+
+A incidência anômala de radiação mutagênica na ilha e os consequentes danos celulares nos anfíbios decorrem diretamente da:
+
+A) intensificação do efeito estufa planetário
+B) ocorrência de precipitações de chuva ácida
+C) destruição da camada de ozônio
+D) inversão térmica nas correntes de ar
+E) retenção de calor por poluentes industriais
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00222] topico=chuva_acida
+Em uma convenção de energia limpa, pesquisadores defenderam o investimento em usinas solares e eólicas para substituir as termelétricas a carvão mineral. Eles apresentaram modelos matemáticos provando que a queima contínua de combustíveis fósseis joga bilhões de toneladas de dióxido de carbono (\(CO_{2}\)) na atmosfera. Esse acúmulo funciona como uma barreira física que absorve a radiação infravermelha emitida pela superfície terrestre, impedindo que o calor escape para o espaço.
+
+O investimento nessas fontes de energia limpa visa mitigar diretamente o impacto ambiental global denominado:
+
+A) inversão térmica de inverno
+B) destruição da camada de ozônio
+C) intensificação do efeito estufa
+D) formação de chuvas ácidas severas
+E) ilha de calor por baixo albedo
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00223] topico=aquecimento_global
+Satélites de monitoramento registraram um avanço nas queimadas florestais voltadas à abertura de pastagens. Cientistas alertaram que a destruição da cobertura vegetal gera um impacto duplo negativo no clima: libera grandes volumes de gás carbônico (\(CO_{2}\)) pela combustão da madeira e elimina as árvores vivas que realizavam o sequestro de carbono da atmosfera. Esse acúmulo gasoso intensifica o aprisionamento de energia térmica na troposfera.
+
+As queimadas florestais descritas aceleram as mudanças climáticas globais porque o gás liberado atua:
+
+A) quebrando de forma catalítica as moléculas de ozônio
+B) reagir com o vapor d'água gerando precipitação de baixo pH
+C) intensificando o efeito estufa através da retenção de calor
+D) bloqueando a entrada de raios ultravioleta na superfície
+E) alterando a densidade do ar e gerando inversões térmicas
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00224] topico=aquecimento_global
+Engenheiros ambientais projetaram um sistema de captação de biogás em um aterro sanitário metropolitano. Eles explicaram que as camadas profundas de lixo compactado entram em anaerobiose, estimulando bactérias a produzirem grandes volumes de gás metano (\(CH_{4}\)). O projeto canaliza esse gás para queimadores industriais, transformando-o em \(CO_{2}\) e vapor d'água antes do descarte na atmosfera, pois o metano livre retém muito mais calor na atmosfera do que o gás carbônico.
+
+A queima controlada do metano captado nos dutos do aterro visa reduzir os impactos diretos relacionados ao(à):
+
+A) formação de chuvas ácidas urbanas
+B) buraco na camada de ozônio estratosférico
+C) intensificação do efeito estufa
+D) fenômeno da inversão térmica sazonal
+E) contaminação do lençol freático por chorume
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00225] topico=inversao_termica
+Uma cidade industrial localizada no fundo de um vale cercado por montanhas apresenta altos índices de internações hospitalares por asma e bronquite durante os meses de julho. Geógrafos explicaram que a topografia em forma de bacia favorece o acúmulo de ar frio e denso no fundo do vale durante as madrugadas sem vento. Esse ar frio fica trancado embaixo de uma camada de ar quente e mais leve, impedindo que a fumaça expelida pelas fábricas suba e se disperse na atmosfera.
+
+O aprisionamento dos poluentes industriais no fundo do vale durante o inverno é provocado pelas características físicas do fenômeno natural da:
+
+A) chuva ácida regional
+B) inversão térmica
+C) ilha de calor urbana
+D) destruição do ozônio estratosférico
+E) evapotranspiração do dossel florestal
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00226] topico=inversao_termica
+Um telejornal local emitiu um boletim meteorológico alertando a população de uma metrópole sobre a chegada de uma massa de ar frio e seco de origem polar no início do inverno. O apresentador explicou que as madrugadas frias favorecem o resfriamento rápido do asfalto, criando uma condição de estabilidade atmosférica em que o ar colado ao chão fica muito denso e não consegue subir, funcionando como um bloqueio físico que aprisionará os gases dos carros na altura dos pedestres.
+
+O alerta emitido pelo boletim meteorológico refere-se aos impactos na qualidade do ar decorrentes da ocorrência da:
+
+A) precipitação de chuva ácida
+B) intensificação do efeito estufa
+C) inversão térmica
+D) ilha de calor metropolitana
+E) variação do albedo superficial
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00227] topico=inversao_termica
+Em uma prova de simulado de ecologia, um estudante analisou um gráfico que mostrava a variação diária da altura de dispersão da fumaça em uma cidade industrial. O gráfico apontava que, entre as 4h e as 9h da manhã, a fumaça ficava confinada a uma altura máxima de apenas 50 metros em relação ao solo. O professor explicou que esse confinamento matutino ocorre por um processo térmico natural da atmosfera e não porque as indústrias aumentaram a produção de gases naquele horário.
+
+O confinamento da fumaça próximo ao solo nas primeiras horas da manhã demonstrado no gráfico é explicado pelo fenômeno da:
+
+A) chuva ácida concentrada
+B) destruição do ozônio estratosférico
+C) inversão térmica
+D) retenção por gases estufa
+E) variação do albedo urbano
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00228] topico=chuva_acida
+Engenheiros ferroviários que planejam a expansão de uma linha de trens de alta velocidade analisaram o impacto da qualidade do ar na durabilidade dos trilhos metálicos e cabos de alta tensão. O relatório técnico indicou que, em trechos que cortam regiões industriais com queima pesada de óleo combustível pesado, os componentes metálicos sofrem oxidação e desgaste estrutural severamente acelerados. A análise da água coletada nas canaletas da ferrovia revelou uma alta concentração de íons SO₄²⁻ (sulfato).
+
+O desgaste acelerado dos componentes metálicos da ferrovia nas proximidades do polo industrial é causado por precipitações associadas ao fenômeno da:
+
+A) inversão térmica na bacia
+B) ilha de calor por concreto
+C) chuva ácida
+D) destruição da camada de ozônio
+E) magnificação trófica
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00229] topico=destruicao_camada_ozonio
+Durante uma conferência internacional sobre o clima, diplomatas discutiram a eficácia de tratados que impuseram restrições econômicas a países que violaram as cotas de emissão de compostos halogenados gasosos de cloro e bromo. O painel científico demonstrou que, graças à proibição desses compostos industriais nas últimas décadas, a taxa de penetração de radiação solar mutagênica de alta energia na troposfera parou de crescer, apresentando os primeiros sinais de estabilização global.
+
+Os tratados internacionais mencionados focaram em banir compostos cuja ação química direta provocava o(a):
+
+A) intensificação do efeito estufa global
+B) formação de chuvas ácidas nas florestas
+C) destruição da camada de ozônio
+D) aceleração da inversão térmica no inverno
+E) aprisionamento de radiação infravermelha
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00230] topico=chuva_acida
+Arquitetos paisagistas projetaram um "cinturão verde" ao redor de um distrito industrial para atuar como barreira física de dispersão gasosa. No projeto, eles alertaram que a vegetação consegue reter material particulado (poeira), mas é vulnerável a gases invisíveis derivados do enxofre. Se as indústrias operarem sem filtros, esses gases reagem com o orvalho matinal nas superfícies das folhas, reduzindo o pH do microambiente celular e matando os tecidos vegetais externos.
+
+A agressão química sofrida pelas folhas das árvores do cinturão verde devido à desregulagem do pH do orvalho é explicada pelo fenômeno da:
+
+A) inversão térmica localizada
+B) formação de chuva ácida
+C) destruição do ozônio foliar
+D) taxa de albedo biológico
+E) intensificação do efeito estufa
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00231] topico=destruicao_camada_ozonio
+Um sindicato de trabalhadores da construção civil de uma região de alta altitude exigiu o fornecimento obrigatório de protetores solares de espectro total e óculos com proteção UV especial. O relatório médico anexado à petição comprovou que, devido à redução sazonal da concentração do gás O₃ na alta atmosfera daquelas coordenadas geográficas, os operários que trabalhavam em coberturas de prédios estavam expostos a uma carga energética mutagênica muito acima dos limites de segurança biológica.
+
+A exposição excessiva dos operários à radiação solar mutagênica decorre diretamente do impacto atmosférico conhecido como:
+
+A) intensificação do efeito estufa
+B) precipitação de chuva ácida
+C) destruição da camada de ozônio
+D) inversão térmica urbana
+E) ilha de calor por asfalto
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00232] topico=chuva_acida
+Uma multinacional comprou uma vasta área de pastagem degradada para transformá-la em uma floresta comercial de pinus voltada à venda de créditos de carbono. O diretor financeiro explicou que a empresa lucra porque as árvores em crescimento funcionam absorvendo o dióxido de carbono da atmosfera e fixando-o em suas estruturas de celulose, o que reduz a quantidade do gás que atua como isolante térmico na troposfera terrestre.
+
+O projeto de reflorestamento visa lucrar ao mitigar diretamente o mecanismo responsável pelo(a):
+
+A) inversão térmica nas manhãs frias
+B) destruição da camada de ozônio estratosférico
+C) intensificação do efeito estufa
+D) formação de chuvas ácidas regionais
+E) processo de eutrofização atmosférica
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00233] topico=aquecimento_global
+Cientistas simularam o impacto climático global da liberação massiva de gás metano (CH₄) decorrente do derretimento das camadas de solo congelado (permafrost) no Ártico. O computador indicou que o metano livre atua absorvendo comprimentos de onda específicos da radiação infravermelha emitida pela crosta terrestre. O relatório alertou que esse processo criará um ciclo de retroalimentação, aprisionando mais calor e acelerando o aquecimento do planeta.
+
+A liberação do metano pelo solo congelado acelera o aquecimento global porque esse composto atua diretamente na:
+
+A) corrosão de ozônio por reações químicas
+B) redução do pH das nuvens polares
+C) intensificação do efeito estufa
+D) estabilização da inversão térmica sazonal
+E) variação do albedo nas calotas polares
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00234] topico=chuva_acida
+Fiscais navais monitorando o tráfego de grandes navios cargueiros em canais marítimos internacionais registraram que o uso de combustíveis navais pesados, ricos em compostos de enxofre, gera plumas de fumaça que viajam centenas de quilômetros. Satélites indicaram que essas plumas se misturam às massas de ar úmido do oceano, gerando chuvas que provocam a queda severa do pH da água de lagos em ilhas ecológicas distantes, desregulando o ecossistema aquático.
+
+O impacto ecológico registrado nos lagos das ilhas distantes é consequência direta do fenômeno da:
+
+A) inversão térmica marítima
+B) destruição da camada de ozônio
+C) ocorrência de chuva ácida
+D) magnificação trófica do combustível
+E) intensificação do efeito estufa global
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00235] topico=inversao_termica
+Organizadores de uma competição de esqui em uma cidade montanhosa industrializada suspenderam os treinos matutinos devido à baixíssima visibilidade nas pistas e ao forte cheiro de fumaça de óleo diesel no ar. Os meteorologistas explicaram que, durante a madrugada sem nuvens, a neve resfriou intensamente a camada de ar imediatamente acima dela. Esse ar frio e pesado ficou trancado no fundo do vale, funcionando como uma represa física que reteve toda a poluição urbana na altura dos atletas.
+
+O confinamento da fumaça e a baixa visibilidade na pista de esqui foram causados pela ocorrência do fenômeno natural da:
+
+A) chuva ácida concentrada
+B) inversão térmica
+C) ilha de calor na montanha
+D) destruição do ozônio local
+E) variação cíclica do albedo nivial
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00236] topico=destruicao_camada_ozonio
+Uma transportadora de alimentos congelados foi autuada por manter em seu pátio central contêineres refrigerados antigos com vazamento de gases da família dos clorofluorcarbonos. A defesa da empresa tentou atenuar a multa alegando que os gases vazados não causam o aquecimento das redondezas e nem o derretimento do asfalto do pátio. O perito ambiental confirmou que o pátio não aqueceu, mas manteve a autuação porque o risco do CFC é de escala estratosférica, fragilizando a barreira que impede a passagem de radiação solar mutagênica.
+
+A autuação ambiental mantida pelo perito justifica-se porque o vazamento de CFC provoca o(a):
+
+A) formação de chuvas ácidas no pátio
+B) destruição da camada de ozônio
+C) intensificação do efeito estufa local
+D) aceleração da inversão térmica urbana
+E) escoamento de resíduos orgânicos densos
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00237] topico=inversao_termica
+O algoritmo de um aplicativo de previsão do tempo disparou um alerta vermelho para pedestres de um centro urbano em uma manhã de julho. O gráfico do sistema indicava um índice de estabilidade vertical do ar crítico, mostrando que a taxa de variação de temperatura estava invertida entre o solo e os primeiros 100 metros de altitude. O aviso instruía asmáticos a evitarem exercícios ao ar livre porque a fumaça das avenidas permaneceria trancada na altura do asfalto pelas próximas cinco horas.
+
+O alerta disparado pelo algoritmo do aplicativo meteorológico decorre das condições geradas pelo fenômeno da:
+
+A) chuva ácida metropolitana
+B) intensificação do efeito estufa
+C) inversão térmica
+D) ilha de calor por concreto
+E) magnificação trófica do carbono
+GABARITO: C
+
+======================================================================
+MATERIA: fisiologia_humana
+======================================================================
+
+--------------------------------------------------
+[pratica_00238] topico=vacina_vs_soro
+Um consultor de logística precisa realizar uma viagem de última hora para um país que exige o Certificado Internacional de Vacinação contra a Febre Amarela. Sabendo que o documento só é validado pelas autoridades sanitárias se a aplicação do imunizante ocorrer com pelo menos dez dias de antecedência à data do embarque, o viajante comparece ao centro de saúde para receber a dose protetiva.
+
+A exigência do prazo mínimo de dez dias antes do embarque justifica-se biologicamente porque o organismo do viajante precisa de tempo para:
+
+A) metabolizar e eliminar os anticorpos prontos injetados
+B) desencadear a resposta imune primária e fixar as células de memória
+C) absorver as proteínas plasmáticas que realizam a cura imediata
+D) reverter a toxicidade dos anticorpos equinos introduzidos
+E) purificar os antígenos para que eles combatam o vírus diretamente no ar
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00239] topico=vacina_vs_soro
+Um trabalhador rural é picado por uma jararaca enquanto realizava a colheita manual em uma plantação de café isolada. Ele é levado às pressas ao pronto-socorro apresentando dor intensa e hemorragia local decorrentes da ação rápida das toxinas do veneno da serpente. Para neutralizar de forma imediata o veneno circulante no sangue do paciente e evitar danos sistêmicos aos órgãos, o médico deve prescrever uma intervenção terapêutica.
+
+A ação médica adequada para conter os efeitos agudos do veneno baseia-se na administração de uma solução que contém:
+
+A) antígenos atenuados que estimulam a produção ativa de defesas pelo próprio paciente
+B) anticorpos específicos pré-fabricados que agem diretamente no bloqueio do veneno
+C) células de memória imunológica que conferem proteção duradoura contra novos ataques
+D) fragmentos de DNA viral que induzem a síntese de proteínas de resistência no fígado
+E) toxinas enfraquecidas que desencadeiam uma resposta imune primária estável
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00240] topico=vacina_vs_soro
+Durante uma campanha nacional de imunização em um posto de saúde urbano, pais levam seus filhos pequenos para receberem a vacina injetável contra a paralisia infantil (poliomielite). O objetivo da ação de saúde pública é garantir que as crianças fiquem protegidas contra o vírus caso entrem em contato com ele no futuro, erradicando a transmissão da doença na comunidade.
+
+O mecanismo biológico que justifica a aplicação dessa tecnologia preventiva na população infantil baseia-se na:
+
+A) introdução de anticorpos prontos que destroem o vírus imediatamente após a aplicação
+B) transferência passiva de imunidade que dispensa o gasto energético do corpo da criança
+C) inoculação de antígenos que induzem o organismo a produzir suas próprias células de memória
+D) neutralização emergencial de toxinas bacterianas ativas no trato digestório dos pacientes
+E) cura imediata de infecções latentes por meio da estimulação de respostas inespecíficas
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00241] topico=vacina_vs_soro
+Um operário trabalhando na reforma de um antigo galpão industrial sofre um corte profundo no pé ao pisar em um prego enferrujado encrustado na madeira. No hospital, os prontuários indicam que o trabalhador nunca completou o esquema vacinal básico contra o tétano. Devido ao risco iminente de proliferação da toxina bacteriana letal produzida pelo Clostridium tetani, a equipe médica administra uma solução contendo anticorpos prontos e, em outro membro corporal, aplica a dose da vacina antitetânica.
+
+A administração da solução contendo anticorpos prontos na urgência do ferimento justifica-se pela necessidade de:
+
+A) induzir o corpo do operário a iniciar uma produção nativa e lenta de linfócitos
+B) conferir proteção permanente caso ele sofra o mesmo ferimento no futuro
+C) fornecer neutralização imediata para conter a toxina antes que ela cause danos neurológicos
+D) injetar esporos bacterianos vivos que competem por espaço com a infecção original
+E) esterilizar quimicamente a corrente sanguínea por meio de proteínas de alta temperatura
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00242] topico=vacina_vs_soro
+Agentes de saúde pública visitaram uma escola municipal para aplicar a vacina contra o papilomavírus humano (HPV) em adolescentes de 9 a 14 anos. Durante a palestra explicativa, a enfermeira ressaltou que a vacinação nessa faixa etária, antes do início da vida sexual, é estratégica porque o sistema de defesa dos jovens reage com máxima eficiência à injeção das proteínas virais, garantindo proteção por décadas contra o câncer de colo de útero.
+
+A proteção por décadas mencionada pela enfermeira decorre de uma propriedade do sistema imune estimulada pela vacina denominada:
+
+A) imunização passiva artificial
+B) memória imunológica de longo prazo
+C) barreira inespecífica primária
+D) neutralização enzimática imediata
+E) tolerância biológica a anticorpos equinos
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00243] topico=vacina_vs_soro
+Em uma unidade de terapia intensiva hospitalar, médicos enfrentam um surto de uma variante agressiva de um vírus respiratório que compromete rapidamente os pulmões de pacientes idosos. Como esses pacientes possuem um sistema imune debilitado e não dispõem de tempo hábil para fabricar defesas próprias, a equipe decide administrar um concentrado de imunoglobulinas purificadas extraídas do plasma de doadores já recuperados.
+
+A utilização desse concentrado de imunoglobulinas purificadas como terapia hospitalar justifica-se por promover uma:
+
+A) imunização ativa que força o idoso a fabricar defesas perpétuas
+B) resposta lenta baseada na inoculação de fragmentos ativos do vírus
+C) proteção imediata e passiva, embora não gere memória imunológica duradoura
+D) prevenção de longo prazo contra reinfecções futuras pela mesma variante viral
+E) estimulação direta da medula óssea para a criação autônoma de novos linfócitos
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00244] topico=vacina_vs_soro
+Um morador de uma área periurbana acorda na madrugada e percebe que foi mordido no tornozelo por um morcego hematófago (que se alimenta de sangue). Na unidade de pronto atendimento, o protocolo médico para profilaxia pós-exposição contra a raiva humana exige a aplicação imediata do soro antirrábico ao redor do ferimento, combinado à aplicação da vacina antirrábica em dias intercalados.
+
+A aplicação específica do soro antirrábico nesse protocolo pós-exposição justifica-se pela necessidade de:
+
+A) bloquear imediatamente o avanço do vírus em direção ao sistema nervoso com anticorpos prontos
+B) forçar o organismo do paciente a produzir anticorpos nativos em menos de uma hora
+C) conferir imunidade permanente caso o morador seja atacado novamente no futuro
+D) injetar vírus enfraquecidos que destruam as toxinas salivares por competição ecológica
+E) desencadear uma inflamação terapêutica para purificar o tecido epitelial afetado
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00245] topico=vacina_vs_soro
+Um laboratório de biotecnologia produz sors antiofídicos inoculando pequenas doses não letais de veneno de cobra em cavalos saudáveis. Ao longo de semanas, o sistema imune do cavalo produz uma grande quantidade de proteínas de defesa contra o veneno. Os técnicos coletam o sangue do animal, separam as hemácias do plasma, purificam as proteínas de defesa e embalam o produto final que será enviado aos hospitais.
+
+As proteínas de defesa produzidas pelo cavalo e purificadas pelo laboratório para compor o soro antiofídico são classificadas como:
+
+A) antígenos
+B) vacinas
+C) anticorpos
+D) antibióticos
+E) alérgenos
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00246] topico=vacina_vs_soro
+Um trabalhador de um parque florestal foi picado por uma cascavel e salvo no hospital graças à administração rápida de soro antiofídico. Passados dois anos, o mesmo trabalhador sofreu um segundo acidente com a mesma espécie de cascavel na floresta. Ele argumentou com os colegas que não precisava ir ao hospital porque o soro tomado no passado garantiria sua imunidade contra o veneno da cobra.
+
+Do ponto de vista biológico, o argumento do trabalhador está incorreto porque o soro antiofídico:
+
+A) joga antígenos na corrente sanguínea que se somam ao veneno do segundo ataque
+B) induz uma resposta imune ativa muito lenta que falha em conter o envenenamento agudo
+C) introduz anticorpos prontos de ação imediata que não deixam células de memória no corpo
+D) destrói a medula óssea do paciente, impedindo-o de fabricar linfócitos pelo resto da vida
+E) funciona como uma vacina de curto prazo que exige reforço semanal para manter o efeito
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00247] topico=vacina_vs_soro
+Médicos obstetras orientam mulheres grávidas a tomarem a vacina dTpa (tríplice bacteriana acelular) no último trimestre da gestação. O objetivo da intervenção é fazer com que o corpo da mãe produza anticorpos contra a coqueluche e os transfira naturalmente através da placenta para o feto, garantindo que o bebê já nasça protegido contra a doença até que tenha idade para tomar suas próprias vacinas.
+
+O processo de transferência de anticorpos prontos da mãe para o feto através da placenta configura um exemplo de:
+
+A) imunização ativa natural
+B) imunização passiva natural
+C) imunização ativa artificial
+D) imunização passiva artificial
+E) memória imunológica congênita
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00248] topico=vacina_vs_soro
+Grávidas que comparecem às consultas de pré-natal são orientadas pelo obstetra a receberem a vacina contra a hepatite B. O objetivo médico é forçar o organismo da mãe a processar as proteínas estruturais do vírus inativado presentes na injeção, desencadeando uma cascata de reações bioquímicas internas para que o seu próprio sistema de defesa fabrique as estruturas de combate e as células de salvaguarda de longo prazo antes do parto.
+
+A injeção das proteínas estruturais do vírus inativado na gestante atua introduzindo no organismo um(a):
+
+A) anticorpo exógeno que destrói o vírus de forma imediata e passiva
+B) antígeno que induz a produção ativa de defesas e células de memória
+C) antibiótico natural que esteriliza a corrente sanguínea da paciente
+D) soro terapêutico que confere proteção instantânea contra reinfecções
+E) imunoglobulina equina que ataca diretamente as células hepáticas infectadas
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00249] topico=vacina_vs_soro
+Um pedreiro trabalhando na fundação de um edifício pisa em um pedaço de arame farpado enterrado na lama, sofrendo uma perfuração profunda no calcanhar. Na unidade de pronto atendimento, ao constatar que o trabalhador está com o esquema vacinal atrasado há mais de quinze anos, o médico receita a aplicação imediata do Soro Antitetânico (SAT) para neutralizar de forma urgente as toxinas ativas liberadas pela bactéria do tétano no ferimento.
+
+A administração do soro na urgência do atendimento justifica-se porque essa tecnologia introduz no paciente:
+
+A) antígenos bacterianos atenuados que aceleram a síntese nativa de linfócitos
+B) esporos vivos atenuados que destroem a bactéria por competição biológica
+C) anticorpos específicos pré-fabricados que bloqueiam a toxina imediatamente
+D) células de memória prontas que conferem proteção vitalícia contra o tétano
+E) fragmentos de RNA bacteriano que ensinam as células do pé a resistirem à infecção
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00250] topico=vacina_vs_soro
+Um biólogo em uma expedição florestal é mordido por uma cobra cascavel. Levado ao posto médico, ele recebe doses de soro antiofídico e se recupera. Seis meses depois, o mesmo pesquisador sofre uma nova picada da mesma espécie de cascavel. Ele afirma aos assistentes que não precisa retornar ao hospital porque os anticorpos injetados no tratamento do primeiro acidente ainda estão circulando em seu sangue, garantindo sua total proteção.
+
+O argumento do biólogo está incorreto do ponto de vista imunológico porque o soro antiofídico:
+
+A) fornece anticorpos exógenos que atuam na urgência, mas não geram células de memória
+B) atua como uma vacina de curto prazo que perde o efeito protetivo em menos de trinta dias
+C) injeta antígenos altamente concentrados que aumentam a toxicidade do veneno no segundo ataque
+D) induz o corpo do paciente a destruir seus próprios linfócitos B durante a varredura química
+E) estimula a medula óssea a produzir anticorpos defeituosos contra o veneno de serpentes
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00251] topico=vacina_vs_soro
+Campanhas municipais de saúde orientam tutores de cães e gatos a vacinarem seus animais anualmente contra a raiva nas clínicas veterinárias públicas. Os folhetos explicativos detalham que a injeção anual é necessária porque o vírus da raiva morto contido no frasco treina os glóbulos brancos do animal de estimação a reconhecerem o invasor, deixando o sistema de defesa em alerta permanente contra uma infecção real na rua.
+
+O componente inofensivo do vírus morto contido no frasco do imunizante veterinário, responsável por treinar os glóbulos brancos do animal, atua como um:
+
+A) anticorpo nativo
+B) soro profilático
+C) antígeno
+D) antibiótico biológico
+E) receptor passivo
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00252] topico=vacina_vs_soro
+Médicos oncologistas utilizam um tratamento revolucionário baseado na infusão intravenosa de anticorpos monoclonais específicos em pacientes com linfomas. Essas proteínas de defesa, fabricadas em biorreatores de alta tecnologia a partir de células clonadas, são injetadas diretamente na corrente sanguínea do doente para se ligarem aos receptores das células tumorais e destruí-las imediatamente, agindo como um remédio de precisão sem forçar o organismo debilitado a gastar energia produzindo defesas próprias.
+
+A terapia baseada na injeção direta de anticorpos monoclonais pré-fabricados em laboratório configura um exemplo de:
+
+A) imunização ativa artificial
+B) imunização passiva artificial
+C) imunização ativa natural
+D) imunização passiva natural
+E) engenharia de memória congênita
+GABARITO: B
+
+======================================================================
+MATERIA: optica
+======================================================================
+
+--------------------------------------------------
+[pratica_00273] topico=polarizacao
+Um praticante de pesca esportiva comprou óculos com lentes especiais para utilizar em suas expedições em rios de águas claras. Ele notou que, ao colocar os óculos sob o sol forte, o brilho intenso da luz solar que ricocheteava horizontalmente na superfície d'água sumia por completo, permitindo enxergar com nitidez os peixes nadando nas profundezas.
+
+A tecnologia dessas lentes elimina o incômodo do reflexo luminoso sobre a água ao aplicar diretamente o mecanismo da:
+
+A) difração
+B) refração
+C) dispersão
+D) polarização
+E) ressonância
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00274] topico=difracao
+Moradores de uma comunidade localizada em um vale profundo atrás de uma cadeia de montanhas rochosas conseguem sintonizar emissoras de rádio AM da capital perfeitamente, enquanto o sinal de internet via rádio de altíssima frequência não chega até as casas. Os técnicos explicaram que as ondas longas de rádio AM possuem uma propriedade física que permite desviar do topo do obstáculo de pedra e descer em direção ao vale.
+
+A propriedade física que permite às ondas de rádio AM contornarem o topo das montanhas para alcançar as antenas no vale é a:
+
+A) difração
+B) refração
+C) reflexão
+D) polarização
+E) interferência
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00275] topico=polarizacao
+Engenheiros projetaram janelas automotivas equipadas com películas de cristais líquidos que alinham suas moléculas verticalmente ao receberem uma pequena corrente elétrica. Esse alinhamento molecular atua filtrando os raios de luz solares cegantes que vibram na horizontal após rebaterem no capô metálico do carro, reduzindo o cansaço visual do motorista sem escurecer completamente o vidro.
+
+O controle do brilho excessivo do Sol através do alinhamento molecular da película baseia-se diretamente no fenômeno da:
+
+A) difração eletromagnética
+B) refração luminosa
+C) dispersão cromática
+D) polarização da luz
+E) ressonância óptica
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00276] topico=difracao
+Um morador de um apartamento de frente para uma avenida movimentada reclama que, mesmo fechando quase toda a porta da varanda e deixando apenas uma fresta milimétrica aberta, o som estridente das buzinas dos carros parece se espalhar por todo o interior da sua sala, como se a fresta estivesse funcionando como uma nova caixinha de som espalhando o barulho.
+
+O espalhamento do som das buzinas por todo o ambiente interno ao passar pela fresta estreita da porta ocorre devido ao fenômeno da:
+
+A) refração acústica
+B) difração do som
+C) polarização mecânica
+D) reflexão especular
+E) interferência destrutiva
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00277] topico=difracao
+Um estudante instalou um roteador de internet Wi-Fi na sala de estar de sua casa. Ele notou que, mesmo estando no seu quarto com a porta fechada e atrás de uma parede espessa de alvenaria, o sinal de internet chegava ao seu celular. Os técnicos explicaram que as ondas eletromagnéticas do roteador conseguem atravessar o vão das portas e contornar os cantos das paredes do corredor para inundar os outros cômodos.
+
+A capacidade das ondas do roteador Wi-Fi de contornarem as quinas das paredes e se espalharem pelos cômodos da casa deve-se à:
+
+A) refração total
+B) polarização linear
+C) difração de onda
+D) ressonância magnética
+E) interferência destrutiva
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00278] topico=difracao
+Um técnico de som instalou uma barreira de isolamento acústico de madeira para separar a bateria dos microfones dos cantores. Ele notou que os sons graves do bumbo da bateria continuavam contornando as bordas da placa de madeira e invadindo o canal de áudio dos microfones, enquanto os sons agudos dos pratos eram totalmente bloqueados pela placa.
+
+Os sons graves do bumbo conseguem contornar a placa de madeira com mais facilidade do que os sons agudos dos pratos porque apresentam uma maior taxa de:
+
+A) refração por mudança de meio
+B) polarização mecânica longitudinal
+C) difração devido ao maior comprimento de onda
+D) ressonância com as moléculas de madeira
+E) interferência destrutiva nas quinas
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00279] topico=polarizacao
+Um fotógrafo profissional está registrando imagens de uma cadeia de montanhas refletida perfeitamente em um lago cristalino. Para capturar a textura das rochas sob o fundo da água, ele acopla um filtro circular giratório na lente de sua câmera. À medida que gira o filtro, o brilho intenso da luz solar que rebatia na superfície do lago é progressivamente cortado, revelando os detalhes do fundo d'água sem alterar as cores naturais da paisagem.
+
+O filtro acoplado à lente da câmera fotográfica atua na redução do brilho da superfície do lago ao manipular diretamente o fenômeno da:
+
+A) difração
+B) refração
+C) dispersão
+D) polarização
+E) ressonância
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00280] topico=difracao
+Engenheiros de tráfego instalaram grandes barreiras acústicas de concreto ao longo de uma rodovia expressa para proteger um condomínio residencial vizinho do barulho dos motores. Os moradores dos primeiros andares dos prédios notaram uma redução drástica no ruído, mas os moradores das coberturas continuaram reclamando do barulho. Os técnicos explicaram que, ao atingirem o topo da barreira de concreto, as ondas sonoras sofrem um desvio em suas trajetórias, espalhando-se em direção aos andares mais altos.
+
+A propriedade física que permite ao som dos motores contornar o topo da barreira de concreto e atingir as coberturas dos prédios é a:
+
+A) difração
+B) refração
+C) reflexão
+D) polarização
+E) interferência
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00281] topico=difracao
+Durante uma missão de resgate em alto-mar, um navio da Guarda Costeira tenta enviar um sinal de socorro para uma base costeira localizada atrás de uma grande ilha rochosa. O operador de rádio nota que as transmissões na faixa de ondas curtas (alta frequência) falham em alcançar a base, enquanto o canal de ondas longas (baixa frequência) consegue estabelecer contato perfeitamente, pois suas ondas conseguem desviar do contorno das rochas da ilha.
+
+As ondas de baixa frequência conseguem estabelecer comunicação contornando a estrutura da ilha com mais eficiência devido a uma maior taxa de:
+
+A) refração na água
+B) polarização magnética
+C) difração por maior comprimento de onda
+D) ressonância com o solo rochoso
+E) interferência destrutiva na costa
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00282] topico=polarizacao
+No manual de desenvolvimento de telas para smartphones de alta performance, os engenheiros detalham a inclusão de uma película microscópica texturizada inserida entre o vidro externo e o painel de LED. Essa película atua como uma barreira que impede que a luz do Sol que oscila de forma desordenada no ambiente cause o ofuscamento dos olhos do usuário, selecionando a direção das ondas emitidas estritamente pela tela do celular.
+
+O mecanismo utilizado na engenharia da película para selecionar o plano de oscilação das ondas e evitar o ofuscamento baseia-se no princípio da:
+
+A) difração eletromagnética
+B) refração do vidro
+C) dispersão cromática
+D) polarização da luz
+E) ressonância quântica
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00283] topico=refracao
+Um motorista trafegando por uma estrada retilínea sob o sol do meio-dia avista uma poça d'água fictícia sobre o asfalto quente a algumas centenas de metros à sua frente, espelhando o céu. O relatório meteorológico explicou que o asfalto superaquecido cria uma camada de ar muito quente e menos densa logo acima da pista, alterando a densidade dos meios e forçando os raios de luz solar a sofrerem desvios contínuos em sua trajetória antes de tocarem o chão.
+
+O desvio contínuo na trajetória dos raios de luz gerado pela variação de densidade e temperatura nas camadas de ar sobre o asfalto caracteriza o fenômeno da:
+
+A) difração
+B) refração
+C) reflexão especular
+D) polarização
+E) interferência
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00284] topico=refracao
+Um pescador nativo em pé sobre uma rocha tenta capturar um peixe usando um arpão. Ele sabe por experiência que, se mirar exatamente na posição onde enxerga o animal sob a água cristalina, vai errar o golpe, pois a luz que sai do corpo do peixe sofre uma alteração em sua velocidade e ângulo ao cruzar a fronteira para o ar, deslocando a imagem real.
+
+A divergência entre a posição real do peixe e a imagem percebida pelo pescador fora da água deve-se à ocorrência do fenômeno da:
+
+A) difração
+B) refração
+C) reflexão difusa
+D) polarização
+E) dispersão
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00286] topico=dispersao
+Ao observar o céu logo após um temporal em uma tarde ensolarada, um pedestre avista um arco-íris bem definido. Cientistas explicam que esse efeito visual ocorre porque as gotículas de água esféricas que permanecem suspensas no ar atuam como minúsculos prismas. Ao atravessar a água, a luz branca solar sofre desvios separados para cada cor, pois cada comprimento de onda viaja com uma velocidade ligeiramente diferente no interior da gota.
+
+A decomposição da luz solar em suas cores constituintes ao atravessar as gotas de chuva suspensas no ar é denominada:
+
+A) difração
+B) refração
+C) dispersão
+D) polarização
+E) interferência
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00287] topico=dispersao
+Peritos criminais utilizam espectrofotômetros para identificar substâncias químicas em amostras apreendidas. O coração do aparelho é um bloco óptico polido que faz um feixe de luz branca sofrer desvios angulares separados para cada comprimento de onda ao cruzar o material. O computador detecta o espalhamento das cores e gera um gráfico de absorção para identificar o composto.
+
+O fenômeno físico que ocorre no bloco óptico do aparelho para separar e mapear as cores componentes do feixe de luz branca é a:
+
+A) difração
+B) refração
+C) dispersão
+D) polarização
+E) interferência
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00288] topico=absorcao
+Engenheiros projetaram coletores solares residenciais revestidos com uma placa metálica pintada com uma tinta preta fosca especial. Eles explicaram que essa tinta retém a energia radiante dos fótons solares incidentes em vez de rebatê-la de volta para o ambiente, convertendo essa energia luminosa em agitação molecular para esquentar a água das tubulações.
+
+A retenção da energia luminosa do Sol e sua conversão em calor na placa metálica escura baseiam-se no princípio da:
+
+A) difração
+B) refração
+C) reflexão
+D) polarização
+E) absorção
+GABARITO: E
+
+--------------------------------------------------
+[pratica_00289] topico=absorcao
+Urbanistas sugerem que os proprietários de grandes galpões comerciais pintem suas telhas metálicas superiores de branco texturizado em vez de mantê-las em tons escuros ou cinzas. O objetivo é reduzir os custos com ar-condicionado, visto que as superfícies claras repelem a maior parte da energia radiante solar, ao contrário dos materiais escuros que capturam os raios solares e aquecem a estrutura física do prédio.
+
+A propriedade dos materiais escuros de reterem os raios solares e aquecerem a estrutura do galpão deve-se à ocorrência do fenômeno da:
+
+A) difração
+B) refração
+C) polarização
+D) absorção
+E) interferência
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00290] topico=reflexao_difusa
+Durante uma viagem noturna, um motorista percebe que a placa de sinalização de uma rodovia parece brilhar intensamente ao receber o impacto da luz dos faróis do seu carro. A placa é revestida por uma película áspera contendo microesferas de vidro que fazem os raios luminosos retornarem espalhados em múltiplos ângulos, permitindo que a mensagem seja lida de forma clara pelo condutor de qualquer posição na pista.
+
+O retorno espalhado e desordenado dos raios luminosos na superfície irregular da placa de trânsito caracteriza o fenômeno da:
+
+A) difração de onda
+B) refração vítrea
+C) reflexão especular
+D) reflexão difusa
+E) polarização linear
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00291] topico=reflexao_difusa
+Na fabricação de livros escolares, as editoras dão preferência a papéis foscos e levemente rugosos em substituição aos papéis brilhantes e acetinados. Os designers editoriais explicam que as superfícies rugosas espalham a luz do ambiente em todas as direções de forma desordenada, garantindo que o estudante consiga ler o texto confortavelmente de qualquer ângulo, sem sofrer com focos de brilho cegantes.
+
+O comportamento da luz ao incidir no papel fosco do livro, espalhando-se de forma desordenada e permitindo a leitura confortável, baseia-se na:
+
+A) difração
+B) refração
+C) reflexão especular
+D) reflexão difusa
+E) polarização
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00292] topico=reflexao_especular
+No teto das curvas fechadas de um estacionamento subterrâneo, foram instalados grandes espelhos esféricos convexos perfeitamente polidos. Os motoristas utilizam esses dispositivos para visualizar se há outros veículos vindo na direção contrária nos corredores transversais ocultos, pois a superfície lisa e espelhada devolve os raios de luz de forma organizada, gerando imagens nítidas.
+
+O retorno organizado dos raios de luz na superfície polida do espelho convexo, permitindo a formação de imagens nítidas dos carros ocultos, ocorre devido à:
+
+A) difração das ondas
+B) refração do meio
+C) reflexão especular
+D) reflexão difusa
+E) polarização linear
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00293] topico=reflexao_especular
+Técnicos que limpam painéis solares usam robôs para monitorar a integridade das coberturas protetoras de vidro plano. Se o vidro estiver limpo e polido, ele atua devolvendo uma fração da luz do Sol de forma altamente ordenada e em um único ângulo previsível. No entanto, se houver trincas microestruturais na superfície, os raios de luz começam a retornar bagunçados e espalhados, alertando o sistema sobre a avaria.
+
+O comportamento esperado do vidro limpo e polido, que devolve os raios de luz de forma altamente ordenada e geométrica, é classificado como:
+
+A) difração
+B) refração
+C) reflexão especular
+D) reflexão difusa
+E) polarização
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00294] topico=reflexao_interna_total
+Engenheiros de telecomunicações usam um equipamento a laser para testar o índice de refração do núcleo de vidro de cabos de fibra óptica. Ao injetar a luz no cabo, eles monitoram a transição entre o vidro central e a casca externa. O teste confirma que a luz sofre alterações sucessivas em sua velocidade e comprimento de onda ao tentar mudar de meio, ficando presa no interior do filamento devido aos desvios sofridos na fronteira.
+
+Os desvios e alterações de velocidade sofridos pela luz ao interagir com as fronteiras dos meios de densidades diferentes no cabo configuram o fenômeno da:
+
+A) difração
+B) refração
+C) reflexão difusa
+D) polarização
+E) ressonância
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00295] topico=refracao
+Durante um exame clínico de refração ocular (teste do grau), o oftalmologista projeta letras na parede e posiciona diferentes lentes de vidro na frente dos olhos do paciente. Essas lentes têm como função alterar a trajetória dos raios de luz que entram na pupila, corrigindo o ponto de foco na retina ao forçar a luz a mudar de velocidade e sofrer desvios controlados ao atravessar o vidro.
+
+O princípio físico utilizado pelas lentes oftálmicas para desviar os raios de luz e ajustar o foco na retina baseia-se na:
+
+A) difração
+B) refração
+C) reflexão especular
+D) polarização
+E) interferência
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00296] topico=reflexao_difusa
+Fotógrafos de estúdio utilizam grandes sombrinhas brancas de tecido fosco ou painéis difusores posicionados na frente dos flashes de luz. Eles explicam que, se dispararem o flash diretamente contra o rosto do modelo, a imagem apresentará sombras duras e pontos de brilho excessivos. O painel de tecido atua quebrando o feixe concentrado e espalhando os raios luminosos de forma desordenada em todas as direções sobre o cenário.
+
+A ação do painel de tecido fosco de quebrar o feixe de luz concentrado e espalhá-lo de forma desordenada baseia-se no princípio da:
+
+A) difração
+B) refração
+C) reflexão especular
+D) reflexão difusa
+E) polarização
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00297] topico=dispersao
+Um gemólogo avalia a qualidade de um diamante lapidado analisando o seu "fogo" — o efeito visual em que feixes de luz branca ao entrarem na joia se dividem em faixas coloridas vibrantes e saem pelas facetas polidas. Esse fenômeno ocorre com alta intensidade no diamante porque a velocidade de propagação das diferentes cores da luz varia drasticamente no interior do cristal, forçando-as a se separarem ao longo das trajetórias geométricas internas.
+
+A divisão dos feixes de luz branca em faixas coloridas vibrantes no interior do diamante lapidado ocorre devido à:
+
+A) difração
+B) refração isolada
+C) dispersão
+D) polarização
+E) ressonância
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00298] topico=refracao
+Astrônomos que operam telescópios terrestres precisam corrigir as distorções nas imagens das estrelas causadas pela atmosfera da Terra. Eles explicam que a luz dos astros, ao cruzar as diferentes camadas de ar com temperaturas e densidades variáveis antes de atingir as lentes do equipamento, sofre desvios e alterações contínuas em sua velocidade de propagação e comprimento de onda.
+
+Os desvios e variações de velocidade sofridos pela luz estelar ao atravessar as camadas de ar da atmosfera caracterizam o fenômeno da:
+
+A) difração
+B) refração
+C) reflexão especular
+D) polarização
+E) interferência
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00299] topico=refracao
+Um fotógrafo subaquático tenta registrar a imagem de uma ave pousada em um galho de árvore acima da linha da água. Olhando de dentro da piscina cristalina para fora, ele percebe que a ave parece estar em uma posição ligeiramente mais alta e deslocada do que a sua posição geográfica real.
+
+A alteração na percepção visual da altura e posição da ave para quem observa de dentro da água deve-se à ocorrência do fenômeno da:
+
+A) difração
+B) refração
+C) reflexão difusa
+D) polarização
+E) dispersão
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00300] topico=dispersao
+Ao visitar uma catedral gótica clássica em uma manhã ensolarada, um arquiteto nota que a luz branca do Sol, ao atravessar os ornamentos de vidro lapidado das janelas superiores, projeta faixas perfeitamente separadas com as cores do arco-íris nas paredes internas de pedra do templo.
+
+A separação geométrica da luz branca solar em feixes coloridos ao cruzar a estrutura do vidro polido configura o fenômeno da:
+
+A) difração
+B) refração isolada
+C) dispersão
+D) polarização
+E) interferência
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00301] topico=dispersao
+Engenheiros que projetam sensores de chuva automotivos utilizam um pequeno prisma óptico acoplado ao para-brisa. O dispositivo faz com que a luz de um LED interno sofra decomposição em comprimentos de onda separados ao atravessar o vidro. Quando uma gota de água toca o para-brisa, ela altera esse espalhamento cromático, acionando os limpadores automaticamente.
+
+O espalhamento e separação dos comprimentos de onda da luz ao cruzar a estrutura de vidro do para-brisa baseiam-se no princípio da:
+
+A) difração
+B) refração
+C) dispersão
+D) polarização
+E) interferência
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00302] topico=absorcao
+Fabricantes de perfumes de alta qualidade acondicionam suas fragrâncias em frascos de vidro escuro revestidos com películas protetoras opacas. Os engenheiros químicos explicam que essa embalagem impede que a radiação luminosa do ambiente penetre no líquido e destrua as moléculas do aroma, garantindo que a energia da luz seja totalmente retida na parede externa do vidro e convertida em calor inofensivo.
+
+A retenção da energia da luz na parede externa do frasco escuro com sua consequente conversão em energia térmica é explicada pelo fenômeno da:
+
+A) difração
+B) refração
+C) polarização
+D) absorção
+E) interferência
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00303] topico=absorcao
+Agrônomos que gerenciam estufas hidropônicas utilizam lonas plásticas pretas opacas para cobrir os canais de circulação de água das plantas. O objetivo do manejo é impedir o crescimento de algas nocivas nos dutos, garantindo que toda a radiação luminosa do ambiente seja capturada pelo plástico e convertida em calor, eliminando a luz necessária para a fotossíntese dos micro-organismos aquáticos.
+
+O bloqueio da luz através do aprisionamento da energia luminosa na lona plástica preta baseia-se na ocorrência de:
+
+A) difração
+B) refração
+C) polarização
+D) absorção
+E) interferência
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00304] topico=reflexao_difusa
+Em caixas de supermercados, os leitores digitais escaneiam os códigos de barras das embalagens disparando um feixe de laser vermelho. Quando o laser atinge as barras brancas, a luz retorna de forma espalhada em múltiplos ângulos desordenados para os sensores do aparelho. Os computadores convertem esse espalhamento desordenado em pulsos elétricos para identificar o preço do produto.
+
+O retorno espalhado e desordenado dos raios de luz do laser ao colidirem com as barras brancas foscas da embalagem caracteriza o fenômeno da:
+
+A) difração de onda
+B) refração interna
+C) reflexão especular
+D) reflexão difusa
+E) polarização linear
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00305] topico=reflexao_difusa
+Uma montadora lançou uma linha de carros com pintura "azul fosca" que não brilha sob o sol. Os engenheiros químicos explicaram que a tinta possui micropartículas de sílica que criam uma textura microscópica irregular na lataria. Essa rugosidade faz com que os raios de luz solares retornem bagunçados e espalhados em todas as direções, eliminando reflexos concentrados.
+
+O comportamento dos raios solares ao colidirem com a lataria rugosa do veículo, retornando bagunçados e eliminando focos de brilho, ocorre devido à:
+
+A) difração
+B) refração
+C) reflexão especular
+D) reflexão difusa
+E) polarização
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00306] topico=reflexao_especular
+Durante um procedimento clínico, um dentista utiliza um pequeno espelho plano polido fixado em uma haste metálica para visualizar a face oculta dos dentes de um paciente. O espelho permite enxergar a estrutura com total nitidez porque sua superfície metálica polida devolve os raios de luz vindos da boca do paciente de forma perfeitamente organizada e geométrica.
+
+O retorno perfeitamente organizado e geométrico dos raios de luz na superfície polida do espelho bucal, gerando imagens nítidas, baseia-se no fenômeno da:
+
+A) difração
+B) refração do esmalte
+C) reflexão especular
+D) reflexão difusa
+E) polarização linear
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00307] topico=reflexao_especular
+Engenheiros civis revestiram a fachada de um arranha-céu corporativo com placas de vidro espelhado monolítico. O objetivo estético foi fazer com que o prédio mimetizasse o ambiente ao redor, devolvendo os raios luminosos do céu de forma altamente ordenada e em ângulos precisos, gerando um reflexo perfeito das nuvens na estrutura do edifício.
+
+O comportamento do vidro espelhado que devolve a luz de forma ordenada, gerando um reflexo perfeito do céu na fachada, é denominado:
+
+A) difração
+B) refração
+C) reflexão especular
+D) reflexão difusa
+E) polarização
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00311] topico=reflexao
+Um morador se muda para um apartamento novo e nota que, antes de colocar os móveis, cortinas e tapetes na sala de estar, sua voz parece soar estranha ao conversar no ambiente. Não é possível ouvir uma segunda voz separada, mas o som original das palavras parece se prolongar no tempo, ficando ligeiramente borrado e confuso devido às reflexões rápidas do som nas paredes nuas e no piso liso.
+
+O prolongamento temporal e o aspecto borrado do som da voz na sala vazia caracterizam o fenômeno do(a):
+
+A) eco
+B) reverberação
+C) difração acústica
+D) efeito Doppler
+E) polarização mecânica
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00314] topico=interferencia
+Durante a passagem de som para um show em uma arena aberta, o técnico de áudio posicionou duas caixas de som idênticas emitindo uma mesma nota musical contínua. Ao caminhar pela pista, um músico percebeu que, em determinados pontos específicos do terreno, o volume do som ficava extremamente alto e encorpado, enquanto ao dar dois passos para o lado, o som praticamente sumia, criando zonas de silêncio.
+
+A criação de zonas de volume máximo intercaladas com zonas de silêncio na pista devido ao cruzamento das ondas das duas caixas de som é explicada pela:
+
+A) difração sonora
+B) refração mecânica
+C) ressonância acústica
+D) interferência
+E) polarização das ondas
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00315] topico=interferencia
+Engenheiros automotivos integraram nos bancos de um carro de luxo um sistema que capta o ruído de baixa frequência vindo do rolamento dos pneus no asfalto e emite, através de alto-falantes embutidos, ondas sonoras com a mesma frequência e amplitude, porém com os vales coincidindo exatamente com as cristas do barulho externo, eliminando o incômodo na cabine.
+
+O cancelamento do ruído dos pneus no interior do veículo através da emissão de ondas com fases invertidas baseia-se na ocorrência de:
+
+A) difração acústica
+B) refração na cabine
+C) interferência destrutiva
+D) ressonância mecânica
+E) polarização sonora
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00319] topico=interferencia
+Engenheiros ópticos projetaram um sistema de projeção holográfica para um show de mágica. O dispositivo divide um feixe de laser de alta precisão em dois caminhos. Ao se cruzarem novamente no centro do palco, os dois feixes de luz combinam suas cristas luminosas em pontos específicos e se cancelam em outros, criando um padrão tridimensional flutuante de luz e sombra que forma a imagem no ar.
+
+A criação do padrão tridimensional flutuante através do cruzamento programado dos feixes de laser baseia-se no fenômeno da:
+
+A) difração
+B) refração
+C) polarização
+D) ressonância
+E) interferência
+GABARITO: E
+
+--------------------------------------------------
+[pratica_00320] topico=reflexao
+Turistas visitando uma catedral gótica antiga notaram que, ao baterem palmas no centro do grande salão de pedra, a fala e os sons pareciam se prolongar por quase dois segundos, criando uma atmosfera imersiva, porém tornando a leitura de textos falados confusa e difícil de compreender devido ao som arrastado. O guia explicou que as paredes de pedra nuas e o teto alto fazem as ondas sonoras rebatem sucessivamente e retornem aos ouvidos antes que o cérebro termine de processar o som original.
+
+O efeito de prolongamento e sobreposição do som que deixou as palavras arrastadas no interior da catedral caracteriza a variação de reflexão denominada:
+
+A) eco
+B) refração
+C) difração
+D) reverberação
+E) ressonância
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00324] topico=interferencia
+Projetistas de escapamentos para carros de corrida desenvolveram um silenciador baseado em câmaras de expansão simétricas. O gás do motor é direcionado para dois dutos paralelos de comprimentos ligeiramente calculados para que, ao se reencontrarem na saída do escapamento, os vales da onda sonora de um duto coincidam exatamente com as cristas da onda do outro duto, atenuando drasticamente a poluição sonora nas pistas.
+
+A atenuação do barulho dos motores nas câmaras do silenciador ocorre devido ao processo de:
+
+A) difração acústica
+B) refração na saída
+C) ressonância mecânica
+D) interferência destrutiva
+E) polarização das ondas
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00327] topico=interferencia
+Em um festival de música eletrônica, engenheiros de iluminação cruzaram múltiplos feixes de luz laser sobre a pista de dança. Em determinados pontos geométricos do espaço onde os feixes se sobrepunham, a intensidade luminosa se multiplicava gerando flashes brilhantes, enquanto em pontos milimetricamente vizinhos os feixes se cruzavam em oposição de fase, gerando faixas de sombra completas no ar.
+
+A formação das faixas intercaladas de flashes brilhantes e de sombra devido ao cruzamento dos lasers na pista de dança é explicada pela:
+
+A) difração
+B) refração
+C) polarização
+D) ressonância
+E) interferência
+GABARITO: E
+
+======================================================================
+MATERIA: separacao_de_misturas
+======================================================================
+
+--------------------------------------------------
+[pratica_00253] topico=metodos_separacao_misturas
+Em uma refinaria de petróleo, o óleo bruto extraído das jazidas submarinas passa por uma fornalha industrial e é injetado na base de uma imensa torre metálica vertical contendo pratos internos em diferentes alturas. À medida que o vapor do petróleo sobe pela torre, os diferentes componentes gasosos — como a gasolina, o querosene e o óleo diesel — resfriam-se e condensam-se separadamente em pratos específicos devido à proximidade e diferença controlada de seus pontos de ebulição.
+
+O método mecânico industrial utilizado na torre de refino para fracionar os componentes homogêneos do petróleo bruto baseia-se na:
+
+A) decantação por gravidade
+B) destilação fracionada
+C) levigação mecânica
+D) filtração a vácuo
+E) centrifugação acelerada
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00254] topico=metodos_separacao_misturas
+Durante uma das etapas de uma Estação de Tratamento de Água (ETA), sulfato de alumínio é adicionado ao líquido para fazer com que as micropartículas de sujeira em suspensão se aglutinem, formando flocos densos e pesados. Em seguida, a água é direcionada para tanques gigantescos onde permanece em repouso absoluto por algumas horas, permitindo que a força da gravidade puxe toda essa lama pesada para o fundo do reservatório, limpando a parte superior.
+
+A etapa do tratamento de água descrita, em que o sistema fica em repouso absoluto para que a gravidade afunde os flocos de sujeira densa, configura a:
+
+A) filtração
+B) cristalização
+C) decantação
+D) destilação simples
+E) tamisação mecânica
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00255] topico=metodos_separacao_misturas
+Após passar pelos tanques onde a sujeira mais pesada afundou por ação da gravidade, a água de uma ETA ainda carrega pequenas impurezas microscópicas que continuam flutuando na superfície. Para retê-las e tornar a água límpida, os engenheiros direcionam o fluxo de água para grandes reservatórios verticais preenchidos com camadas sucessivas de cascalho grosso, areia fina e carvão ativado poroso.
+
+A passagem da água pelas barreiras físicas porosas de cascalho, areia e carvão para a retenção de impurezas microscópicas suspensas caracteriza o processo de:
+
+A) decantação
+B) sublimação
+C) filtração
+D) destilação fracionada
+E) centrifugação
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00256] topico=metodos_separacao_misturas
+Uma indústria de gases medicinais capta o ar atmosférico que respiramos e o submete a processos térmicos extremos de compressão e resfriamento até que o ar vire um líquido homogêneo azulado (liquefação). Em seguida, esse ar líquido é transferido para uma coluna de aquecimento gradual, onde o gás nitrogênio ferve primeiro e sai pelo topo, seguido pelo gás argônio e, por fim, pelo gás oxigênio puro.
+
+A separação dos gases constituintes do ar líquido a partir do aquecimento gradual baseado nas diferentes temperaturas de ebulição dos elementos ocorre por:
+
+A) decantação gasosa
+B) filtração mecânica
+C) destilação fracionada
+D) liquefação simples
+E) sublimação reversa
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00257] topico=metodos_separacao_misturas
+O vazamento de óleo combustível de um navio cargueiro gerou uma extensa mancha escura na superfície de uma baía litorânea. Biólogos explicaram que, por apresentarem características químicas totalmente distintas e densidades diferentes, a água salgada e o óleo não se misturam de forma alguma, formando duas camadas heterogêneas bem definidas que facilitam a contenção física por barreiras flutuantes e posterior sucção.
+
+A separação espontânea entre a água do mar e a camada de óleo diesel flutuante ocorre devido ao mesmo princípio físico atuante na:
+
+A) filtração
+B) decantação
+C) destilação
+D) evaporação
+E) dissolução
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00258] topico=metodos_separacao_misturas
+Em um alambique tradicional de produção de cachaça, o caldo de cana fermentado é colocado em uma caldeira de cobre e aquecido diretamente pelo fogo. O vapor de álcool e frações voláteis sobe pelo gargalo do equipamento e passa por um tubo resfriado por uma serpentina de água fria, retornando ao estado líquido em um recipiente coletor isolado, separando a bebida purificada dos resíduos sólidos e sais que ficaram para trás na panela.
+
+O processo de aquecimento do caldo fermentado seguido da condensação dos vapores alcoólicos em um recipiente separado configura a:
+
+A) destilação simples
+B) decantação física
+C) filtração por membrana
+D) destilação fracionada
+E) centrifugação fracionada
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00259] topico=metodos_separacao_misturas
+Os sistemas de ar-condicionado de carros modernos são equipados com um filtro de cabine composto por barreiras de microfibras sintéticas entrelaçadas. O manual técnico especifica que o dispositivo impede a entrada de grãos de pólen, poeira de asfalto e fuligem de escapamentos no interior do veículo, deixando apenas o fluxo de ar limpo passar pelas fendas das tubulações.
+
+A retenção das partículas sólidas de poeira e pólen pelas microfibras sintéticas do ar-condicionado automotivo ocorre devido ao fenômeno da:
+
+A) decantação gasosa
+B) cristalização
+C) filtração
+D) destilação simples
+E) sublimação molecular
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00260] topico=metodos_separacao_misturas
+Fiscais de um órgão de defesa do consumidor realizam o teste de teor de etanol na gasolina em um posto de combustíveis. Eles adicionam uma solução de água e sal a uma proveta contendo a gasolina. O etanol, que estava dissolvido na gasolina, migra inteiramente para a água devido à maior afinidade química. Como a gasolina e a água salgada não se misturam, o sistema é deixado em repouso por um minuto, formando duas camadas nítidas: a gasolina limpa no topo e a água com álcool no fundo.
+
+A separação visual em duas camadas distintas da gasolina e da água com álcool na proveta após o período de repouso ocorre por:
+
+A) destilação
+B) decantação
+C) filtração
+D) liquefação
+E) tamisação
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00261] topico=metodos_separacao_misturas
+Na extração artesanal de essência de lavanda para perfumes, folhas e flores são trituradas e aquecidas em uma caldeira com água. O vapor de água arrasta consigo os compostos aromáticos voláteis da planta. Esse fluxo gasoso misto entra em uma câmara de resfriamento onde volta inteiramente ao estado líquido, coletando na saída uma água perfumada que contém as gotas do óleo essencial isoladas dos tecidos vegetais que permaneceram na caldeira.
+
+O método físico de aquecimento e condensação utilizado para isolar os compostos voláteis do perfume dos tecidos vegetais fixos na caldeira é a:
+
+A) destilação simples
+B) decantação fracionada
+C) filtração molecular
+D) destilação fracionada
+E) levigação mecânica
+GABARITO: A
+
+--------------------------------------------------
+[pratica_00262] topico=metodos_separacao_misturas
+Uma indústria química gera um efluente líquido homogêneo composto por uma mistura de acetona e água inteiramente misturadas. Para reaproveitar a acetona no processo produtivo e evitar o desperdício, o líquido é colocado em um sistema equipado com uma coluna de recheio. Ao aquecer a mistura, os vapores de acetona (ponto de ebulição de 56 °C) sobem e se separam com alta pureza da água (ponto de ebulição de 100 °C) antes de passarem pelo condensador.
+
+O método utilizado pela indústria para isolar a acetona líquida da água com base na proximidade de seus pontos de ebulição é a:
+
+A) filtração qualificada
+B) destilação fracionada
+C) decantação fracionada
+D) destilação simples
+E) cristalização simples
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00263] topico=metodos_separacao_misturas
+Manuais de sobrevivência naval detalham o uso de kits de dessalinização solar para náufragos em botes salva-vidas. O dispositivo consiste em uma cúpula plástica onde a água salgada do mar é colocada na base. O calor do sol evapora a água pura, que condensa nas paredes internas transparentes da cúpula e escorre para um canal coletor perimetral, deixando os cristais de sal secos retidos no fundo do recipiente.
+
+O processo de purificação de água executado pelo kit solar de sobrevivência para separar a água potável líquida do sal marinho é a:
+
+A) decantação solar
+B) filtração a vácuo
+C) destilação fracionada
+D) destilação simples
+E) tamisação natural
+GABARITO: D
+
+--------------------------------------------------
+[pratica_00264] topico=metodos_separacao_misturas
+Pessoas que sofrem com crises severas de asma utilizam aparelhos purificadores de ar em seus quartos. O equipamento capta o ar do ambiente e, através de um motor elétrico, força o fluxo gasoso a colidir contra uma barreira de papel microporoso do tipo HEPA. Esse material bloqueia mecanicamente a passagem de ácaros, fungos e pelos de animais, liberando o ar purificado pelas frestas superiores.
+
+O bloqueio mecânico de ácaros e fungos realizado pela barreira de papel microporoso do purificador de ar é um exemplo de:
+
+A) decantação gasosa
+B) filtração
+C) tamisação molecular
+D) destilação simples
+E) sublimação reversa
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00265] topico=metodos_separacao_misturas
+Em uma mina de extração de ferro, o processo de lavagem das rochas gera um grande volume de efluente heterogêneo composto por água e argila fina em suspensão (lama). Antes de reutilizar essa água no maquinário, o efluente é bombeado para bacias de contenção planas. O sistema permanece imóvel por dias, fazendo com que as partículas densas de argila se acumulem no chão das bacias por ação gravitacional, gerando uma camada de água limpa na superfície.
+
+O método mecânico utilizado na bacia de contenção da mina para separar a água da argila fina através do repouso gravitacional é a:
+
+A) filtração secundária
+B) tamisação rústica
+C) decantação
+D) destilação simples
+E) evaporação térmica
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00266] topico=metodos_separacao_misturas
+Indústrias petroquímicas produzem o querosene de aviação (QAV) isolando-o de outras frações do óleo bruto. Na torre de processamento, o querosene condensa em uma faixa térmica específica (entre 150 °C e 300 °C), separando-se de compostos mais leves que continuam subindo na coluna de fracionamento, como a nafta e o gás de cozinha.
+
+O fracionamento do querosene de aviação na torre petroquímica a partir da condensação em faixas térmicas intermediárias baseia-se na:
+
+A) decantação por gravidade
+B) destilação fracionada
+C) filtração capilar
+D) destilação simples
+E) cristalização térmica
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00267] topico=metodos_separacao_misturas
+Um técnico de laboratório realiza a análise de sedimentos em uma amostra de urina que apresenta aspecto turvo devido à presença de cristais sólidos de oxalato de cálcio. Para isolar esses cristais sem alterar a composição do líquido, ele verte a amostra sobre uma membrana de acetato de celulose microporosa. O líquido atravessa a membrana livremente, enquanto os cristais ficam retidos na malha do papel.
+
+O procedimento executado pelo técnico para reter os cristais de oxalato na membrana microporosa é classificado como:
+
+A) decantação
+B) destilação simples
+C) filtração
+D) destilação fracionada
+E) tamisação
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00268] topico=metodos_separacao_misturas
+Famílias residentes no semiárido brasileiro utilizam dessalinizadores caseiros do tipo "telhado de vidro" para tratar a água salobra de poços artesianos. A água salgada é colocada em uma caixa escura fechada por uma placa de vidro inclinada. O calor do sol faz a água pura evaporar, deixando o sal concentrado no fundo. O vapor atinge o vidro frio, retorna à fase líquida e escorre até um balde coletor de água potável.
+
+A purificação da água salobra no semiárido por meio do ciclo de evaporação solar e condensação no vidro inclinado ocorre por:
+
+A) decantação térmica
+B) destilação simples
+C) destilação fracionada
+D) filtração por gravidade
+E) sublimação induzida
+GABARITO: B
+
+--------------------------------------------------
+[pratica_00269] topico=metodos_separacao_misturas
+No processo industrial de fabricação de manteiga, o creme de leite é submetido a um aquecimento brando para quebrar a emulsão original. Após o aquecimento, o sistema heterogêneo é transferido para tanques horizontais de repouso. Em poucos minutos, a gordura da manteiga líquido-oleosa (menos densa) flutua completamente, formando uma camada amarela superior que é separada por escoamento do soro do leite líquido-aquoso (mais denso) que ficou no fundo.
+
+A separação em camadas do soro de leite e da gordura líquida nos tanques de repouso por diferença de densidade baseia-se na:
+
+A) filtração
+B) destilação simples
+C) decantação
+D) destilação fracionada
+E) evaporação seletiva
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00270] topico=metodos_separacao_misturas
+Operários que trabalham na pintura de automóveis utilizam máscaras faciais especiais equipadas com cartuchos de carvão ativado. O manual de segurança do trabalho explica que o equipamento bloqueia fisicamente a passagem de névoas de tinta e partículas de solventes sólidos em suspensão no ar, permitindo que o trabalhador respire apenas o ar livre de contaminantes particulados.
+
+A retenção das partículas de tinta e fuligem pela malha de carvão ativado do cartucho protetor da máscara configura o processo de:
+
+A) decantação
+B) destilação fracionada
+C) filtração
+D) destilação simples
+E) sublimação
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00271] topico=metodos_separacao_misturas
+Em uma usina de biocombustíveis, a reação química de produção do biodiesel gera um sistema heterogêneo composto por duas fases líquidas que não se misturam: o biodiesel bruto e a glicerina (um subproduto muito mais denso). Para separá-los sem gasto energético, a mistura é transferida para tanques verticais de decantação, onde a glicerina pesada afunda espontaneamente acumulando-se na base, permitindo a retirada do biodiesel limpo pelo topo.
+
+O princípio físico utilizado na usina para isolar o biodiesel da glicerina acumulada na base do tanque fundamenta-se na:
+
+A) filtração por gravidade
+B) destilação fracionada das fases
+C) decantação por diferença de densidade
+D) destilação simples sob vácuo
+E) cristalização por resfriamento
+GABARITO: C
+
+--------------------------------------------------
+[pratica_00272] topico=metodos_separacao_misturas
+Bases aéreas militares utilizam unidades móveis de oxigênio para abastecer os sistemas de respiração dos pilotos de caça. O equipamento captura o ar ambiente, remove o gás carbônico e a umidade, liquefaz o ar por resfriamento criogênico e, finalmente, introduz o líquido em uma mini-torre de pratos. Ao controlar rigorosamente a temperatura, o sistema separa o oxigênio líquido puro do gás nitrogênio com alto grau de confiabilidade para segurança do voo.
+
+O método físico automatizado utilizado na mini-torre para separar o oxigênio do nitrogênio a partir do ar liquefeito é a:
+
+A) decantação criogênica
+B) destilação fracionada
+C) filtração de gases
+D) destilação simples
+E) sublimação reversa
+GABARITO: B
