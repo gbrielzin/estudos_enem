@@ -139,3 +139,47 @@ For a UI-only request:
 3. Preserve existing functionality.
 4. Do not refactor unrelated code.
 5. Do not modify backend/database logic unless necessary.
+
+## NUNCA UTILIZAR COMANDOS GIT
+
+Claude nunca roda `git` (add, commit, push, branch, ou qualquer outro) neste
+projeto, em nenhuma pasta — vale pro repositório inteiro, não só `core/`.
+Editar/criar/apagar arquivo continua normal. Staging, commit e push ficam
+100% com o Gabriel, no momento e do jeito que ele quiser.
+
+### Sempre sugerir o commit, nunca executar
+
+Toda vez que uma alteração feita na conversa (código, doc, dado) chegar a um
+ponto que valeria um commit, Claude deve **sugerir** o commit em texto — nunca
+rodar `git commit`. A sugestão vem em bloco de código pronto pra copiar/colar,
+no formato:
+
+```
+git commit -m "tipo: mensagem curta no imperativo"
+```
+
+- `tipo` segue Conventional Commits (`feat`, `fix`, `docs`, `refactor`,
+  `chore`, `test`, etc.) condizente com o que mudou.
+- Mensagem em português, curta, descrevendo o "quê" da mudança.
+- Se fizer sentido separar em mais de um commit (mudanças sem relação entre
+  si), sugerir os blocos separados, cada um com seu próprio `git add
+  <arquivos>` + `git commit -m "..."`.
+- Isso não substitui a regra acima: Claude nunca executa o `git add`/`commit`
+  sugerido, só mostra pra Gabriel decidir e rodar ele mesmo.
+
+### Branch de trabalho: `algumas-mod`, não `master`
+
+`master` é o branch principal (usado pra PR), mas o trabalho do dia a dia
+acontece em `algumas-mod` (já sincronizado com `origin/algumas-mod`) —
+`master` fica deliberadamente atrasado como um "intermediário" antes do
+GitHub principal. Por causa disso:
+
+- Commits sugeridos por Claude (pela seção acima) presumem que Gabriel está
+  commitando em `algumas-mod`, não em `master`.
+- Levar mudanças de `algumas-mod` pra `master` (merge, PR, ou push direto em
+  `master`) é sempre uma decisão manual e explícita do Gabriel — Claude nunca
+  sugere isso como próximo passo automático depois de um commit, e muito menos
+  executa (vale a mesma regra de nunca rodar `git`).
+- Se em algum momento Gabriel confirmar que já promoveu `algumas-mod` pra
+  `master` (ou trocou de branch de trabalho), atualizar este trecho pra
+  refletir o branch atual.
