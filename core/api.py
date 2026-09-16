@@ -123,6 +123,16 @@ def trilha(grande_area: str, materia: str, fonte: str | None = None, fase: int |
     return db.trilha_banco_pratica(grande_area, materia, fonte=fonte, fase=fase)
 
 
+@app.get("/trilha-fixa")
+def trilha_fixa() -> list[dict]:
+    """Trilha fixa entrelaçada entre matérias de Ciências da Natureza,
+    na ordem de ROI definida em
+    docs/arquitetura_questoes/arquitetura-trilha.docx (ver
+    db.TRILHA_FIXA_NOS) -- diferente de /trilha, que só monta a
+    sequência de UMA matéria por vez."""
+    return db.trilha_fixa()
+
+
 @app.get("/fases")
 def fases(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
     """Fases de uma matéria (hoje só ecologia tem) -- lista vazia pra

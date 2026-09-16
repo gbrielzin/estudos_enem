@@ -76,6 +76,21 @@ export interface NoTrilha {
   desbloqueado: boolean;
 }
 
+/**
+ * Um nó da trilha fixa entrelaçada entre matérias (ver db.trilha_fixa()
+ * / db.TRILHA_FIXA_NOS em core/db.py) -- diferente de NoTrilha, que é
+ * um mini-bloco de 5 questões DENTRO de uma matéria só. Aqui 'chave'
+ * identifica o nó (ex: 'ecologia_poluicao_atmosferica') e 'blocos' é a
+ * lista de NoTrilha daquela matéria/fase.
+ */
+export interface NoTrilhaFixa {
+  chave: string;
+  nome: string;
+  concluido: boolean;
+  desbloqueado: boolean;
+  blocos: NoTrilha[];
+}
+
 export interface FaseInfo {
   fase: number;
   nome: string;
@@ -177,6 +192,17 @@ export function getTrilha(
   if (fonte) query.set('fonte', fonte);
   if (fase != null) query.set('fase', String(fase));
   return buscarJson(`/trilha?${query.toString()}`);
+}
+
+/**
+ * Trilha fixa entrelaçada entre matérias de Ciências da Natureza, na
+ * ordem de ROI definida em
+ * docs/arquitetura_questoes/arquitetura-trilha.docx -- sem parâmetro
+ * de matéria (ao contrário de getTrilha), porque a ordem/composição
+ * dos nós é fixa no backend (db.TRILHA_FIXA_NOS).
+ */
+export function getTrilhaFixa(): Promise<NoTrilhaFixa[]> {
+  return buscarJson(`/trilha-fixa`);
 }
 
 /**
