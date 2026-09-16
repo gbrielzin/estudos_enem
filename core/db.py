@@ -473,6 +473,22 @@ def inicializar_banco() -> None:
                 """
             )
 
+        # Migração de duracao_segundos: checada de novo aqui (não junto
+        # com tipo_erro acima) DE PROPÓSITO -- os dois rebuilds de
+        # tentativas_usuario acima (CHECK antigo / DEFAULT antigo) têm
+        # CREATE TABLE com lista de coluna hardcoded que não inclui
+        # duracao_segundos; se essa migração rodasse ANTES deles, a
+        # coluna seria adicionada e depois APAGADA pelo rebuild (o
+        # INSERT INTO...SELECT do rebuild só copia as colunas que ele
+        # lista). Rodando por último, com PRAGMA table_info() lido de
+        # novo (não reaproveitando `colunas` de cima, que pode estar
+        # desatualizado se um rebuild rodou), fica correto nos dois
+        # casos: banco que nunca teve rebuild, e banco que acabou de
+        # passar por um agora mesmo.
+        colunas_tentativas_final = {r[1] for r in conn.execute("PRAGMA table_info(tentativas_usuario)").fetchall()}
+        if "duracao_segundos" not in colunas_tentativas_final:
+            conn.execute("ALTER TABLE tentativas_usuario ADD COLUMN duracao_segundos INTEGER")
+
 
 # ============================================================
 # ID CANÔNICO
@@ -1231,7 +1247,7 @@ def _recomputar_estado_revisao(id_questao: str, conn: sqlite3.Connection) -> Non
 # REGISTRO DE TENTATIVA
 # ============================================================
 
-def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict:
+def registrar_tentativa(id_questao: str, resposta_escolhida: str | None, duracao_segundos: int | None = None) -> dict:
     """Única função que deve gravar em tentativas_usuario e
     estado_revisao — evita os dois divergirem por escritas separadas.
 
@@ -1246,7 +1262,14 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict
     "pular": entra no Leitner (agenda revisão, e cedo -- streak zera
     igual erro comum) e em toda estatística baseada em
     tentativas_usuario, em vez de desaparecer da conta como se a
-    questão não existisse na prova."""
+    questão não existisse na prova.
+
+    duracao_segundos é OPCIONAL e só de registro (pedido explícito do
+    usuário: "saber quanto tempo gasto numa questão", guardado pra
+    métrica futura -- hoje nenhuma função deste módulo lê essa coluna
+    de volta). None quando quem chamou não mediu tempo nenhum (scripts
+    de carga em lote como reconstruir_base.py, chamadas antigas do
+    Streamlit antes desta coluna existir) -- não é 0s, é "não sei"."""
     if resposta_escolhida is not None:
         resposta_escolhida = resposta_escolhida.strip().upper()
         if resposta_escolhida not in {"A", "B", "C", "D", "E"}:
@@ -1266,10 +1289,10 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict
         conn.execute(
             """
             INSERT INTO tentativas_usuario
-                (id_questao, resposta_escolhida, resultado, intervalo_dias, streak_acertos, proxima_revisao)
-            VALUES (?,?,?,?,?,?)
+                (id_questao, resposta_escolhida, resultado, intervalo_dias, streak_acertos, proxima_revisao, duracao_segundos)
+            VALUES (?,?,?,?,?,?,?)
             """,
-            (id_questao, resposta, resultado, intervalo_dias, streak, proxima_revisao.isoformat()),
+            (id_questao, resposta, resultado, intervalo_dias, streak, proxima_revisao.isoformat(), duracao_segundos),
         )
         id_tentativa = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 

@@ -167,6 +167,26 @@ class TestTentativas(_TestComBancoTemporario):
         resposta = self.client.post("/tentativas", json={"resposta_escolhida": "A"})
         self.assertEqual(resposta.status_code, 422)
 
+    def test_duracao_segundos_repassada_e_gravada(self):
+        resposta = self.client.post(
+            "/tentativas",
+            json={"id_questao": self.id_q, "resposta_escolhida": "C", "duracao_segundos": 42},
+        )
+        self.assertEqual(resposta.status_code, 200)
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertEqual(valor, 42)
+
+    def test_sem_duracao_segundos_continua_funcionando(self):
+        # clientes antigos (ou scripts) que nunca mandaram esse campo
+        # não podem quebrar -- tem que continuar opcional pra sempre.
+        resposta = self.client.post(
+            "/tentativas", json={"id_questao": self.id_q, "resposta_escolhida": "C"}
+        )
+        self.assertEqual(resposta.status_code, 200)
+
 
 class TestHeaderDeStatus(_TestComBancoTemporario):
     """streak/nivel/missoes-do-dia -- nenhum bloqueia o usuário (ver

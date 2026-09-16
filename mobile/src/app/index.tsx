@@ -239,7 +239,7 @@ export default function TrilhaScreen() {
     if (!escolha || tela.tipo !== 'exercicio') return;
     setEnviando(true);
     try {
-      const r = await registrarTentativa(idQuestao, escolha);
+      const r = await registrarTentativa(idQuestao, escolha, duracaoMs / 1000);
       setResultado(r);
       if (r.resultado === 'acertou') {
         setAcertosNoNo((n) => n + 1);

@@ -143,12 +143,16 @@ def fases(grande_area: str, materia: str, fonte: str | None = None) -> list[dict
 class TentativaRequest(BaseModel):
     id_questao: str
     resposta_escolhida: str | None = None
+    # Opcional, de propósito: quem chama sem medir tempo (scripts,
+    # clientes antigos) não manda nada, e db.registrar_tentativa()
+    # trata None como "não sei", não como 0s.
+    duracao_segundos: int | None = None
 
 
 @app.post("/tentativas")
 def registrar_tentativa(corpo: TentativaRequest) -> dict:
     try:
-        return db.registrar_tentativa(corpo.id_questao, corpo.resposta_escolhida)
+        return db.registrar_tentativa(corpo.id_questao, corpo.resposta_escolhida, corpo.duracao_segundos)
     except ValueError as erro:
         raise HTTPException(status_code=400, detail=str(erro))
 

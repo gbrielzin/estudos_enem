@@ -195,6 +195,22 @@ class TestRegistrarTentativaEEstadoRevisao(_TestComBancoTemporario):
         with self.assertRaises(ValueError):
             db.registrar_tentativa("2099_azul_999", "A")
 
+    def test_duracao_segundos_e_gravada_quando_informada(self):
+        db.registrar_tentativa(self.id_q, "C", duracao_segundos=87)
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertEqual(valor, 87)
+
+    def test_duracao_segundos_e_opcional_fica_none_sem_informar(self):
+        db.registrar_tentativa(self.id_q, "A")
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertIsNone(valor)
+
 
 class TestSobrescreverRecalculaTentativas(_TestComBancoTemporario):
     """Cobre o comportamento descrito na seção 3 de SYSTEM_DEEP_DIVE.md:

@@ -241,12 +241,28 @@ export function getExplorarMaterias(grandeArea: GrandeArea): Promise<MateriaExpl
   return buscarJson(`/explorar?grande_area=${grandeArea}`);
 }
 
-export async function registrarTentativa(idQuestao: string, respostaEscolhida: string | null): Promise<ResultadoTentativa> {
+/**
+ * duracaoSegundos é OPCIONAL, de propósito -- pedido explícito do
+ * usuário: "quanto tempo eu gasto numa questão" precisa ficar
+ * registrado no banco pra virar métrica depois, não só mostrado ao
+ * vivo na tela (ver o cronômetro em app/index.tsx, QuestaoAtual).
+ * Quem chama sem medir tempo (nenhum caller hoje, mas a assinatura
+ * fica pronta pra isso) simplesmente não manda o campo.
+ */
+export async function registrarTentativa(
+  idQuestao: string,
+  respostaEscolhida: string | null,
+  duracaoSegundos?: number,
+): Promise<ResultadoTentativa> {
   const url = `${getApiBaseUrl()}/tentativas`;
   const resposta = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
-    body: JSON.stringify({ id_questao: idQuestao, resposta_escolhida: respostaEscolhida }),
+    body: JSON.stringify({
+      id_questao: idQuestao,
+      resposta_escolhida: respostaEscolhida,
+      ...(duracaoSegundos != null ? { duracao_segundos: Math.round(duracaoSegundos) } : {}),
+    }),
   });
   if (!resposta.ok) {
     throw new ErroApi(`Backend respondeu ${resposta.status} ao registrar a tentativa.`);
