@@ -107,19 +107,25 @@ const AREAS: GrandeArea[] = ['matematica', 'ciencias_natureza'];
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 
 /**
- * `apresentacao` ganhou `retomarNoIndice`/`retomarPosicao` opcionais
- * -- pedido explícito do usuário: no meio de uma questão, se o aluno
- * "esqueceu uma coisa", ele precisa conseguir voltar pro conteúdo
- * base (a mesma TelaApresentacao que já abre antes do Nó 1) e depois
- * voltar pra ESSA questão específica, sem perder acertosNoNo/
- * errosNoNo/temposQuestoesNoNo da rodada em andamento (que abrirNo()
- * zeraria). Quando os dois campos vêm undefined, é a apresentação
- * "de entrada" normal (antes do Nó 1); quando vêm preenchidos, é uma
- * revisão no meio de um nó já aberto.
+ * `apresentacao` cobre DOIS casos, distinguidos por `revisao`:
+ *
+ * - `revisao` falso/ausente: entrada normal ANTES de começar um nó
+ *   (seja a primeira vez de uma trilha de matéria única, seja a
+ *   primeira vez abrindo um nó novo da trilha fixa que ainda não foi
+ *   respondido) -- `destinoNoIndice`/`destinoPosicao`, quando
+ *   presentes, dizem pra onde ir ao apertar "Entendi, começar"
+ *   (default pro Nó 1 da trilha inteira se ausentes, comportamento
+ *   antigo da trilha de matéria única).
+ * - `revisao` true: usuário está NO MEIO de uma questão e apertou
+ *   "Rever conteúdo base" (pedido explícito: "esqueci uma coisa") --
+ *   `destinoNoIndice`/`destinoPosicao` aqui é a questão exata de
+ *   onde ele saiu, pra voltar pra ela sem perder acertosNoNo/
+ *   errosNoNo/temposQuestoesNoNo da rodada em andamento (que
+ *   entrarNoExercicioFresco() zeraria).
  */
 type Tela =
   | { tipo: 'mapa' }
-  | { tipo: 'apresentacao'; retomarNoIndice?: number; retomarPosicao?: number }
+  | { tipo: 'apresentacao'; destinoNoIndice?: number; destinoPosicao?: number; revisao?: boolean }
   | { tipo: 'exercicio'; noIndice: number; posicao: number };
 
 /**
@@ -291,15 +297,40 @@ export default function TrilhaScreen() {
     if (materia) carregarTrilha();
   }, [materia, fonte]);
 
-  function abrirNo(no: NoTrilha) {
-    const primeiraNaoRespondida = no.questoes.findIndex((q) => !q.ja_respondida);
-    setTela({ tipo: 'exercicio', noIndice: no.indice, posicao: primeiraNaoRespondida === -1 ? 0 : primeiraNaoRespondida });
+  // Zera a rodada (acertos/erros/tempos) e entra de vez na tela de
+  // exercício -- separado de abrirNo() abaixo porque a apresentação
+  // "de entrada" (ver Tela) precisa poder mostrar o resumo ANTES
+  // disso rodar, só zerando a rodada quando o aluno realmente aperta
+  // "Entendi, começar", não no instante em que toca o nó no mapa.
+  function entrarNoExercicioFresco(noIndice: number, posicaoInicial: number) {
+    setTela({ tipo: 'exercicio', noIndice, posicao: posicaoInicial });
     setEscolha(null);
     setResultado(null);
     setAcertosNoNo(0);
     setErrosNoNo([]);
     setTemposQuestoesNoNo([]);
     setInicioNo(Date.now());
+  }
+
+  // `chaveTrilhaFixa` só vem preenchido quando o toque veio da trilha
+  // fixa (TrilhaFixaPath repassa a chave do NoTrilhaFixa que contém
+  // este bloco -- ver trilha-fixa-path.tsx) -- pra trilha de matéria
+  // única (RESUMOS_TRILHA por materia) fica undefined, sem mudar nada
+  // do comportamento de sempre. Pedido explícito do usuário validando
+  // em modo teste: entrar num nó NUNCA respondido ainda, sem ver o
+  // resumo antes, deixa ele "sem base pra fixar" -- mesmo problema que
+  // "Rever conteúdo base" já resolve NO MEIO da questão, só que aqui é
+  // ANTES da primeira questão do nó.
+  function abrirNo(no: NoTrilha, chaveTrilhaFixa?: string) {
+    const primeiraNaoRespondida = no.questoes.findIndex((q) => !q.ja_respondida);
+    const posicaoInicial = primeiraNaoRespondida === -1 ? 0 : primeiraNaoRespondida;
+    const jaComecado = no.questoes.some((q) => q.ja_respondida);
+    const resumo = resumoDoNo('', chaveTrilhaFixa);
+    if (!jaComecado && resumo) {
+      setTela({ tipo: 'apresentacao', destinoNoIndice: no.indice, destinoPosicao: posicaoInicial });
+      return;
+    }
+    entrarNoExercicioFresco(no.indice, posicaoInicial);
   }
 
   async function voltarPraTrilha() {
@@ -348,7 +379,7 @@ export default function TrilhaScreen() {
   // temposQuestoesNoNo da rodada em andamento.
   function verConteudoBase() {
     if (tela.tipo !== 'exercicio') return;
-    setTela({ tipo: 'apresentacao', retomarNoIndice: tela.noIndice, retomarPosicao: tela.posicao });
+    setTela({ tipo: 'apresentacao', destinoNoIndice: tela.noIndice, destinoPosicao: tela.posicao, revisao: true });
   }
 
   function voltarDaRevisaoDeConteudo(noIndice: number, posicao: number) {
@@ -518,7 +549,7 @@ export default function TrilhaScreen() {
               trilha={trilha}
               trilhaFixa={trilhaFixa}
               materia={materia}
-              onComecar={() => abrirNo(trilha[0])}
+              onEntrarFresco={entrarNoExercicioFresco}
               onVoltarRevisao={voltarDaRevisaoDeConteudo}
               onVoltarMapa={() => setTela({ tipo: 'mapa' })}
             />
@@ -658,21 +689,23 @@ const CORES_FREQUENCIA: Record<TopicoResumo['frequencia'], { bgIcone: string; co
 
 /**
  * Roteia `tela.tipo === 'apresentacao'` entre os dois usos da MESMA
- * TelaApresentacao: entrada normal (antes do Nó 1, zera a rodada via
- * abrirNo) ou revisão no meio de uma questão (retomarNoIndice/
- * retomarPosicao preenchidos, ver Tela acima) -- nesse 2º caso "Voltar"
- * e "Entendi" fazem a MESMA coisa (voltar pra questão de onde saiu),
- * então nenhum dos dois pode reiniciar o nó. Sem resumo curado pra
- * essa matéria (RESUMOS_TRILHA não cobre todas ainda), não renderiza
- * nada -- não faz sentido oferecer "rever conteúdo" pra quem não tem
- * conteúdo nenhum escrito.
+ * TelaApresentacao: entrada normal (`tela.revisao` falso/ausente --
+ * antes de abrir um nó ainda não respondido, zera a rodada via
+ * onEntrarFresco) ou revisão no meio de uma questão (`tela.revisao`
+ * true, `destinoNoIndice`/`destinoPosicao` apontam pra questão exata
+ * de onde saiu, ver Tela acima) -- nesse 2º caso "Voltar" e "Entendi"
+ * fazem a MESMA coisa (voltar pra questão de onde saiu), então nenhum
+ * dos dois pode reiniciar o nó. Sem resumo curado pra essa matéria/nó
+ * (RESUMOS_TRILHA/RESUMOS_POR_CHAVE_TRILHA_FIXA não cobrem todos
+ * ainda), não renderiza nada -- não faz sentido oferecer "rever
+ * conteúdo" pra quem não tem conteúdo nenhum escrito.
  */
 function TelaApresentacaoRoteada({
   tela,
   trilha,
   trilhaFixa,
   materia,
-  onComecar,
+  onEntrarFresco,
   onVoltarRevisao,
   onVoltarMapa,
 }: {
@@ -680,27 +713,31 @@ function TelaApresentacaoRoteada({
   trilha: NoTrilha[];
   trilhaFixa: NoTrilhaFixa[] | null;
   materia: string | null;
-  onComecar: () => void;
+  onEntrarFresco: (noIndice: number, posicao: number) => void;
   onVoltarRevisao: (noIndice: number, posicao: number) => void;
   onVoltarMapa: () => void;
 }) {
-  const emRevisao = tela.retomarNoIndice !== undefined;
-  const noFixaAlvo = trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === (tela.retomarNoIndice ?? -1)));
+  const emRevisao = !!tela.revisao;
+  const noFixaAlvo = trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === (tela.destinoNoIndice ?? -1)));
   const materiaAlvo = materia ?? noFixaAlvo?.nome ?? '';
   const resumo = resumoDoNo(materiaAlvo, noFixaAlvo?.chave);
   if (!resumo) return null;
 
-  const voltar = emRevisao
-    ? () => onVoltarRevisao(tela.retomarNoIndice as number, tela.retomarPosicao ?? 0)
-    : onVoltarMapa;
+  const noIndiceDestino = tela.destinoNoIndice ?? trilha[0].indice;
+  const posicaoDestino = tela.destinoPosicao ?? 0;
+
+  const onComecar = emRevisao
+    ? () => onVoltarRevisao(noIndiceDestino, posicaoDestino)
+    : () => onEntrarFresco(noIndiceDestino, posicaoDestino);
+  const onVoltar = emRevisao ? onComecar : onVoltarMapa;
 
   return (
     <TelaApresentacao
       resumo={resumo}
       materia={materiaAlvo}
       modoRevisao={emRevisao}
-      onComecar={emRevisao ? voltar : onComecar}
-      onVoltar={voltar}
+      onComecar={onComecar}
+      onVoltar={onVoltar}
     />
   );
 }
@@ -797,7 +834,7 @@ function TelaApresentacao({
       </View>
 
       <BotaoPrimario onPress={onComecar}>
-        {modoRevisao ? 'Voltar pra questão' : 'Entendi, começar o Nó 1'}
+        {modoRevisao ? 'Voltar pra questão' : 'Entendi, vamos começar'}
       </BotaoPrimario>
       {/* Em modoRevisao, onVoltar === onComecar (ver TelaApresentacaoRoteada)
           -- um 2º botão pro mesmo destino só duplicaria a ação. */}
@@ -985,7 +1022,7 @@ function TelaResultado({
  * Botão sólido primário (lima) desta tela -- "Confirmar" é literalmente
  * o exemplo do card "Botão afunda" no projeto de design (Claude
  * Design, App ENEM.dc.html, TURNO 6 "Gramática de animação"), reusado
- * aqui pros outros CTAs de mesma cor/peso ("Entendi, começar o Nó 1",
+ * aqui pros outros CTAs de mesma cor/peso ("Entendi, vamos começar",
  * "CONTINUAR", "Continuar ➜"). Botões secundários/links (`Rever
  * depois`, `voltarBtn`, alternativas de questão) ficam de fora de
  * propósito -- no design só o botão SÓLIDO ganha a sombra 3D que

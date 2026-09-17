@@ -8,7 +8,7 @@ import { TrilhaPath } from './trilha-path';
 
 interface TrilhaFixaPathProps {
   trilhaFixa: NoTrilhaFixa[];
-  onAbrirNo: (no: NoTrilha) => void;
+  onAbrirNo: (no: NoTrilha, chaveTrilhaFixa: string) => void;
 }
 
 /**
@@ -24,19 +24,19 @@ interface TrilhaFixaPathProps {
 export function TrilhaFixaPath({ trilhaFixa, onAbrirNo }: TrilhaFixaPathProps) {
   return (
     <View style={styles.container}>
-      {trilhaFixa.map((no) => {
-        if (no.concluido) {
-          return <SecaoConcluida key={no.chave} no={no} />;
+      {trilhaFixa.map((noFixa) => {
+        if (noFixa.concluido) {
+          return <SecaoConcluida key={noFixa.chave} no={noFixa} />;
         }
-        if (no.desbloqueado) {
+        if (noFixa.desbloqueado) {
           return (
-            <View key={no.chave} style={styles.secaoAtiva}>
-              <BannerMateriaAtiva no={no} />
-              <TrilhaPath trilha={no.blocos} onAbrirNo={onAbrirNo} />
+            <View key={noFixa.chave} style={styles.secaoAtiva}>
+              <BannerMateriaAtiva no={noFixa} />
+              <TrilhaPath trilha={noFixa.blocos} onAbrirNo={(bloco) => onAbrirNo(bloco, noFixa.chave)} />
             </View>
           );
         }
-        return <SecaoBloqueada key={no.chave} no={no} />;
+        return <SecaoBloqueada key={noFixa.chave} no={noFixa} />;
       })}
     </View>
   );
