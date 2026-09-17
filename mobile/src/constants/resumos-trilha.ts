@@ -324,6 +324,113 @@ export const RESUMOS_FASE_ECOLOGIA: Record<number, ResumoTrilha> = {
 };
 
 /**
+ * Resumo por fase de Cinemática, adicionado em 2026-09-17 junto com a
+ * inserção dos 2 padrões novos no banco (MRUV/Lançamento Horizontal --
+ * ver docs/questoes/moldes_novos_padroes_2026-09-17.md). Fase 1
+ * (Velocidade Média/MRU, 15 questões já existentes) ainda sem resumo
+ * -- degrada normalmente, sem "Rever conteúdo base" nessa fase.
+ */
+export const RESUMOS_FASE_CINEMATICA: Record<number, ResumoTrilha> = {
+  2: {
+    minutos: 2,
+    titulo: 'O que cai de MRUV',
+    subtitulo: 'Mesma família de fórmula do MRU, só que agora a velocidade MUDA a uma taxa constante.',
+    topicos: [
+      {
+        titulo: 'v = v₀ + a·t',
+        descricao: 'Velocidade em função do tempo -- sinal de "a" positivo acelera, negativo freia',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'v² = v₀² + 2·a·Δs',
+        descricao: 'Velocidade em função do espaço percorrido, sem precisar calcular o tempo',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'Lançamento vertical -- pegadinha',
+        descricao: 'No ponto mais alto, v = 0, mas a aceleração continua sendo g (nunca fica zero)',
+        frequencia: 'media',
+      },
+    ],
+    estatisticaNumero: '2x',
+    estatisticaTexto: 'foi o padrão mais recorrente de Cinemática na amostra de provas oficiais já classificadas.',
+  },
+  3: {
+    minutos: 2,
+    titulo: 'O que cai de Lançamento Horizontal',
+    subtitulo: 'Dois movimentos ACONTECENDO JUNTOS, mas independentes: horizontal é MRU, vertical é queda livre.',
+    topicos: [
+      {
+        titulo: 'Eixo horizontal (x)',
+        descricao: 'MRU puro -- velocidade constante, a mesma que o objeto tinha ao sair',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'Eixo vertical (y)',
+        descricao: 'Queda livre (MRUV com a = g), começando do repouso NESSE eixo -- só a altura decide o tempo de queda',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'Pegadinha clássica',
+        descricao: 'A velocidade horizontal NÃO afeta quanto tempo o objeto leva pra cair -- só a altura importa',
+        frequencia: 'alta',
+      },
+    ],
+    estatisticaNumero: '2x',
+    estatisticaTexto: 'apareceu na amostra de provas oficiais já classificadas, empatado com MRUV.',
+  },
+};
+
+/**
+ * Resumo por fase de Fisiologia Humana, adicionado em 2026-09-17
+ * junto com a inserção dos 2 padrões novos no banco (Bioacumulação em
+ * Tecido Adiposo/Fibras Musculares). Fase 1 (Vacina vs. Soro, 15
+ * questões já existentes) ainda sem resumo -- degrada normalmente.
+ */
+export const RESUMOS_FASE_FISIOLOGIA_HUMANA: Record<number, ResumoTrilha> = {
+  2: {
+    minutos: 2,
+    titulo: 'O que cai de Bioacumulação em Tecido Adiposo',
+    subtitulo: 'Mesma lógica da magnificação trófica que você já viu em Ecologia, só que aplicada dentro do corpo.',
+    topicos: [
+      {
+        titulo: 'Lipossolúvel acumula em gordura',
+        descricao:
+          'Substância que se dissolve em gordura (não em água) não é eliminada fácil pela urina -- o corpo guarda no tecido adiposo',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'Bioacumulação x Magnificação trófica',
+        descricao:
+          'Bioacumulação: acumula DENTRO de um organismo ao longo do tempo. Magnificação trófica: acumula AO LONGO da cadeia alimentar -- não confundir os dois nomes',
+        frequencia: 'media',
+      },
+    ],
+    estatisticaNumero: 'novo',
+    estatisticaTexto: 'padrão adicionado a partir da classificação de questões oficiais (ver docs/pesquisa_estrategia_de_prova.md).',
+  },
+  3: {
+    minutos: 2,
+    titulo: 'O que cai de Fibras Musculares',
+    subtitulo: 'Distinção binária, tipo tabela: fibra lenta x fibra rápida.',
+    topicos: [
+      {
+        titulo: 'Fibra Lenta (vermelha)',
+        descricao: 'Muita mitocôndria, bem irrigada, metabolismo AERÓBICO -- favorece esporte de LONGA duração (maratona, ciclismo de estrada)',
+        frequencia: 'alta',
+      },
+      {
+        titulo: 'Fibra Rápida (branca)',
+        descricao: 'Pouca mitocôndria, metabolismo ANAERÓBICO -- favorece esporte de EXPLOSÃO curta (salto, levantamento de peso, sprint)',
+        frequencia: 'alta',
+      },
+    ],
+    estatisticaNumero: 'novo',
+    estatisticaTexto: 'padrão adicionado a partir da classificação de questões oficiais (ver docs/pesquisa_estrategia_de_prova.md).',
+  },
+};
+
+/**
  * Ponte entre RESUMOS_FASE_ECOLOGIA (chave = número da fase) e a
  * trilha fixa entrelaçada (`core/db.py TRILHA_FIXA_NOS`, chave =
  * string tipo 'ecologia_poluicao_atmosferica') -- é o que faltava pra
@@ -357,4 +464,8 @@ export const RESUMOS_POR_CHAVE_TRILHA_FIXA: Record<string, ResumoTrilha> = {
   optica_ondulatoria_1: RESUMOS_FASE_OPTICA[1],
   optica_ondulatoria_2: RESUMOS_FASE_OPTICA[2],
   optica_ondulatoria_3: RESUMOS_FASE_OPTICA[3],
+  cinematica_mruv: RESUMOS_FASE_CINEMATICA[2],
+  cinematica_lancamento_horizontal: RESUMOS_FASE_CINEMATICA[3],
+  fisiologia_bioacumulacao: RESUMOS_FASE_FISIOLOGIA_HUMANA[2],
+  fisiologia_fibras_musculares: RESUMOS_FASE_FISIOLOGIA_HUMANA[3],
 };

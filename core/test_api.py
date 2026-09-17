@@ -120,10 +120,10 @@ class TestTrilhaEFases(_TestComBancoTemporario):
         self.assertFalse(nos[1]["desbloqueado"])
 
     def test_materia_sem_fase_mapeada_devolve_lista_vazia(self):
-        # cinematica nao tem fase mapeada (so ecologia/optica/acustica
-        # tem, ver db._FASES_POR_MATERIA) -- ver db.fases_disponiveis.
+        # separacao_de_misturas nao tem fase mapeada (ver
+        # db._FASES_POR_MATERIA) -- ver db.fases_disponiveis.
         resposta = self.client.get(
-            "/fases", params={"grande_area": "ciencias_natureza", "materia": "cinematica"}
+            "/fases", params={"grande_area": "ciencias_natureza", "materia": "separacao_de_misturas"}
         )
         self.assertEqual(resposta.status_code, 200)
         self.assertEqual(resposta.json(), [])

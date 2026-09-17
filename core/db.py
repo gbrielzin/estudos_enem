@@ -725,10 +725,44 @@ NOMES_FASES_ACUSTICA: dict[int, str] = {
     3: "Eco, Reverberação e Efeito Doppler",
 }
 
+# Cinemática e Fisiologia Humana ganharam fase em 2026-09-17, no mesmo
+# dia em que os padrões novos foram inserido no banco (MRUV/Lançamento
+# Horizontal; Bioacumulação em Tecido Adiposo/Fibras Musculares -- ver
+# docs/questoes/moldes_novos_padroes_2026-09-17.md e a classificação
+# das questões oficiais em docs/pesquisa_estrategia_de_prova.md). Sem
+# fase, essas questões novas cairiam misturadas com MRU/"vacina vs.
+# soro" no mesmo nó só (fase=None pega tudo) -- o que desfaria o
+# ponto inteiro de ter um padrão por nó.
+FASES_CINEMATICA: dict[int, set[str]] = {
+    1: {"velocidade_media_mru"},
+    2: {"mruv"},
+    3: {"lancamento_horizontal"},
+}
+
+NOMES_FASES_CINEMATICA: dict[int, str] = {
+    1: "Velocidade Média e MRU",
+    2: "MRUV",
+    3: "Lançamento Horizontal",
+}
+
+FASES_FISIOLOGIA_HUMANA: dict[int, set[str]] = {
+    1: {"vacina_vs_soro"},
+    2: {"bioacumulacao_tecido_adiposo"},
+    3: {"fibras_musculares"},
+}
+
+NOMES_FASES_FISIOLOGIA_HUMANA: dict[int, str] = {
+    1: "Vacina vs. Soro",
+    2: "Bioacumulação em Tecido Adiposo",
+    3: "Fibras Musculares",
+}
+
 _FASES_POR_MATERIA: dict[str, dict[int, set[str]]] = {
     "ecologia": FASES_ECOLOGIA,
     "optica": FASES_OPTICA,
     "acustica": FASES_ACUSTICA,
+    "cinematica": FASES_CINEMATICA,
+    "fisiologia_humana": FASES_FISIOLOGIA_HUMANA,
 }
 
 # Espelhada em _FASES_POR_MATERIA acima -- fases_disponiveis() usava
@@ -736,6 +770,8 @@ _FASES_POR_MATERIA: dict[str, dict[int, set[str]]] = {
 # (nomes de fase de Ecologia) pra qualquer matéria nova com fase
 # própria. Generalizado junto com a adição de Óptica/Acústica.
 _NOMES_FASES_POR_MATERIA: dict[str, dict[int, str]] = {
+    "cinematica": NOMES_FASES_CINEMATICA,
+    "fisiologia_humana": NOMES_FASES_FISIOLOGIA_HUMANA,
     "ecologia": NOMES_FASES_ECOLOGIA,
     "optica": NOMES_FASES_OPTICA,
     "acustica": NOMES_FASES_ACUSTICA,
@@ -1134,15 +1170,41 @@ TRILHA_FIXA_NOS: list[dict] = [
         "nome": "Óptica/Ondulatória — Eco, Reverberação, Doppler e Interferência",
         "materias": [("optica", 3), ("acustica", 3)],
     },
+    # Fisiologia Humana e Cinemática ganharam sub-nó em 2026-09-17,
+    # junto com a inserção dos padrões novos (ver
+    # FASES_FISIOLOGIA_HUMANA/FASES_CINEMATICA acima) -- achado de que
+    # "vacina vs. soro" e "velocidade média/MRU" sozinhos batiam com
+    # 0/5 e 1/7 das questões oficiais da amostra, respectivamente (ver
+    # docs/pesquisa_estrategia_de_prova.md).
     {
         "chave": "fisiologia_vacina_soro",
         "nome": "Fisiologia Humana — Vacina vs. Soro",
-        "materias": [("fisiologia_humana", None)],
+        "materias": [("fisiologia_humana", 1)],
+    },
+    {
+        "chave": "fisiologia_bioacumulacao",
+        "nome": "Fisiologia Humana — Bioacumulação em Tecido Adiposo",
+        "materias": [("fisiologia_humana", 2)],
+    },
+    {
+        "chave": "fisiologia_fibras_musculares",
+        "nome": "Fisiologia Humana — Fibras Musculares",
+        "materias": [("fisiologia_humana", 3)],
     },
     {
         "chave": "cinematica_mru",
         "nome": "Cinemática — Velocidade Média e MRU",
-        "materias": [("cinematica", None)],
+        "materias": [("cinematica", 1)],
+    },
+    {
+        "chave": "cinematica_mruv",
+        "nome": "Cinemática — MRUV",
+        "materias": [("cinematica", 2)],
+    },
+    {
+        "chave": "cinematica_lancamento_horizontal",
+        "nome": "Cinemática — Lançamento Horizontal",
+        "materias": [("cinematica", 3)],
     },
     {
         "chave": "separacao_de_misturas",
