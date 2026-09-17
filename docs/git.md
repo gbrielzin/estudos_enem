@@ -377,3 +377,88 @@ Resultado:
 
 A alteração fica registrada no histórico local e também disponível
 no GitHub.
+
+---
+
+# 16. Branches e Pull Request (PR)
+
+Um branch é uma linha de desenvolvimento separada. Nesse projeto:
+
+- `master` é o branch principal — o que aparece pra quem visita o
+  repositório, e o que deveria representar sempre um estado estável.
+- `algumas-mod` é o branch de trabalho do dia a dia — é nele que os
+  commits acontecem primeiro.
+
+Uma Pull Request (PR) é um pedido pra trazer os commits de um branch
+(`algumas-mod`) pra dentro de outro (`master`). Ela existe entre esses
+dois momentos:
+
+commit em algumas-mod → PR aberta (algumas-mod → master) → merge (quando eu decidir)
+
+Criar a PR não muda o `master`. Só o **merge** muda.
+Ou seja: posso deixar uma PR aberta por dias, empilhando commit em cima
+de commit em `algumas-mod`, sem que nada disso toque o `master` — o
+merge é um clique (ou comando) separado, que eu decido dar quando o
+lote de trabalho estiver pronto.
+
+---
+
+# 17. Por que um commit às vezes não aparece nas minhas contribuições
+
+O GitHub só conta um commit no gráfico de contribuições do perfil se:
+
+- ele está no branch padrão do repositório (`master`), OU
+- ele está num branch que tem uma **Pull Request aberta** associada.
+
+Ou seja: dar `git push` sozinho num branch como `algumas-mod`, sem
+nenhuma PR aberta pra ele, NÃO conta como contribuição. Foi isso que
+aconteceu comigo: fiz 2 commits, dei push, e eles não apareceram —
+porque não existia PR aberta ainda.
+
+Assim que abro a PR `algumas-mod → master`, os commits que já existiam
+nela passam a contar, e todo commit novo que eu push nesse branch
+enquanto a PR estiver aberta também conta — sem precisar mergear nada.
+
+**Consequência prática:** abrir a PR cedo (e deixar aberta) já resolve
+as contribuições. Mergear é decisão separada, só quando eu quiser que
+o `master` mude de verdade.
+
+---
+
+# 18. Fazendo tudo pelo terminal (GitHub CLI — `gh`)
+
+Não é obrigatório entrar no site do GitHub pra criar ou mergear uma PR.
+A ferramenta `gh` (GitHub CLI) faz isso pelo terminal.
+
+Primeira vez (por máquina):
+
+```
+gh auth login
+```
+
+Criar a PR (uma vez por branch de trabalho, pode deixar aberta):
+
+```
+gh pr create --base master --head algumas-mod --title "titulo da PR" --body "descricao"
+```
+
+Ver o status da PR (se está aberta, quantos commits tem, etc.):
+
+```
+gh pr status
+```
+
+Mergear quando eu decidir que está pronto (só nesse momento o `master`
+muda):
+
+```
+gh pr merge --merge
+```
+
+(`--merge` cria um commit de merge, como o botão "Merge pull request"
+do site faz por padrão; `--squash` junta tudo num commit só, `--rebase`
+reaplica os commits em sequência — a diferença é só de como o
+histórico fica, nenhuma delas é "mais certa").
+
+Continuo comitando/pushando normal (`git commit`, `git push`) — o `gh`
+só substitui a parte de abrir/mergear PR pelo site.

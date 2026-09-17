@@ -76,6 +76,21 @@ export interface NoTrilha {
   desbloqueado: boolean;
 }
 
+/**
+ * Um nó da trilha fixa entrelaçada entre matérias (ver db.trilha_fixa()
+ * / db.TRILHA_FIXA_NOS em core/db.py) -- diferente de NoTrilha, que é
+ * um mini-bloco de 5 questões DENTRO de uma matéria só. Aqui 'chave'
+ * identifica o nó (ex: 'ecologia_poluicao_atmosferica') e 'blocos' é a
+ * lista de NoTrilha daquela matéria/fase.
+ */
+export interface NoTrilhaFixa {
+  chave: string;
+  nome: string;
+  concluido: boolean;
+  desbloqueado: boolean;
+  blocos: NoTrilha[];
+}
+
 export interface FaseInfo {
   fase: number;
   nome: string;
@@ -144,7 +159,16 @@ async function buscarJson<T>(caminho: string): Promise<T> {
   const url = `${getApiBaseUrl()}${caminho}`;
   let resposta: Response;
   try {
-    resposta = await fetch(url, { headers: cabecalhosAutenticacao() });
+    // cache: 'no-store' -- sem isso, o navegador pode servir uma
+    // resposta antiga do cache HTTP em vez de bater na API de novo
+    // (mais visível na versão web, que roda dentro do próprio Chrome;
+    // o app nativo no celular não usa esse cache do jeito que o
+    // fetch() do navegador usa). Como toda tela desta trilha depende
+    // de progresso ATUAL (nó desbloqueado, questão já respondida),
+    // uma resposta em cache é literalmente a causa de "a web ficou
+    // atrasada em relação ao celular" -- os dois batem no mesmo
+    // backend/enem.db, só um dos dois estava lendo cache velho.
+    resposta = await fetch(url, { headers: cabecalhosAutenticacao(), cache: 'no-store' });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);
     throw new ErroApi(`Não consegui alcançar o backend em ${url} (${mensagem}). Confere se está na mesma wifi do computador e se o servidor está rodando.`);
@@ -177,6 +201,17 @@ export function getTrilha(
   if (fonte) query.set('fonte', fonte);
   if (fase != null) query.set('fase', String(fase));
   return buscarJson(`/trilha?${query.toString()}`);
+}
+
+/**
+ * Trilha fixa entrelaçada entre matérias de Ciências da Natureza, na
+ * ordem de ROI definida em
+ * docs/arquitetura_questoes/arquitetura-trilha.docx -- sem parâmetro
+ * de matéria (ao contrário de getTrilha), porque a ordem/composição
+ * dos nós é fixa no backend (db.TRILHA_FIXA_NOS).
+ */
+export function getTrilhaFixa(): Promise<NoTrilhaFixa[]> {
+  return buscarJson(`/trilha-fixa`);
 }
 
 /**
@@ -215,12 +250,28 @@ export function getExplorarMaterias(grandeArea: GrandeArea): Promise<MateriaExpl
   return buscarJson(`/explorar?grande_area=${grandeArea}`);
 }
 
-export async function registrarTentativa(idQuestao: string, respostaEscolhida: string | null): Promise<ResultadoTentativa> {
+/**
+ * duracaoSegundos é OPCIONAL, de propósito -- pedido explícito do
+ * usuário: "quanto tempo eu gasto numa questão" precisa ficar
+ * registrado no banco pra virar métrica depois, não só mostrado ao
+ * vivo na tela (ver o cronômetro em app/index.tsx, QuestaoAtual).
+ * Quem chama sem medir tempo (nenhum caller hoje, mas a assinatura
+ * fica pronta pra isso) simplesmente não manda o campo.
+ */
+export async function registrarTentativa(
+  idQuestao: string,
+  respostaEscolhida: string | null,
+  duracaoSegundos?: number,
+): Promise<ResultadoTentativa> {
   const url = `${getApiBaseUrl()}/tentativas`;
   const resposta = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
-    body: JSON.stringify({ id_questao: idQuestao, resposta_escolhida: respostaEscolhida }),
+    body: JSON.stringify({
+      id_questao: idQuestao,
+      resposta_escolhida: respostaEscolhida,
+      ...(duracaoSegundos != null ? { duracao_segundos: Math.round(duracaoSegundos) } : {}),
+    }),
   });
   if (!resposta.ok) {
     throw new ErroApi(`Backend respondeu ${resposta.status} ao registrar a tentativa.`);

@@ -127,6 +127,16 @@ class TestTrilhaEFases(_TestComBancoTemporario):
         self.assertEqual(resposta.status_code, 200)
         self.assertEqual(resposta.json(), [])
 
+    def test_trilha_fixa_devolve_um_no_por_entrada_de_db_trilha_fixa_nos(self):
+        # as 7 questoes do setUp sao 'ecologia' sem topico -- nao caem na
+        # fase 4 (ver FASES_ECOLOGIA), entao o 1o no fica vazio mesmo
+        # assim; o endpoint so precisa repassar db.trilha_fixa() como esta.
+        resposta = self.client.get("/trilha-fixa")
+        self.assertEqual(resposta.status_code, 200)
+        nos = resposta.json()
+        self.assertEqual([n["chave"] for n in nos], [c["chave"] for c in db.TRILHA_FIXA_NOS])
+        self.assertTrue(nos[0]["desbloqueado"])
+
 
 class TestTentativas(_TestComBancoTemporario):
     def setUp(self):
@@ -156,6 +166,26 @@ class TestTentativas(_TestComBancoTemporario):
     def test_corpo_sem_id_questao_da_422(self):
         resposta = self.client.post("/tentativas", json={"resposta_escolhida": "A"})
         self.assertEqual(resposta.status_code, 422)
+
+    def test_duracao_segundos_repassada_e_gravada(self):
+        resposta = self.client.post(
+            "/tentativas",
+            json={"id_questao": self.id_q, "resposta_escolhida": "C", "duracao_segundos": 42},
+        )
+        self.assertEqual(resposta.status_code, 200)
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertEqual(valor, 42)
+
+    def test_sem_duracao_segundos_continua_funcionando(self):
+        # clientes antigos (ou scripts) que nunca mandaram esse campo
+        # não podem quebrar -- tem que continuar opcional pra sempre.
+        resposta = self.client.post(
+            "/tentativas", json={"id_questao": self.id_q, "resposta_escolhida": "C"}
+        )
+        self.assertEqual(resposta.status_code, 200)
 
 
 class TestHeaderDeStatus(_TestComBancoTemporario):

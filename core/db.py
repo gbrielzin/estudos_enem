@@ -473,6 +473,22 @@ def inicializar_banco() -> None:
                 """
             )
 
+        # Migração de duracao_segundos: checada de novo aqui (não junto
+        # com tipo_erro acima) DE PROPÓSITO -- os dois rebuilds de
+        # tentativas_usuario acima (CHECK antigo / DEFAULT antigo) têm
+        # CREATE TABLE com lista de coluna hardcoded que não inclui
+        # duracao_segundos; se essa migração rodasse ANTES deles, a
+        # coluna seria adicionada e depois APAGADA pelo rebuild (o
+        # INSERT INTO...SELECT do rebuild só copia as colunas que ele
+        # lista). Rodando por último, com PRAGMA table_info() lido de
+        # novo (não reaproveitando `colunas` de cima, que pode estar
+        # desatualizado se um rebuild rodou), fica correto nos dois
+        # casos: banco que nunca teve rebuild, e banco que acabou de
+        # passar por um agora mesmo.
+        colunas_tentativas_final = {r[1] for r in conn.execute("PRAGMA table_info(tentativas_usuario)").fetchall()}
+        if "duracao_segundos" not in colunas_tentativas_final:
+            conn.execute("ALTER TABLE tentativas_usuario ADD COLUMN duracao_segundos INTEGER")
+
 
 # ============================================================
 # ID CANÔNICO
@@ -971,6 +987,124 @@ def trilha_banco_pratica(
     return nos
 
 
+# Trilha fixa entrelaçada, especificada em
+# docs/arquitetura_questoes/arquitetura-trilha.docx: ordem de matérias
+# escolhida por ROI (assunto de maior incidência/menor esforço de
+# aprendizado primeiro), não pela ordem alfabética/curricular. Cada
+# item é (materia, fase) -- fase=None pega o banco inteiro da matéria
+# (hoje só ecologia tem fase mapeada, ver FASES_ECOLOGIA); um nó pode
+# juntar mais de uma matéria (ex: Óptica + Acústica, ambas fazem parte
+# do mesmo "Nó 2: Óptica/Ondulatória" do documento).
+#
+# Eletrodinâmica (Nó 6 do documento) fica de fora por enquanto -- ainda
+# não tem nenhuma questão no banco (precisa dos SVGs de circuito
+# primeiro). Adicionar aqui assim que a primeira leva de questões
+# entrar; não criar o nó vazio antes disso (ver decisão do usuário
+# 2026-09-16: só entra na trilha fixa quando tiver conteúdo de verdade).
+TRILHA_FIXA_NOS: list[dict] = [
+    {
+        "chave": "ecologia_poluicao_atmosferica",
+        "nome": "Ecologia — Poluição Atmosférica",
+        "materias": [("ecologia", 4)],
+    },
+    {
+        "chave": "optica_ondulatoria",
+        "nome": "Óptica/Ondulatória — Fundamentos e Fenômenos",
+        "materias": [("optica", None), ("acustica", None)],
+    },
+    {
+        "chave": "fisiologia_vacina_soro",
+        "nome": "Fisiologia Humana — Vacina vs. Soro",
+        "materias": [("fisiologia_humana", None)],
+    },
+    {
+        "chave": "cinematica_mru",
+        "nome": "Cinemática — Velocidade Média e MRU",
+        "materias": [("cinematica", None)],
+    },
+    {
+        "chave": "separacao_de_misturas",
+        "nome": "Química Geral — Separação de Misturas",
+        "materias": [("separacao_de_misturas", None)],
+    },
+]
+
+
+def trilha_fixa(tamanho_no: int = 5) -> list[dict]:
+    """Monta a trilha fixa entrelaçada entre matérias (TRILHA_FIXA_NOS),
+    com progressão sequencial em DOIS níveis:
+
+      1. dentro de cada nó, os mini-blocos de `tamanho_no` questões
+         desbloqueiam em sequência (mesma regra de trilha_banco_pratica);
+      2. entre nós, um nó só desbloqueia quando TODOS os blocos do nó
+         ANTERIOR estiverem concluídos -- é isso que faz a trilha
+         "entrelaçada" (Ecologia -> Óptica -> Fisiologia -> ...) em vez
+         de várias trilhas soltas por matéria.
+
+    Cada entrada do retorno: {'chave', 'nome', 'concluido', 'desbloqueado',
+    'blocos': [...]}, onde cada bloco tem o mesmo formato de
+    trilha_banco_pratica ('indice', 'questoes', 'concluido', 'desbloqueado'
+    -- aqui 'desbloqueado' do bloco já leva em conta se o NÓ INTEIRO está
+    desbloqueado, não só a posição do bloco dentro dele).
+
+    grande_area é sempre 'ciencias_natureza' -- todas as matérias de
+    TRILHA_FIXA_NOS são de Ciências da Natureza; não parametrizado de
+    propósito, pra não sugerir que isso já suporta Matemática (não
+    suporta -- nenhuma matéria de matemática está mapeada aqui ainda)."""
+    grande_area = "ciencias_natureza"
+    resultado = []
+    no_anterior_concluido = True
+
+    for config in TRILHA_FIXA_NOS:
+        questoes: list[dict] = []
+        for materia, fase in config["materias"]:
+            materia_norm = canonicalizar_materia(normalizar_texto(materia))
+            qs = questoes_por_materia(grande_area, materia_norm, origem="banco_pratica")
+            if fase is not None:
+                qs = [q for q in qs if fase_de_topico(materia_norm, q.get("topico")) == fase]
+            questoes.extend(qs)
+
+        ids = [q["id_questao"] for q in questoes]
+        respondidas: set[str] = set()
+        if ids:
+            with _conectar() as conn:
+                marcadores = ",".join("?" * len(ids))
+                linhas = conn.execute(
+                    f"SELECT DISTINCT id_questao FROM tentativas_usuario WHERE id_questao IN ({marcadores})",
+                    ids,
+                ).fetchall()
+            respondidas = {r[0] for r in linhas}
+
+        no_desbloqueado = no_anterior_concluido
+        blocos = []
+        bloco_anterior_concluido = True
+        for i in range(0, len(questoes), tamanho_no):
+            bloco_questoes = [
+                dict(q, ja_respondida=q["id_questao"] in respondidas)
+                for q in questoes[i:i + tamanho_no]
+            ]
+            bloco_concluido = all(q["ja_respondida"] for q in bloco_questoes)
+            blocos.append({
+                "indice": i // tamanho_no,
+                "questoes": bloco_questoes,
+                "concluido": bloco_concluido,
+                "desbloqueado": no_desbloqueado and bloco_anterior_concluido,
+            })
+            bloco_anterior_concluido = bloco_anterior_concluido and bloco_concluido
+
+        no_concluido = len(questoes) > 0 and all(b["concluido"] for b in blocos)
+        resultado.append({
+            "chave": config["chave"],
+            "nome": config["nome"],
+            "concluido": no_concluido,
+            "desbloqueado": no_desbloqueado,
+            "blocos": blocos,
+        })
+        no_anterior_concluido = no_anterior_concluido and no_concluido
+
+    return resultado
+
+
 def listar_banco_pratica() -> list[dict]:
     """Toda questão do banco de prática, mais recente primeiro --
     alimenta a listagem/gerenciamento no Admin (apagar uma questão
@@ -1113,7 +1247,7 @@ def _recomputar_estado_revisao(id_questao: str, conn: sqlite3.Connection) -> Non
 # REGISTRO DE TENTATIVA
 # ============================================================
 
-def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict:
+def registrar_tentativa(id_questao: str, resposta_escolhida: str | None, duracao_segundos: int | None = None) -> dict:
     """Única função que deve gravar em tentativas_usuario e
     estado_revisao — evita os dois divergirem por escritas separadas.
 
@@ -1128,7 +1262,14 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict
     "pular": entra no Leitner (agenda revisão, e cedo -- streak zera
     igual erro comum) e em toda estatística baseada em
     tentativas_usuario, em vez de desaparecer da conta como se a
-    questão não existisse na prova."""
+    questão não existisse na prova.
+
+    duracao_segundos é OPCIONAL e só de registro (pedido explícito do
+    usuário: "saber quanto tempo gasto numa questão", guardado pra
+    métrica futura -- hoje nenhuma função deste módulo lê essa coluna
+    de volta). None quando quem chamou não mediu tempo nenhum (scripts
+    de carga em lote como reconstruir_base.py, chamadas antigas do
+    Streamlit antes desta coluna existir) -- não é 0s, é "não sei"."""
     if resposta_escolhida is not None:
         resposta_escolhida = resposta_escolhida.strip().upper()
         if resposta_escolhida not in {"A", "B", "C", "D", "E"}:
@@ -1148,10 +1289,10 @@ def registrar_tentativa(id_questao: str, resposta_escolhida: str | None) -> dict
         conn.execute(
             """
             INSERT INTO tentativas_usuario
-                (id_questao, resposta_escolhida, resultado, intervalo_dias, streak_acertos, proxima_revisao)
-            VALUES (?,?,?,?,?,?)
+                (id_questao, resposta_escolhida, resultado, intervalo_dias, streak_acertos, proxima_revisao, duracao_segundos)
+            VALUES (?,?,?,?,?,?,?)
             """,
-            (id_questao, resposta, resultado, intervalo_dias, streak, proxima_revisao.isoformat()),
+            (id_questao, resposta, resultado, intervalo_dias, streak, proxima_revisao.isoformat(), duracao_segundos),
         )
         id_tentativa = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
 

@@ -195,6 +195,22 @@ class TestRegistrarTentativaEEstadoRevisao(_TestComBancoTemporario):
         with self.assertRaises(ValueError):
             db.registrar_tentativa("2099_azul_999", "A")
 
+    def test_duracao_segundos_e_gravada_quando_informada(self):
+        db.registrar_tentativa(self.id_q, "C", duracao_segundos=87)
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertEqual(valor, 87)
+
+    def test_duracao_segundos_e_opcional_fica_none_sem_informar(self):
+        db.registrar_tentativa(self.id_q, "A")
+        with db._conectar() as conn:
+            valor = conn.execute(
+                "SELECT duracao_segundos FROM tentativas_usuario WHERE id_questao = ?", (self.id_q,)
+            ).fetchone()[0]
+        self.assertIsNone(valor)
+
 
 class TestSobrescreverRecalculaTentativas(_TestComBancoTemporario):
     """Cobre o comportamento descrito na seção 3 de SYSTEM_DEEP_DIVE.md:
@@ -761,6 +777,60 @@ class TestTrilhaBancoPratica(_TestComBancoTemporario):
         respondidas = {q["id_questao"]: q["ja_respondida"] for q in trilha[0]["questoes"]}
         self.assertTrue(respondidas[ids[0]])
         self.assertFalse(respondidas[ids[1]])
+
+
+class TestTrilhaFixa(_TestComBancoTemporario):
+    def _inserir_n(self, materia: str, n: int, topico: str | None = None) -> list[str]:
+        ids = []
+        for i in range(n):
+            id_q, _ = db.inserir_questao_pratica(
+                grande_area="ciencias_natureza", materia=materia,
+                alternativa_correta="A", enunciado_texto=f"{materia} {topico} {i}",
+                fonte="autoral", topico=topico,
+            )
+            ids.append(id_q)
+        return ids
+
+    def test_ordem_dos_nos_segue_a_arquitetura(self):
+        chaves = [no["chave"] for no in db.trilha_fixa()]
+        self.assertEqual(chaves, [c["chave"] for c in db.TRILHA_FIXA_NOS])
+
+    def test_no_sem_questao_nenhuma_fica_vazio_mas_presente(self):
+        trilha = db.trilha_fixa()
+        self.assertEqual(trilha[0]["blocos"], [])
+        self.assertFalse(trilha[0]["concluido"])
+
+    def test_primeiro_no_desbloqueado_resto_bloqueado_no_inicio(self):
+        self._inserir_n("ecologia", 5, topico="chuva_acida")  # fase 4
+        self._inserir_n("optica", 5)
+        trilha = db.trilha_fixa()
+        self.assertTrue(trilha[0]["desbloqueado"])
+        self.assertFalse(trilha[1]["desbloqueado"])
+
+    def test_concluir_todo_o_no_1_desbloqueia_o_no_2(self):
+        ids_ecologia = self._inserir_n("ecologia", 5, topico="chuva_acida")
+        self._inserir_n("optica", 5)
+        for id_q in ids_ecologia:
+            db.registrar_tentativa(id_q, "A")
+        trilha = db.trilha_fixa()
+        self.assertTrue(trilha[0]["concluido"])
+        self.assertTrue(trilha[1]["desbloqueado"])
+
+    def test_no_de_optica_junta_optica_e_acustica(self):
+        self._inserir_n("optica", 3)
+        self._inserir_n("acustica", 2)
+        trilha = db.trilha_fixa()
+        no_optica = next(no for no in trilha if no["chave"] == "optica_ondulatoria")
+        total = sum(len(b["questoes"]) for b in no_optica["blocos"])
+        self.assertEqual(total, 5)
+
+    def test_no_de_ecologia_filtra_so_a_fase_4(self):
+        self._inserir_n("ecologia", 3, topico="chuva_acida")  # fase 4
+        self._inserir_n("ecologia", 4, topico="predacao")  # fase 2
+        trilha = db.trilha_fixa()
+        no_ecologia = trilha[0]
+        total = sum(len(b["questoes"]) for b in no_ecologia["blocos"])
+        self.assertEqual(total, 3)
 
 
 class TestFontesEListarBancoPratica(_TestComBancoTemporario):
