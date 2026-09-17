@@ -153,6 +153,13 @@ export interface MateriaExplorada {
   taxa_acerto: number | null;
 }
 
+export interface Resolucao {
+  id_resolucao: number;
+  tipo: 'video' | 'texto';
+  conteudo: string;
+  canal: string | null;
+}
+
 class ErroApi extends Error {}
 
 async function buscarJson<T>(caminho: string): Promise<T> {
@@ -277,4 +284,34 @@ export async function registrarTentativa(
     throw new ErroApi(`Backend respondeu ${resposta.status} ao registrar a tentativa.`);
   }
   return resposta.json();
+}
+
+/**
+ * Resoluções (texto/vídeo) já cadastradas pra uma questão -- mesma
+ * db.resolucoes_da_questao() que o Cartão-resposta (Streamlit) já
+ * usa. Lista vazia é o caso comum (nem toda questão tem uma
+ * resolução escrita ainda); a tela de exercício só mostra a seção
+ * "por que essa resposta" quando isto vier não-vazio.
+ */
+export function getResolucoes(idQuestao: string): Promise<Resolucao[]> {
+  return buscarJson(`/resolucoes?id_questao=${encodeURIComponent(idQuestao)}`);
+}
+
+/**
+ * Botão "reportar" da tela de exercício -- pedido explícito do
+ * usuário pra acumular sinal ("acho que o gabarito está errado",
+ * "falta uma figura" etc.) enquanto ele valida o banco de questões
+ * pergunta por pergunta, sem sair do fluxo de resolver pra corrigir
+ * na hora.
+ */
+export async function reportarQuestao(idQuestao: string, comentario: string): Promise<void> {
+  const url = `${getApiBaseUrl()}/relatos`;
+  const resposta = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+    body: JSON.stringify({ id_questao: idQuestao, comentario }),
+  });
+  if (!resposta.ok) {
+    throw new ErroApi(`Backend respondeu ${resposta.status} ao enviar o relato.`);
+  }
 }
