@@ -114,8 +114,8 @@ export function Mascote({
     if (!animado) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(respirar, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(respirar, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(respirar, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+        Animated.timing(respirar, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
       ]),
     );
     loop.start();

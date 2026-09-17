@@ -817,16 +817,23 @@ class TestTrilhaFixa(_TestComBancoTemporario):
         self.assertTrue(trilha[1]["desbloqueado"])
 
     def test_no_de_optica_junta_optica_e_acustica(self):
-        self._inserir_n("optica", 3)
-        self._inserir_n("acustica", 2)
+        # Óptica/Ondulatória virou 3 nós por subfase (2026-09, ver
+        # FASES_OPTICA/FASES_ACUSTICA) -- 'polarizacao' é fase 1 tanto
+        # pra optica quanto (por não estar mapeada) fica de fora da
+        # acustica; 'eco' é fase 3 só de acustica. Cada subfase junta
+        # as duas matérias, mesmo que uma delas não tenha questão
+        # naquela fase ainda.
+        self._inserir_n("optica", 3, topico="polarizacao")  # fase 1
+        self._inserir_n("acustica", 2, topico="eco")  # fase 3
         trilha = db.trilha_fixa()
-        no_optica = next(no for no in trilha if no["chave"] == "optica_ondulatoria")
-        total = sum(len(b["questoes"]) for b in no_optica["blocos"])
-        self.assertEqual(total, 5)
+        no_fase1 = next(no for no in trilha if no["chave"] == "optica_ondulatoria_1")
+        no_fase3 = next(no for no in trilha if no["chave"] == "optica_ondulatoria_3")
+        self.assertEqual(sum(len(b["questoes"]) for b in no_fase1["blocos"]), 3)
+        self.assertEqual(sum(len(b["questoes"]) for b in no_fase3["blocos"]), 2)
 
     def test_no_de_ecologia_filtra_so_a_fase_4(self):
         self._inserir_n("ecologia", 3, topico="chuva_acida")  # fase 4
-        self._inserir_n("ecologia", 4, topico="predacao")  # fase 2
+        self._inserir_n("ecologia", 4, topico="predacao")  # fase 7 (nao fase 4)
         trilha = db.trilha_fixa()
         no_ecologia = trilha[0]
         total = sum(len(b["questoes"]) for b in no_ecologia["blocos"])

@@ -100,7 +100,7 @@ function ChamaAnimada({ ativa }: { ativa: boolean }) {
   const t = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!ativa) return;
-    const loop = Animated.loop(Animated.timing(t, { toValue: 1, duration: 1500, easing: Easing.linear, useNativeDriver: true }));
+    const loop = Animated.loop(Animated.timing(t, { toValue: 1, duration: 1500, easing: Easing.linear, useNativeDriver: false }));
     loop.start();
     return () => loop.stop();
   }, [ativa, t]);
