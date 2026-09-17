@@ -159,7 +159,16 @@ async function buscarJson<T>(caminho: string): Promise<T> {
   const url = `${getApiBaseUrl()}${caminho}`;
   let resposta: Response;
   try {
-    resposta = await fetch(url, { headers: cabecalhosAutenticacao() });
+    // cache: 'no-store' -- sem isso, o navegador pode servir uma
+    // resposta antiga do cache HTTP em vez de bater na API de novo
+    // (mais visível na versão web, que roda dentro do próprio Chrome;
+    // o app nativo no celular não usa esse cache do jeito que o
+    // fetch() do navegador usa). Como toda tela desta trilha depende
+    // de progresso ATUAL (nó desbloqueado, questão já respondida),
+    // uma resposta em cache é literalmente a causa de "a web ficou
+    // atrasada em relação ao celular" -- os dois batem no mesmo
+    // backend/enem.db, só um dos dois estava lendo cache velho.
+    resposta = await fetch(url, { headers: cabecalhosAutenticacao(), cache: 'no-store' });
   } catch (erro) {
     const mensagem = erro instanceof Error ? erro.message : String(erro);
     throw new ErroApi(`Não consegui alcançar o backend em ${url} (${mensagem}). Confere se está na mesma wifi do computador e se o servidor está rodando.`);

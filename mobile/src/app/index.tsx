@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mascote } from '@/components/mascote';
@@ -948,6 +948,41 @@ function CardFeedback({ correto, children }: { correto: boolean; children: strin
 // só um alerta visual).
 const LIMITE_AVISO_QUESTAO_MS = 10 * 60 * 1000;
 
+/**
+ * Som de acerto -- pedido explícito do usuário ("que nem o Duolingo
+ * tem"): um "ding" curto de duas notas quando a resposta está certa
+ * (assets/sounds/acerto.wav, sintetizado, sem depender de rede).
+ *
+ * Isolado num componente PRÓPRIO, montado só quando `Platform.OS ===
+ * 'web'` (ver uso em QuestaoAtual), de propósito: expo-audio é um
+ * módulo nativo, e o Expo Go do celular não tem esse módulo linkado
+ * sem reconstruir o app (custom dev client) -- chamar
+ * useAudioPlayer() incondicionalmente já quebrava a tela de questão
+ * no celular (relatado pelo usuário: "erro ao abrir as questões"),
+ * mesmo com o .play() dentro de try/catch, porque o problema é a
+ * PRÓPRIA CHAMADA do hook, não só o play(). Como React permite
+ * montar/desmontar COMPONENTES condicionalmente (diferente de pular
+ * um hook dentro do mesmo componente, que violaria as regras de
+ * hooks), colocar o hook aqui dentro e só renderizar
+ * <SomAcerto /> na web tira o módulo nativo do caminho inteiro no
+ * celular -- ele nunca é sequer importado/chamado lá.
+ */
+function SomAcerto({ tocar }: { tocar: boolean }) {
+  const player = useAudioPlayer(require('@/assets/sounds/acerto.wav'));
+  useEffect(() => {
+    if (tocar) {
+      try {
+        player.seekTo(0);
+        player.play();
+      } catch {
+        // silencioso de propósito -- som é extra, nunca pode quebrar
+        // o fluxo de responder questão.
+      }
+    }
+  }, [tocar, player]);
+  return null;
+}
+
 function QuestaoAtual({
   questao,
   posicao,
@@ -1001,28 +1036,6 @@ function QuestaoAtual({
   // dela -- por isso `total - posicao`, não `total - posicao - 1`.
   const restantesMs = mediaMs !== null ? mediaMs * (total - posicao) : null;
 
-  // Som de acerto -- pedido explícito do usuário ("que nem o
-  // Duolingo tem"): um "ding" curto de duas notas quando a resposta
-  // está certa (assets/sounds/acerto.wav, sintetizado, sem depender de
-  // rede). useAudioPlayer mantém UMA instância do player pelo tempo de
-  // vida do componente (QuestaoAtual não desmonta entre questões do
-  // mesmo nó -- só troca de props), então cada acerto só precisa
-  // voltar o player pro início e tocar de novo, sem recarregar o
-  // arquivo. Silencioso em erro -- se o áudio falhar (autoplay
-  // bloqueado no navegador antes de qualquer interação, plataforma sem
-  // suporte etc.), não pode quebrar o fluxo de responder questão.
-  const somAcerto = useAudioPlayer(require('@/assets/sounds/acerto.wav'));
-  useEffect(() => {
-    if (resultado?.resultado === 'acertou') {
-      try {
-        somAcerto.seekTo(0);
-        somAcerto.play();
-      } catch {
-        // silencioso de propósito, ver comentário acima
-      }
-    }
-  }, [resultado, somAcerto]);
-
   // "Questão entra" -- padrão de movimento 6a do projeto de design
   // (Claude Design, App ENEM.dc.html, TURNO 6 "Gramática de
   // animação"): 240ms, entra pela direita. O design também prevê
@@ -1040,6 +1053,7 @@ function QuestaoAtual({
 
   return (
     <Animated.View style={{ opacity: entrada, transform: [{ translateX }] }}>
+      {Platform.OS === 'web' && <SomAcerto tocar={resultado?.resultado === 'acertou'} />}
       <View style={styles.progressoLinha}>
         <Text style={styles.progressoTexto}>
           Questão {posicao + 1} de {total}
