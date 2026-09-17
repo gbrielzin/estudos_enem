@@ -30,7 +30,18 @@ export function BarraProgresso({ pct, cor, altura = 11 }: { pct: number; cor: st
   useEffect(() => {
     Animated.timing(progresso, { toValue: pct, duration: 420, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
     brilho.setValue(0);
-    Animated.timing(brilho, { toValue: 1, duration: 420, delay: 60, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    // false, não true: `progresso` (acima) já roda em JS de propósito
+    // (anima `width` em %, propriedade não suportada pelo driver
+    // nativo) -- rodar `brilho` em native driver AO MESMO TEMPO, no
+    // mesmo componente, é o que disparava "Attempting to run JS
+    // driven animation on animated node that has been moved to
+    // 'native' earlier" no New Architecture (Fabric) desta versão de
+    // RN/Expo (achado ao vivo: tela de questão travava com esse erro
+    // assim que a barra de progresso entrava em cena). Manter TODO
+    // Animated.timing deste app em `false` evita misturar os dois
+    // modos na mesma árvore de render -- ver mesmo raciocínio já
+    // aplicado em use-interacao-botao.ts.
+    Animated.timing(brilho, { toValue: 1, duration: 420, delay: 60, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
   }, [pct, progresso, brilho]);
 
   const larguraAnimada = progresso.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
