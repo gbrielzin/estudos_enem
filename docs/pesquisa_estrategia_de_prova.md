@@ -76,6 +76,13 @@ repetir tema nem perder o fio entre sessões.
   análises comerciais sérias usam a série INTEIRA 2009-2025 sem excluir
   os anos mais antigos
 
+- §14 — dificuldade escalando por exposição repetida: nome formal mais
+  próximo é "adaptive fading"/scaffolding fading (Kalyuga, expertise
+  reversal) + controle de dificuldade de distrator por similaridade
+  semântica (AIG) + Bjork (dificuldade desejável precisa calibrar pelo
+  nível do aluno) — e um caso real em produção (Duolingo/BirdBrain)
+  fazendo quase exatamente isso dentro da mesma lição
+
 **Pendente / candidato pra próximas rodadas:** nenhum tema pendente
 registrado no momento. Próxima rodada depende de novo pedido do Gabriel.
 
@@ -1889,4 +1896,120 @@ que hoje só existe pra 2019 em diante em `gabaritos_reais/` — carregar
 (PDF do INEP ou outra fonte), não só da API de enunciado.
 
 Fontes: [História do ENEM: TRI e Sistema de Correção (SimpleTeacher)](https://www.simpleteacher.com.br/blog/historia-enem-tri-corrrecao-2009-2012), [Andifes — Saiba tudo sobre o Enem 2009](https://www.andifes.org.br/2009/05/15/saiba-tudo-sobre-o-enem-2009/), [ENEM 2017: confira as principais mudanças para este ano (AppProva)](https://appprova.com.br/enem-2017-confira-as-principais-mudancas-para-este-ano/), [Nota do Enem: como funciona a TRI (QueroBolsa)](https://querobolsa.com.br/revista/nota-do-enem-como-funciona-a-tri), [O que mais cai no Enem: análise 2015-2024 (Evolucional)](https://blog.evolucional.com.br/o-que-mais-cai-no-enem/), [O que mais cai no ENEM em cada matéria — 6.840 questões (AlvoEnem)](https://alvoenem.com/materiais/guia/assuntos-que-mais-caem-no-enem), [Sample Size and Item Calibration or Person Measure Stability (Rasch.org)](https://www.rasch.org/rmt/rmt74m.htm).
+
+---
+
+## 14. Dificuldade escalando por exposição repetida
+
+Motivação: validando a trilha de Relações Ecológicas ao vivo, o Gabriel notou
+que uma questão de "inquilinismo" fácil de matar só lendo o comando era boa
+no início (pega o hábito, aprende o padrão), mas incomodou quando repetiu a
+MESMA facilidade numa questão que apareceu bem mais tarde, depois que ele já
+tinha dominado aquele padrão. Intuição: a sutileza do distrator deveria SUBIR
+conforme o número de exposições ao mesmo `topico` aumenta — questão 1-2 pode
+ser óbvia, questão 5+ do mesmo padrão deveria exigir mais. Esta seção checa
+se isso já tem nome/pesquisa formal, ou se é ideia nova.
+
+### 14.1 Não existe correspondência EXATA — mas existem 3 conceitos formais adjacentes, e eles convergem
+
+Nenhuma busca achou um estudo medindo literalmente "dificuldade de distrator
+de múltipla escolha subindo a cada repetição do mesmo padrão" — isso não é
+como a literatura de psicometria fatia o problema (ela pensa em calibrar
+UM item, não uma progressão de itens do mesmo item model). Mas três linhas
+de pesquisa DIFERENTES, cada uma bem estabelecida na sua área, apontam pro
+mesmo lugar quando somadas:
+
+1. **Expertise reversal effect + adaptive fading (Kalyuga)** — já citado na
+   §9.2 pro contexto de worked examples: o que ajuda iniciante atrapalha
+   quem já tem base. O ponto novo aqui: existe uma técnica formal chamada
+   **"faded worked examples"** (backward fading) — uma sequência real onde o
+   PRIMEIRO exemplo vem 100% resolvido, o SEGUNDO tem só o último passo pro
+   aluno completar, e cada exemplo seguinte remove mais passos, até o aluno
+   resolver sozinho do zero. Um experimento (Salden, Koedinger, Renkl et al.)
+   comparou fading FIXO (progressão pré-definida) com fading ADAPTATIVO
+   (ajustado ao desempenho real de CADA aluno) — o adaptativo produziu
+   ganho de aprendizagem maior que o fixo, tanto em laboratório quanto em
+   sala de aula real. Isso é a mesma lógica da ideia do Gabriel, só que do
+   lado de "quanto apoio dar", não "quão sutil é o distrator" — mas o
+   princípio (reduzir a facilidade conforme a competência sobe, e fazer
+   isso adaptado ao indivíduo, não num cronograma fixo) é idêntico.
+2. **Bjork: "dificuldade desejável" muda de categoria conforme o nível do
+   aluno** — reforça a mesma lógica pelo lado da teoria de retenção (§2.4):
+   uma dificuldade só é "desejável" quando o aluno já tem base pra vencer
+   ela com esforço real; a MESMA dificuldade que era desejável no dia 1 de
+   um padrão novo pode virar "indesejável" (fácil demais pra gerar
+   qualquer esforço real, logo sem ganho de retenção) depois que o padrão
+   já foi dominado — é literalmente descrever o desconforto que o Gabriel
+   sentiu, só que pelo ângulo teórico "por que aquilo parou de ajudar".
+3. **Controle de dificuldade de distrator por similaridade semântica (AIG)**
+   — a peça que FALTAVA nas seções 12.6-12.9 (que cobriram como achar o
+   radical/incidental e como prever dificuldade, mas não como GRADUAR
+   dificuldade dentro do mesmo item model). Pesquisa recente confirma
+   diretamente: **o conteúdo do distrator é o fator que mais controla a
+   dificuldade do item** (mais que a posição da alternativa ou a
+   dificuldade do texto do enunciado) — especificamente, a similaridade
+   SEMÂNTICA entre a alternativa correta e o distrator. Existe inclusive
+   uma escala formal de 3 pontos pra classificar um distrator: "obviamente
+   errado" (0), "meio plausível" (1), "plausível" (2). Aplicado ao caso
+   real do Gabriel: um distrator "obviamente errado" pra uma questão de
+   CFC/ozônio seria algo sem nenhuma relação temática (ex: "reflexão da
+   luz solar"); um distrator "plausível" seria EXATAMENTE chuva ácida ou
+   efeito estufa — os mecanismos que a §12.11 já confirmou ser a confusão
+   mais documentada do mundo nesse tópico. **Ou seja: dá pra gerar,
+   deliberadamente, uma versão fácil e uma versão difícil do MESMO item
+   model, trocando só a "distância semântica" do distrator escolhido** —
+   isso é controlável e documentado, não é acaso.
+
+**Força de evidência**: (1) é estudo controlado real (lab + sala de aula),
+mas mede fading de exemplo resolvido, não distrator de múltipla escolha —
+adjacente, não idêntico. (2) é extrapolação lógica direta da teoria de Bjork
+já citada, não um estudo novo medindo exposição repetida especificamente.
+(3) é a mais diretamente aplicável — vem de pesquisa recente de geração
+automática de item especificamente sobre CONTROLAR dificuldade de distrator,
+o pedaço que faltava pra fechar o raciocínio do Gabriel com método, não só
+analogia.
+
+### 14.2 Um sistema real em produção já faz quase exatamente isso
+
+**Duolingo** documenta publicamente (blog técnico da empresa, não
+terceiro) que o motor de recomendação deles (internamente chamado
+"BirdBrain") mede o desempenho do aluno DENTRO da mesma lição, em tempo
+real: se o aluno está acertando tudo, os últimos exercícios da lição são
+trocados por exercícios mais difíceis, tirados de um nível acima — usando
+as MESMAS palavras/estrutura que acabaram de ser praticadas, só aumentando
+a exigência. A empresa descreve isso explicitamente como manter o aluno na
+"fronteira do aprendizado" (zona de desenvolvimento proximal, Vygotsky) —
+não deixar nem fácil demais (tédio, sem ganho) nem difícil demais
+(frustração, trava). Isso é validação de produto em escala real (Duolingo
+tem centenas de milhões de usuários), não estudo controlado publicado com
+metodologia revisada por pares — tratar com o mesmo peso que os outros
+achados "sistema real" já citados na §4 (forte como prova de viabilidade
+em produção, não como prova científica formal).
+
+Fontes: [The expertise reversal effect (Kalyuga, Ayres, Chandler, Sweller)](https://www.researchgate.net/publication/48829036_The_Expertise_Reversal_Effect), [The expertise reversal effect and worked examples in tutored problem solving (Salden, Koedinger, Renkl et al.)](http://www.cee.uma.pt/ron/Salden%20et%20al.%20-%20The%20Expertise%20Reversal%20Effect%20and%20Worked%20Examples.pdf), [Faded Worked Examples — CAFÉ Toolkit](https://cafe.cognitiveload.com.au/kb/fadedworkedexamples), [Introducing Desirable Difficulties Into Practice and Instruction (Bjork & Bjork)](https://www.unh.edu/teaching-learning-resource-hub/sites/default/files/media/2023-06/itow-introducing-desirable-difficulties-into-practice-and-instruction-bjork-and-bjork.pdf), [Structure-Aware Modeling of Multiple-Choice Questions Improves Automatic Difficulty Estimation (arXiv)](https://arxiv.org/pdf/2606.08988), [Difficulty-Controllable Cloze Question Distractor Generation (arXiv)](https://arxiv.org/pdf/2511.01526), [The Features of Plausible but Incorrect Options: Distractor Plausibility in Synonym-Based Vocabulary Tests (Ludewig, Schwerter, McElvany 2023)](https://journals.sagepub.com/doi/10.1177/07342829231167892), [Keeping you at the frontier of learning with adaptive lessons (Duolingo Blog)](https://blog.duolingo.com/keeping-you-at-the-frontier-of-learning-with-adaptive-lessons/).
+
+### 14.3 Conexão direta com o pipeline de Automatic Item Generation que o app já usa (§12)
+
+O desenho de pipeline já proposto na §12.12 (extrai padrão → molde
+radical/incidental → gera → Gabriel valida) pode ganhar uma dimensão a
+mais sem mudar a estrutura: **o molde de um `topico` poderia especificar
+não 1, mas 2-3 NÍVEIS de dificuldade do mesmo radical**, cada nível
+definido pela distância semântica do distrator em relação à resposta
+certa — nível 1 (distrator "obviamente errado", sem relação temática),
+nível 2 (distrator do MESMO campo temático mas mecanismo diferente,
+reconhecível com atenção), nível 3 (distrator = a concepção errada mais
+documentada pra aquele padrão especificamente, exigindo domínio real pra
+descartar — exatamente o que a fase 4 de Ecologia já faz por padrão, sem
+ainda ter os níveis 1/2 como opção deliberada mais fácil).
+
+Isso não resolve sozinho a pergunta "depois de quantas questões subir de
+nível" — a §12.8 (overlearning ratio, 1,5-2× a repetição inicial) é o
+número mais próximo disponível hoje, mas foi calculado pra um contexto
+diferente (repetição até dominar, não escalonamento de distrator) — tratar
+como ponto de partida a testar, não como resposta fechada. Também não
+prescreve se isso deveria ser HARDCODED no molde (3 variantes escritas de
+antemão) ou CALCULADO em cima do histórico real de acerto por `topico`
+(`tentativas_usuario` já tem esse dado) — as duas são compatíveis com a
+arquitetura atual, é decisão de implementação pra outro momento, não desta
+pesquisa.
 
