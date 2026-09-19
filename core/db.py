@@ -647,12 +647,15 @@ CADERNO_BANCO_PRATICA = "banco_pratica"
 # e trilha_banco_pratica(fase=...) não filtra nada pra ela.
 FASES_ECOLOGIA: dict[int, set[str]] = {
     1: {"magnificacao_trofica", "dissipacao_termica", "fragmentacao_de_habitat", "eutrofizacao"},
-    2: {
-        "competicao_interespecifica", "mutualismo", "protocooperacao", "inquilinismo",
-        "epifitismo", "comensalismo", "predacao", "parasitismo", "amensalismo",
-        "sucessao_primaria", "sucessao_secundaria", "canibalismo",
-        "capacidade_de_suporte", "potencial_biotico",
-    },
+    # A antiga fase 2 ("Relações Ecológicas", 14 padrões diferentes numa
+    # tela só) foi dividida em 3 em 2026-09-17 -- achado ao vivo do
+    # usuário validando a trilha: resumo "muito coisa" numa tela só, e
+    # um padrão de população (capacidade_de_suporte) aparecendo "do
+    # nada" no meio de padrões de relação ENTRE espécies diferentes
+    # (são coisas conceitualmente distintas, mereciam fases separadas).
+    # Números 7/8 usados pras duas fases novas (em vez de renumerar
+    # 3-6 que já existiam) -- ver NOMES_FASES_ECOLOGIA abaixo.
+    2: {"mutualismo", "protocooperacao", "comensalismo", "inquilinismo", "epifitismo"},  # Harmônicas
     3: {
         "fixacao_biologica", "nitrificacao", "desnitrificacao",
         "piramide_numeros_invertida", "piramide_energia_direta",
@@ -661,18 +664,118 @@ FASES_ECOLOGIA: dict[int, set[str]] = {
     4: {"chuva_acida", "destruicao_camada_ozonio", "inversao_termica", "aquecimento_global"},
     5: {"filtracao_e_cloracao", "coagulacao_decantacao", "decomposicao_aerobica", "chorume", "gas_metano"},
     6: {"ilha_de_calor", "chuva_de_conveccao", "evapotranspiracao", "albedo", "pegada_de_carbono"},
+    7: {"competicao_interespecifica", "predacao", "parasitismo", "amensalismo"},  # Desarmônicas
+    8: {"sucessao_primaria", "sucessao_secundaria", "capacidade_de_suporte", "potencial_biotico", "canibalismo"},  # População/Sucessão
 }
 
 NOMES_FASES_ECOLOGIA: dict[int, str] = {
     1: "Cadeias Alimentares e Fluxo de Energia",
-    2: "Relações Ecológicas e Sucessão",
+    2: "Relações Ecológicas Harmônicas",
     3: "Ciclos Biogeoquímicos e Pirâmides",
     4: "Poluição Atmosférica",
     5: "Saneamento Básico, Lixo e Resíduos",
     6: "Impactos Urbanos",
+    7: "Relações Ecológicas Desarmônicas",
+    8: "População e Sucessão Ecológica",
 }
 
-_FASES_POR_MATERIA: dict[str, dict[int, set[str]]] = {"ecologia": FASES_ECOLOGIA}
+# Óptica/Ondulatória -- 2ª matéria a ganhar fase (2026-09), a partir de
+# 'docs/questoes/Óptica - Fase 1 (PARTE 2).docx' (fonte autoral do
+# usuário): a Fase 1 desse documento já vem dividida em 3 subfases
+# (1.1 Polarização x Difração, 1.2 Refração/Dispersão/Absorção/
+# Reflexão, 1.3 Eco/Reverberação/Doppler/Interferência), cada uma
+# testando um "pool" fixo de fenômenos parecidos com contexto variado
+# -- achado ao vivo confirmando a suspeita do usuário de que "a banca
+# repete o mesmo conjunto de alternativas, só troca o cenário" (ver
+# docs/pesquisa_estrategia_de_prova.md, seção sobre Automatic Item
+# Generation). Diferente de Ecologia, essa trilha combina DUAS
+# matérias (óptica + acústica, mesmo nó de TRILHA_FIXA_NOS) -- por
+# isso duas tabelas de fase (uma por matéria), não uma. Fenômeno sem
+# entrada em nenhuma das duas (ex: 'transmissao', 'ressonancia',
+# 'reflexao' genérico) foi encaixado na subfase mais próxima
+# tematicamente (reflexão/refração → subfase 2; ressonância, por
+# depender de frequência igual a Doppler/interferência → subfase 3) em
+# vez de criar uma 4ª fase para meia dúzia de questão -- reavaliar se
+# uma 2ª parte do documento (Fase 2 de Óptica, ainda não escrita)
+# trouxer volume suficiente pra justificar separar de verdade.
+FASES_OPTICA: dict[int, set[str]] = {
+    1: {"polarizacao", "difracao"},
+    2: {
+        "refracao", "dispersao", "absorcao", "reflexao_especular", "reflexao_difusa",
+        "reflexao_interna_total", "reflexao", "transmissao",
+    },
+    3: {"interferencia", "ressonancia", "efeito_doppler"},
+}
+
+FASES_ACUSTICA: dict[int, set[str]] = {
+    1: set(),
+    2: {"frequencia_constante_na_refracao"},
+    3: {"eco", "reverberacao", "efeito_doppler"},
+}
+
+NOMES_FASES_OPTICA: dict[int, str] = {
+    1: "Polarização e Difração",
+    2: "Refração, Dispersão, Absorção e Reflexão",
+    3: "Interferência e Ressonância",
+}
+
+NOMES_FASES_ACUSTICA: dict[int, str] = {
+    1: "Fundamentos (ainda sem questão nesta subfase)",
+    2: "Refração do Som",
+    3: "Eco, Reverberação e Efeito Doppler",
+}
+
+# Cinemática e Fisiologia Humana ganharam fase em 2026-09-17, no mesmo
+# dia em que os padrões novos foram inserido no banco (MRUV/Lançamento
+# Horizontal; Bioacumulação em Tecido Adiposo/Fibras Musculares -- ver
+# docs/questoes/moldes_novos_padroes_2026-09-17.md e a classificação
+# das questões oficiais em docs/pesquisa_estrategia_de_prova.md). Sem
+# fase, essas questões novas cairiam misturadas com MRU/"vacina vs.
+# soro" no mesmo nó só (fase=None pega tudo) -- o que desfaria o
+# ponto inteiro de ter um padrão por nó.
+FASES_CINEMATICA: dict[int, set[str]] = {
+    1: {"velocidade_media_mru"},
+    2: {"mruv"},
+    3: {"lancamento_horizontal"},
+}
+
+NOMES_FASES_CINEMATICA: dict[int, str] = {
+    1: "Velocidade Média e MRU",
+    2: "MRUV",
+    3: "Lançamento Horizontal",
+}
+
+FASES_FISIOLOGIA_HUMANA: dict[int, set[str]] = {
+    1: {"vacina_vs_soro"},
+    2: {"bioacumulacao_tecido_adiposo"},
+    3: {"fibras_musculares"},
+}
+
+NOMES_FASES_FISIOLOGIA_HUMANA: dict[int, str] = {
+    1: "Vacina vs. Soro",
+    2: "Bioacumulação em Tecido Adiposo",
+    3: "Fibras Musculares",
+}
+
+_FASES_POR_MATERIA: dict[str, dict[int, set[str]]] = {
+    "ecologia": FASES_ECOLOGIA,
+    "optica": FASES_OPTICA,
+    "acustica": FASES_ACUSTICA,
+    "cinematica": FASES_CINEMATICA,
+    "fisiologia_humana": FASES_FISIOLOGIA_HUMANA,
+}
+
+# Espelhada em _FASES_POR_MATERIA acima -- fases_disponiveis() usava
+# NOMES_FASES_ECOLOGIA direto, hardcoded, o que daria nome ERRADO
+# (nomes de fase de Ecologia) pra qualquer matéria nova com fase
+# própria. Generalizado junto com a adição de Óptica/Acústica.
+_NOMES_FASES_POR_MATERIA: dict[str, dict[int, str]] = {
+    "cinematica": NOMES_FASES_CINEMATICA,
+    "fisiologia_humana": NOMES_FASES_FISIOLOGIA_HUMANA,
+    "ecologia": NOMES_FASES_ECOLOGIA,
+    "optica": NOMES_FASES_OPTICA,
+    "acustica": NOMES_FASES_ACUSTICA,
+}
 
 
 def fase_de_topico(materia: str, topico: str | None) -> int | None:
@@ -693,12 +796,12 @@ def fase_de_topico(materia: str, topico: str | None) -> int | None:
 
 
 def fases_disponiveis(grande_area: str, materia: str, fonte: str | None = None) -> list[dict]:
-    """Lista as fases de uma matéria com fase mapeada (hoje só
-    'ecologia'), cada uma com quantas questões tem e quantas dessas já
-    foram respondidas ao menos uma vez -- alimenta uma futura tela de
-    'escolher a fase' no app mobile. Matéria sem fase mapeada (ex:
-    'optica') devolve lista vazia -- comportamento explícito, não
-    erro, pra UI decidir mostrar ou não esse seletor.
+    """Lista as fases de uma matéria com fase mapeada ('ecologia',
+    'optica', 'acustica'), cada uma com quantas questões tem e quantas
+    dessas já foram respondidas ao menos uma vez -- alimenta uma
+    futura tela de 'escolher a fase' no app mobile. Matéria sem fase
+    mapeada devolve lista vazia -- comportamento explícito, não erro,
+    pra UI decidir mostrar ou não esse seletor.
 
     Cada entrada: {'fase', 'nome', 'total', 'respondidas', 'concluida'}."""
     materia_norm = canonicalizar_materia(normalizar_texto(materia))
@@ -731,9 +834,10 @@ def fases_disponiveis(grande_area: str, materia: str, fonte: str | None = None) 
     for fase in sorted(mapa):
         ids = ids_por_fase[fase]
         respondidas = sum(1 for id_q in ids if id_q in respondidas_geral)
+        nomes_materia = _NOMES_FASES_POR_MATERIA.get(materia_norm, {})
         resultado.append({
             "fase": fase,
-            "nome": NOMES_FASES_ECOLOGIA.get(fase, f"Fase {fase}"),
+            "nome": nomes_materia.get(fase, f"Fase {fase}"),
             "total": len(ids),
             "respondidas": respondidas,
             "concluida": len(ids) > 0 and respondidas == len(ids),
@@ -1007,20 +1111,100 @@ TRILHA_FIXA_NOS: list[dict] = [
         "nome": "Ecologia — Poluição Atmosférica",
         "materias": [("ecologia", 4)],
     },
+    # Relações Ecológicas adicionada em 2026-09-17 logo depois da
+    # Poluição Atmosférica, não antes dela -- achado ao vivo
+    # (classificando as questões oficiais já carregadas, ver
+    # docs/pesquisa_estrategia_de_prova.md): na amostra real (11
+    # questões), Poluição Atmosférica teve ZERO ocorrência e Relações
+    # Ecológicas empatou como o padrão mais recorrente, além de ser
+    # mais fácil de fixar (tabela de sinais +/-/0 vs. 4 mecanismos
+    # causais distintos da fase 4). Não foi colocada ANTES da fase 4
+    # de propósito: o usuário já tinha tentativas registradas em
+    # blocos da fase 4 no momento desta mudança, e trilha_fixa()
+    # destrava nó por ORDEM da lista -- inserir antes teria travado de
+    # volta um nó que ele já tinha começado a concluir.
+    #
+    # Dividida em 3 sub-nós no mesmo dia, ainda validando -- "Relações
+    # Ecológicas" virou um resumo com 14 padrões diferentes numa tela
+    # só ("muito coisa", achado ao vivo), e um padrão de DINÂMICA
+    # POPULACIONAL (capacidade_de_suporte) aparecia misturado com
+    # padrões de relação ENTRE espécies diferentes -- coisas
+    # conceitualmente distintas (ver FASES_ECOLOGIA fases 2/7/8).
     {
-        "chave": "optica_ondulatoria",
-        "nome": "Óptica/Ondulatória — Fundamentos e Fenômenos",
-        "materias": [("optica", None), ("acustica", None)],
+        "chave": "ecologia_relacoes_harmonicas",
+        "nome": "Ecologia — Relações Ecológicas Harmônicas",
+        "materias": [("ecologia", 2)],
     },
+    {
+        "chave": "ecologia_relacoes_desarmonicas",
+        "nome": "Ecologia — Relações Ecológicas Desarmônicas",
+        "materias": [("ecologia", 7)],
+    },
+    {
+        "chave": "ecologia_populacao_sucessao",
+        "nome": "Ecologia — População e Sucessão Ecológica",
+        "materias": [("ecologia", 8)],
+    },
+    # Óptica/Ondulatória dividida em 3 subfases (2026-09), espelhando
+    # a estrutura real de 'docs/questoes/Óptica - Fase 1 (PARTE 2).docx'
+    # (ver FASES_OPTICA/FASES_ACUSTICA acima) -- cada subfase testa um
+    # conjunto fixo de fenômenos parecidos, progressão sequencial igual
+    # às outras matérias (só desbloqueia a próxima ao concluir a
+    # anterior). Antes disso, 'optica_ondulatoria' era um nó só com
+    # fase=None (as 137 questões de óptica+acústica misturadas sem
+    # nenhuma ordem pedagógica) -- ver docs/pesquisa_estrategia_de_prova.md
+    # §8/§12 pro raciocínio (Automatic Item Generation, pool fixo de
+    # alternativas por subfase).
+    {
+        "chave": "optica_ondulatoria_1",
+        "nome": "Óptica/Ondulatória — Polarização e Difração",
+        "materias": [("optica", 1), ("acustica", 1)],
+    },
+    {
+        "chave": "optica_ondulatoria_2",
+        "nome": "Óptica/Ondulatória — Refração, Dispersão, Absorção e Reflexão",
+        "materias": [("optica", 2), ("acustica", 2)],
+    },
+    {
+        "chave": "optica_ondulatoria_3",
+        "nome": "Óptica/Ondulatória — Eco, Reverberação, Doppler e Interferência",
+        "materias": [("optica", 3), ("acustica", 3)],
+    },
+    # Fisiologia Humana e Cinemática ganharam sub-nó em 2026-09-17,
+    # junto com a inserção dos padrões novos (ver
+    # FASES_FISIOLOGIA_HUMANA/FASES_CINEMATICA acima) -- achado de que
+    # "vacina vs. soro" e "velocidade média/MRU" sozinhos batiam com
+    # 0/5 e 1/7 das questões oficiais da amostra, respectivamente (ver
+    # docs/pesquisa_estrategia_de_prova.md).
     {
         "chave": "fisiologia_vacina_soro",
         "nome": "Fisiologia Humana — Vacina vs. Soro",
-        "materias": [("fisiologia_humana", None)],
+        "materias": [("fisiologia_humana", 1)],
+    },
+    {
+        "chave": "fisiologia_bioacumulacao",
+        "nome": "Fisiologia Humana — Bioacumulação em Tecido Adiposo",
+        "materias": [("fisiologia_humana", 2)],
+    },
+    {
+        "chave": "fisiologia_fibras_musculares",
+        "nome": "Fisiologia Humana — Fibras Musculares",
+        "materias": [("fisiologia_humana", 3)],
     },
     {
         "chave": "cinematica_mru",
         "nome": "Cinemática — Velocidade Média e MRU",
-        "materias": [("cinematica", None)],
+        "materias": [("cinematica", 1)],
+    },
+    {
+        "chave": "cinematica_mruv",
+        "nome": "Cinemática — MRUV",
+        "materias": [("cinematica", 2)],
+    },
+    {
+        "chave": "cinematica_lancamento_horizontal",
+        "nome": "Cinemática — Lançamento Horizontal",
+        "materias": [("cinematica", 3)],
     },
     {
         "chave": "separacao_de_misturas",
@@ -2462,6 +2646,64 @@ def editar_resolucao(id_resolucao: int, conteudo: str, canal: str | None = None)
         conn.execute(
             "UPDATE resolucoes SET conteudo=?, canal=? WHERE id_resolucao=?",
             (conteudo, canal or None, id_resolucao),
+        )
+
+
+def reportar_questao(id_questao: str, comentario: str) -> int:
+    """Registra um relato ('acho que o gabarito está errado', 'falta
+    a figura', 'alternativa ambígua' etc.) pra uma questão -- botão de
+    reportar do app mobile, pensado pra Gabriel acumular sinal
+    enquanto valida o banco pergunta por pergunta, sem precisar parar
+    o fluxo de resolver questão pra corrigir na hora. Retorna
+    id_relato pra quem chamar poder confirmar que gravou."""
+    comentario = comentario.strip()
+    if not comentario:
+        raise ValueError("comentario não pode ser vazio.")
+    with _conectar() as conn:
+        existe = conn.execute("SELECT 1 FROM questoes WHERE id_questao = ?", (id_questao,)).fetchone()
+        if not existe:
+            raise ValueError(f"Questão '{id_questao}' não existe.")
+        cursor = conn.execute(
+            "INSERT INTO relatos_questao (id_questao, comentario) VALUES (?, ?)",
+            (id_questao, comentario),
+        )
+        return cursor.lastrowid
+
+
+def listar_relatos_questao(resolvido: bool | None = None) -> list[dict]:
+    """Relatos mais recentes primeiro -- alimenta uma futura tela de
+    revisão em lote no Admin. `resolvido=None` traz tudo; True/False
+    filtra só um dos dois estados."""
+    query = (
+        "SELECT r.id_relato, r.id_questao, r.comentario, r.resolvido, r.criado_em, "
+        "q.enunciado_texto, q.materia "
+        "FROM relatos_questao r JOIN questoes q ON q.id_questao = r.id_questao"
+    )
+    parametros: tuple = ()
+    if resolvido is not None:
+        query += " WHERE r.resolvido = ?"
+        parametros = (1 if resolvido else 0,)
+    query += " ORDER BY r.criado_em DESC"
+    with _conectar() as conn:
+        linhas = conn.execute(query, parametros).fetchall()
+    return [
+        {
+            "id_relato": r[0], "id_questao": r[1], "comentario": r[2],
+            "resolvido": bool(r[3]), "criado_em": r[4],
+            "enunciado_texto": r[5], "materia": r[6],
+        }
+        for r in linhas
+    ]
+
+
+def marcar_relato_resolvido(id_relato: int, resolvido: bool = True) -> None:
+    """Marca (ou desmarca) um relato como já revisado, sem apagar o
+    histórico -- pra Gabriel riscar da lista de pendências depois de
+    corrigir a questão."""
+    with _conectar() as conn:
+        conn.execute(
+            "UPDATE relatos_questao SET resolvido = ? WHERE id_relato = ?",
+            (1 if resolvido else 0, id_relato),
         )
 
 

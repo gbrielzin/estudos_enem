@@ -161,8 +161,8 @@ function NoCirculo({ no, ehAtual, diametro, onPress }: { no: NoTrilha; ehAtual: 
     if (!ehAtual) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulso, { toValue: 1.08, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(pulso, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulso, { toValue: 1.08, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
+        Animated.timing(pulso, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: false }),
       ]),
     );
     loop.start();

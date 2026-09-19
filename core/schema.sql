@@ -88,6 +88,25 @@ CREATE TABLE IF NOT EXISTS resolucoes (
 
 CREATE INDEX IF NOT EXISTS idx_resolucoes_questao ON resolucoes(id_questao);
 
+-- Relatos de questão: o botão "reportar" no app mobile (achou o
+-- gabarito errado, enunciado cortado, alternativa ambígua etc.)
+-- enquanto Gabriel valida o banco de questões pergunta por pergunta.
+-- Separado de `resolucoes` (que é conteúdo pra AJUDAR a entender a
+-- questão) porque isto é o oposto: um sinal de que algo na questão
+-- pode estar ERRADO, pra revisar depois em lote em vez de checar
+-- tudo manualmente de novo. `resolvido` deixa marcar como já
+-- revisado sem apagar o histórico do relato.
+CREATE TABLE IF NOT EXISTS relatos_questao (
+    id_relato  INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_questao TEXT NOT NULL REFERENCES questoes(id_questao) ON DELETE CASCADE,
+    comentario TEXT NOT NULL,
+    resolvido  INTEGER NOT NULL DEFAULT 0 CHECK(resolvido IN (0, 1)),
+    criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_relatos_questao ON relatos_questao(id_questao);
+CREATE INDEX IF NOT EXISTS idx_relatos_resolvido ON relatos_questao(resolvido);
+
 -- Log de tentativas do usuário. Append-only de propósito — é o
 -- histórico de verdade, nunca é sobrescrito nem editado.
 -- resposta_escolhida aceita NULL de propósito: questão deixada em

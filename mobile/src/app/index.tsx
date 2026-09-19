@@ -1,7 +1,7 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useAudioPlayer } from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Mascote } from '@/components/mascote';
@@ -12,7 +12,7 @@ import { TrilhaFixaPath } from '@/components/trilha-fixa-path';
 import { TrilhaPath } from '@/components/trilha-path';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import { interpolarSombraBotao, useInteracaoBotao } from '@/hooks/use-interacao-botao';
-import { RESUMOS_TRILHA, ResumoTrilha, TopicoResumo } from '@/constants/resumos-trilha';
+import { RESUMOS_POR_CHAVE_TRILHA_FIXA, RESUMOS_TRILHA, ResumoTrilha, TopicoResumo } from '@/constants/resumos-trilha';
 import {
   GrandeArea,
   MissaoDoDia,
@@ -26,10 +26,13 @@ import {
   getMateriasComBancoPratica,
   getMissoesDoDia,
   getNivel,
+  getResolucoes,
   getStreak,
   getTrilha,
   getTrilhaFixa,
   registrarTentativa,
+  reportarQuestao,
+  Resolucao,
 } from '@/lib/api';
 
 /**
@@ -77,6 +80,25 @@ function desbloquearTudoFlat(trilha: NoTrilha[]): NoTrilha[] {
 
 import { separarAlternativas } from '@/lib/alternativas';
 
+/**
+ * Resumo curado a mostrar em "Apresentação"/"Rever conteúdo base" --
+ * tenta primeiro por CHAVE do nó da trilha fixa
+ * (RESUMOS_POR_CHAVE_TRILHA_FIXA, granularidade de FASE, ex: só
+ * Poluição Atmosférica dentro de Ecologia), e só se não achar cai pro
+ * fallback por matéria inteira (RESUMOS_TRILHA, usado pela trilha
+ * "solta" fora de Ciências da Natureza, onde não existe conceito de
+ * fase). Sem isso, um nó da trilha fixa cujo `nome` de exibição é
+ * "Ecologia — Poluição Atmosférica" nunca batia com a chave
+ * 'ecologia' de RESUMOS_TRILHA (nem deveria -- RESUMOS_TRILHA é POR
+ * MATÉRIA INTEIRA, não por fase) -- achado ao vivo reportando pelo
+ * usuário (ver docs/pesquisa_estrategia_de_prova.md §8): o link
+ * "Rever conteúdo base" nunca aparecia em Ecologia mesmo já existindo
+ * um resumo escrito pra fase 4 (RESUMOS_FASE_ECOLOGIA[4]).
+ */
+function resumoDoNo(materia: string, chave: string | undefined): ResumoTrilha | undefined {
+  return (chave ? RESUMOS_POR_CHAVE_TRILHA_FIXA[chave] : undefined) ?? RESUMOS_TRILHA[materia];
+}
+
 const ROTULO_AREA: Record<GrandeArea, string> = {
   matematica: 'Matemática',
   ciencias_natureza: 'Ciências da Natureza',
@@ -84,7 +106,27 @@ const ROTULO_AREA: Record<GrandeArea, string> = {
 const AREAS: GrandeArea[] = ['matematica', 'ciencias_natureza'];
 const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 
-type Tela = { tipo: 'mapa' } | { tipo: 'apresentacao' } | { tipo: 'exercicio'; noIndice: number; posicao: number };
+/**
+ * `apresentacao` cobre DOIS casos, distinguidos por `revisao`:
+ *
+ * - `revisao` falso/ausente: entrada normal ANTES de começar um nó
+ *   (seja a primeira vez de uma trilha de matéria única, seja a
+ *   primeira vez abrindo um nó novo da trilha fixa que ainda não foi
+ *   respondido) -- `destinoNoIndice`/`destinoPosicao`, quando
+ *   presentes, dizem pra onde ir ao apertar "Entendi, começar"
+ *   (default pro Nó 1 da trilha inteira se ausentes, comportamento
+ *   antigo da trilha de matéria única).
+ * - `revisao` true: usuário está NO MEIO de uma questão e apertou
+ *   "Rever conteúdo base" (pedido explícito: "esqueci uma coisa") --
+ *   `destinoNoIndice`/`destinoPosicao` aqui é a questão exata de
+ *   onde ele saiu, pra voltar pra ela sem perder acertosNoNo/
+ *   errosNoNo/temposQuestoesNoNo da rodada em andamento (que
+ *   entrarNoExercicioFresco() zeraria).
+ */
+type Tela =
+  | { tipo: 'mapa' }
+  | { tipo: 'apresentacao'; destinoNoIndice?: number; destinoPosicao?: number; revisao?: boolean }
+  | { tipo: 'exercicio'; noIndice: number; posicao: number };
 
 /**
  * Fase 1 do plano de app nativo: Banco de Questões / trilha estilo
@@ -255,15 +297,40 @@ export default function TrilhaScreen() {
     if (materia) carregarTrilha();
   }, [materia, fonte]);
 
-  function abrirNo(no: NoTrilha) {
-    const primeiraNaoRespondida = no.questoes.findIndex((q) => !q.ja_respondida);
-    setTela({ tipo: 'exercicio', noIndice: no.indice, posicao: primeiraNaoRespondida === -1 ? 0 : primeiraNaoRespondida });
+  // Zera a rodada (acertos/erros/tempos) e entra de vez na tela de
+  // exercício -- separado de abrirNo() abaixo porque a apresentação
+  // "de entrada" (ver Tela) precisa poder mostrar o resumo ANTES
+  // disso rodar, só zerando a rodada quando o aluno realmente aperta
+  // "Entendi, começar", não no instante em que toca o nó no mapa.
+  function entrarNoExercicioFresco(noIndice: number, posicaoInicial: number) {
+    setTela({ tipo: 'exercicio', noIndice, posicao: posicaoInicial });
     setEscolha(null);
     setResultado(null);
     setAcertosNoNo(0);
     setErrosNoNo([]);
     setTemposQuestoesNoNo([]);
     setInicioNo(Date.now());
+  }
+
+  // `chaveTrilhaFixa` só vem preenchido quando o toque veio da trilha
+  // fixa (TrilhaFixaPath repassa a chave do NoTrilhaFixa que contém
+  // este bloco -- ver trilha-fixa-path.tsx) -- pra trilha de matéria
+  // única (RESUMOS_TRILHA por materia) fica undefined, sem mudar nada
+  // do comportamento de sempre. Pedido explícito do usuário validando
+  // em modo teste: entrar num nó NUNCA respondido ainda, sem ver o
+  // resumo antes, deixa ele "sem base pra fixar" -- mesmo problema que
+  // "Rever conteúdo base" já resolve NO MEIO da questão, só que aqui é
+  // ANTES da primeira questão do nó.
+  function abrirNo(no: NoTrilha, chaveTrilhaFixa?: string) {
+    const primeiraNaoRespondida = no.questoes.findIndex((q) => !q.ja_respondida);
+    const posicaoInicial = primeiraNaoRespondida === -1 ? 0 : primeiraNaoRespondida;
+    const jaComecado = no.questoes.some((q) => q.ja_respondida);
+    const resumo = resumoDoNo('', chaveTrilhaFixa);
+    if (!jaComecado && resumo) {
+      setTela({ tipo: 'apresentacao', destinoNoIndice: no.indice, destinoPosicao: posicaoInicial });
+      return;
+    }
+    entrarNoExercicioFresco(no.indice, posicaoInicial);
   }
 
   async function voltarPraTrilha() {
@@ -302,6 +369,21 @@ export default function TrilhaScreen() {
     setTela({ ...tela, posicao: tela.posicao + 1 });
     setEscolha(null);
     setResultado(null);
+  }
+
+  // "Rever conteúdo base" -- pedido explícito do usuário: sai da
+  // questão atual pra TelaApresentacao (mesmo componente/conteúdo
+  // curado que abre antes do Nó 1) guardando ONDE estava, pra voltar
+  // pra essa mesma questão depois (ver Tela acima). Não passa por
+  // abrirNo() de propósito -- não pode zerar acertosNoNo/errosNoNo/
+  // temposQuestoesNoNo da rodada em andamento.
+  function verConteudoBase() {
+    if (tela.tipo !== 'exercicio') return;
+    setTela({ tipo: 'apresentacao', destinoNoIndice: tela.noIndice, destinoPosicao: tela.posicao, revisao: true });
+  }
+
+  function voltarDaRevisaoDeConteudo(noIndice: number, posicao: number) {
+    setTela({ tipo: 'exercicio', noIndice, posicao });
   }
 
   // Só existe com modoAdmin ligado (botão "Pular" em QuestaoAtual):
@@ -461,12 +543,15 @@ export default function TrilhaScreen() {
             </View>
           )}
 
-          {trilha && trilha.length > 0 && tela.tipo === 'apresentacao' && materia && RESUMOS_TRILHA[materia] && (
-            <TelaApresentacao
-              resumo={RESUMOS_TRILHA[materia]}
+          {trilha && trilha.length > 0 && tela.tipo === 'apresentacao' && (
+            <TelaApresentacaoRoteada
+              tela={tela}
+              trilha={trilha}
+              trilhaFixa={trilhaFixa}
               materia={materia}
-              onComecar={() => abrirNo(trilha[0])}
-              onVoltar={() => setTela({ tipo: 'mapa' })}
+              onEntrarFresco={entrarNoExercicioFresco}
+              onVoltarRevisao={voltarDaRevisaoDeConteudo}
+              onVoltarMapa={() => setTela({ tipo: 'mapa' })}
             />
           )}
 
@@ -483,6 +568,7 @@ export default function TrilhaScreen() {
                 trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === tela.noIndice))?.nome ??
                 ''
               }
+              chave={trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === tela.noIndice))?.chave}
               acertosNoNo={acertosNoNo}
               errosNoNo={errosNoNo}
               temposQuestoesNoNo={temposQuestoesNoNo}
@@ -494,6 +580,7 @@ export default function TrilhaScreen() {
               onContinuar={continuar}
               onPular={pularQuestao}
               onVoltar={voltarPraTrilha}
+              onVerConteudo={verConteudoBase}
             />
           )}
         </ScrollView>
@@ -510,6 +597,7 @@ function TelaExercicio({
   resultado,
   enviando,
   materia,
+  chave,
   acertosNoNo,
   errosNoNo,
   temposQuestoesNoNo,
@@ -521,6 +609,7 @@ function TelaExercicio({
   onContinuar,
   onPular,
   onVoltar,
+  onVerConteudo,
 }: {
   no: NoTrilha;
   totalNos: number;
@@ -529,6 +618,7 @@ function TelaExercicio({
   resultado: ResultadoTentativa | null;
   enviando: boolean;
   materia: string;
+  chave: string | undefined;
   acertosNoNo: number;
   errosNoNo: number[];
   temposQuestoesNoNo: number[];
@@ -540,6 +630,7 @@ function TelaExercicio({
   onContinuar: () => void;
   onPular: () => void;
   onVoltar: () => void;
+  onVerConteudo: () => void;
 }) {
   if (posicao >= no.questoes.length) {
     return (
@@ -566,6 +657,8 @@ function TelaExercicio({
         questao={no.questoes[posicao]}
         posicao={posicao}
         total={no.questoes.length}
+        materia={materia}
+        chave={chave}
         escolha={escolha}
         resultado={resultado}
         enviando={enviando}
@@ -575,6 +668,7 @@ function TelaExercicio({
         onConfirmar={onConfirmar}
         onContinuar={onContinuar}
         onPular={onPular}
+        onVerConteudo={onVerConteudo}
       />
     </View>
   );
@@ -594,6 +688,61 @@ const CORES_FREQUENCIA: Record<TopicoResumo['frequencia'], { bgIcone: string; co
 };
 
 /**
+ * Roteia `tela.tipo === 'apresentacao'` entre os dois usos da MESMA
+ * TelaApresentacao: entrada normal (`tela.revisao` falso/ausente --
+ * antes de abrir um nó ainda não respondido, zera a rodada via
+ * onEntrarFresco) ou revisão no meio de uma questão (`tela.revisao`
+ * true, `destinoNoIndice`/`destinoPosicao` apontam pra questão exata
+ * de onde saiu, ver Tela acima) -- nesse 2º caso "Voltar" e "Entendi"
+ * fazem a MESMA coisa (voltar pra questão de onde saiu), então nenhum
+ * dos dois pode reiniciar o nó. Sem resumo curado pra essa matéria/nó
+ * (RESUMOS_TRILHA/RESUMOS_POR_CHAVE_TRILHA_FIXA não cobrem todos
+ * ainda), não renderiza nada -- não faz sentido oferecer "rever
+ * conteúdo" pra quem não tem conteúdo nenhum escrito.
+ */
+function TelaApresentacaoRoteada({
+  tela,
+  trilha,
+  trilhaFixa,
+  materia,
+  onEntrarFresco,
+  onVoltarRevisao,
+  onVoltarMapa,
+}: {
+  tela: Extract<Tela, { tipo: 'apresentacao' }>;
+  trilha: NoTrilha[];
+  trilhaFixa: NoTrilhaFixa[] | null;
+  materia: string | null;
+  onEntrarFresco: (noIndice: number, posicao: number) => void;
+  onVoltarRevisao: (noIndice: number, posicao: number) => void;
+  onVoltarMapa: () => void;
+}) {
+  const emRevisao = !!tela.revisao;
+  const noFixaAlvo = trilhaFixa?.find((m) => m.blocos.some((b) => b.indice === (tela.destinoNoIndice ?? -1)));
+  const materiaAlvo = materia ?? noFixaAlvo?.nome ?? '';
+  const resumo = resumoDoNo(materiaAlvo, noFixaAlvo?.chave);
+  if (!resumo) return null;
+
+  const noIndiceDestino = tela.destinoNoIndice ?? trilha[0].indice;
+  const posicaoDestino = tela.destinoPosicao ?? 0;
+
+  const onComecar = emRevisao
+    ? () => onVoltarRevisao(noIndiceDestino, posicaoDestino)
+    : () => onEntrarFresco(noIndiceDestino, posicaoDestino);
+  const onVoltar = emRevisao ? onComecar : onVoltarMapa;
+
+  return (
+    <TelaApresentacao
+      resumo={resumo}
+      materia={materiaAlvo}
+      modoRevisao={emRevisao}
+      onComecar={onComecar}
+      onVoltar={onVoltar}
+    />
+  );
+}
+
+/**
  * Tela "Apresentação" -- resumo de conceitos que abre a trilha ANTES
  * do Nó 1, pedido explícito do usuário: dar uma base pro aluno antes
  * de jogar ele direto numa "porrada de questão" -- ele lê isto, ganha
@@ -604,15 +753,22 @@ const CORES_FREQUENCIA: Record<TopicoResumo['frequencia'], { bgIcone: string; co
  * -- curado à mão por matéria, não derivado do banco. Visual importado
  * do projeto de design do usuário (App ENEM.dc.html, tela
  * "Apresentação").
+ *
+ * `modoRevisao` (ver TelaApresentacaoRoteada acima) só muda rótulo e
+ * texto do botão -- pedido explícito do usuário pra poder voltar pra
+ * cá no meio de uma questão ("esqueci uma coisa") e retomar de onde
+ * parou, em vez de só ser a tela de abertura do nó.
  */
 function TelaApresentacao({
   resumo,
   materia,
+  modoRevisao,
   onComecar,
   onVoltar,
 }: {
   resumo: ResumoTrilha;
   materia: string;
+  modoRevisao?: boolean;
   onComecar: () => void;
   onVoltar: () => void;
 }) {
@@ -624,7 +780,7 @@ function TelaApresentacao({
             <Feather name="chevron-left" size={18} color={Brand.roxoTextoEscuro} />
           </Pressable>
           <Text style={styles.apresentacaoRotulo}>
-            APRESENTAÇÃO · {materia.toUpperCase()}
+            {modoRevisao ? 'CONTEÚDO BASE' : 'APRESENTAÇÃO'} · {materia.toUpperCase()}
           </Text>
           <View style={styles.apresentacaoMinutosPill}>
             <Text style={styles.apresentacaoMinutosTexto}>{resumo.minutos} min</Text>
@@ -677,10 +833,16 @@ function TelaApresentacao({
         <Text style={styles.apresentacaoEstatisticaTexto}>{resumo.estatisticaTexto}</Text>
       </View>
 
-      <BotaoPrimario onPress={onComecar}>Entendi, começar o Nó 1</BotaoPrimario>
-      <Pressable style={styles.apresentacaoReverLink} onPress={onVoltar}>
-        <Text style={styles.apresentacaoReverTexto}>Rever depois</Text>
-      </Pressable>
+      <BotaoPrimario onPress={onComecar}>
+        {modoRevisao ? 'Voltar pra questão' : 'Entendi, vamos começar'}
+      </BotaoPrimario>
+      {/* Em modoRevisao, onVoltar === onComecar (ver TelaApresentacaoRoteada)
+          -- um 2º botão pro mesmo destino só duplicaria a ação. */}
+      {!modoRevisao && (
+        <Pressable style={styles.apresentacaoReverLink} onPress={onVoltar}>
+          <Text style={styles.apresentacaoReverTexto}>Rever depois</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -707,7 +869,7 @@ function TelaApresentacao({
 function XpSobe({ children }: { children: string }) {
   const entrada = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(entrada, { toValue: 1, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    Animated.timing(entrada, { toValue: 1, duration: 380, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
   }, [entrada]);
   const translateY = entrada.interpolate({ inputRange: [0, 0.3, 1], outputRange: [14, -4, -10] });
   const scale = entrada.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.8, 1.08, 1] });
@@ -737,11 +899,11 @@ function SeloDestravado() {
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(pop, { toValue: 1, duration: 340, easing: Easing.out(Easing.back(1.6)), useNativeDriver: true }),
-      Animated.timing(tique, { toValue: 1, duration: 180, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
+      Animated.timing(pop, { toValue: 1, duration: 340, easing: Easing.out(Easing.back(1.6)), useNativeDriver: false }),
+      Animated.timing(tique, { toValue: 1, duration: 180, easing: Easing.out(Easing.back(1.4)), useNativeDriver: false }),
     ]).start();
     confetes.forEach((v, i) => {
-      Animated.timing(v, { toValue: 1, duration: 900, delay: i * 250, easing: Easing.linear, useNativeDriver: true }).start();
+      Animated.timing(v, { toValue: 1, duration: 900, delay: i * 250, easing: Easing.linear, useNativeDriver: false }).start();
     });
   }, [pop, tique, confetes]);
 
@@ -860,7 +1022,7 @@ function TelaResultado({
  * Botão sólido primário (lima) desta tela -- "Confirmar" é literalmente
  * o exemplo do card "Botão afunda" no projeto de design (Claude
  * Design, App ENEM.dc.html, TURNO 6 "Gramática de animação"), reusado
- * aqui pros outros CTAs de mesma cor/peso ("Entendi, começar o Nó 1",
+ * aqui pros outros CTAs de mesma cor/peso ("Entendi, vamos começar",
  * "CONTINUAR", "Continuar ➜"). Botões secundários/links (`Rever
  * depois`, `voltarBtn`, alternativas de questão) ficam de fora de
  * propósito -- no design só o botão SÓLIDO ganha a sombra 3D que
@@ -907,14 +1069,14 @@ function CardFeedback({ correto, children }: { correto: boolean; children: strin
   useEffect(() => {
     if (correto) {
       Animated.sequence([
-        Animated.timing(entrada, { toValue: 1.12, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: true }),
-        Animated.timing(entrada, { toValue: 1, duration: 110, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.timing(entrada, { toValue: 1.12, duration: 150, easing: Easing.out(Easing.quad), useNativeDriver: false }),
+        Animated.timing(entrada, { toValue: 1, duration: 110, easing: Easing.inOut(Easing.quad), useNativeDriver: false }),
       ]).start();
-      Animated.timing(anel, { toValue: 1, duration: 420, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+      Animated.timing(anel, { toValue: 1, duration: 420, easing: Easing.out(Easing.quad), useNativeDriver: false }).start();
     } else {
       entrada.setValue(1);
       Animated.sequence(
-        [-9, 8, -5, 4, 0].map((v) => Animated.timing(tremor, { toValue: v, duration: 45, easing: Easing.linear, useNativeDriver: true })),
+        [-9, 8, -5, 4, 0].map((v) => Animated.timing(tremor, { toValue: v, duration: 45, easing: Easing.linear, useNativeDriver: false })),
       ).start();
     }
   }, [correto, entrada, anel, tremor]);
@@ -983,10 +1145,126 @@ function SomAcerto({ tocar }: { tocar: boolean }) {
   return null;
 }
 
+/**
+ * Botão "reportar" -- pedido explícito do usuário: enquanto ele
+ * valida o banco de questões pergunta por pergunta, precisa de um
+ * jeito de sinalizar "acho que isto está errado" (gabarito, figura
+ * faltando, alternativa ambígua etc.) sem sair do fluxo de resolver
+ * pra ir mexer no banco na hora -- acumula os relatos (POST
+ * /relatos -> tabela relatos_questao, ver core/db.py) pra revisar
+ * depois em lote. Caixa de texto some ao enviar com sucesso, de
+ * propósito -- confirma visualmente que foi, sem deixar aberto
+ * pedindo pra reportar de novo.
+ */
+function BotaoReportar({ idQuestao }: { idQuestao: string }) {
+  const [aberto, setAberto] = useState(false);
+  const [texto, setTexto] = useState('');
+  const [estado, setEstado] = useState<'ocioso' | 'enviando' | 'enviado' | 'erro'>('ocioso');
+
+  useEffect(() => {
+    setAberto(false);
+    setTexto('');
+    setEstado('ocioso');
+  }, [idQuestao]);
+
+  async function enviar() {
+    if (!texto.trim()) return;
+    setEstado('enviando');
+    try {
+      await reportarQuestao(idQuestao, texto.trim());
+      setEstado('enviado');
+      setAberto(false);
+      setTexto('');
+    } catch {
+      setEstado('erro');
+    }
+  }
+
+  if (!aberto) {
+    return (
+      <Pressable style={styles.acaoQuestaoBtn} onPress={() => setAberto(true)}>
+        <Feather name="flag" size={13} color={Brand.laranja} />
+        <Text style={[styles.acaoQuestaoTexto, { color: Brand.laranja }]}>
+          {estado === 'enviado' ? 'Relato enviado ✓' : 'Reportar'}
+        </Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={styles.relatoCaixa}>
+      <Text style={styles.relatoLabel}>O que parece errado nesta questão?</Text>
+      <TextInput
+        style={styles.relatoInput}
+        value={texto}
+        onChangeText={setTexto}
+        placeholder="ex: gabarito parece trocado, falta a figura..."
+        placeholderTextColor={Brand.textoApagado}
+        multiline
+      />
+      <View style={styles.relatoBotoesRow}>
+        <Pressable style={styles.relatoBotaoCancelar} onPress={() => setAberto(false)}>
+          <Text style={styles.acaoQuestaoTexto}>Cancelar</Text>
+        </Pressable>
+        <Pressable
+          style={[styles.relatoBotaoEnviar, (!texto.trim() || estado === 'enviando') && styles.botaoDesabilitado]}
+          disabled={!texto.trim() || estado === 'enviando'}
+          onPress={enviar}>
+          <Text style={styles.relatoBotaoEnviarTexto}>{estado === 'enviando' ? 'Enviando…' : 'Enviar'}</Text>
+        </Pressable>
+      </View>
+      {estado === 'erro' && <Text style={styles.avisoErroTexto}>Não consegui enviar, tenta de novo.</Text>}
+    </View>
+  );
+}
+
+/**
+ * "Por que essa resposta" -- pedido explícito do usuário: depois de
+ * responder, mostrar SÓ o necessário (a estratégia/pegadinha, não um
+ * passo a passo inteiro) e deixar recolhido por padrão pra não virar
+ * leitura obrigatória em toda questão. Reaproveita `resolucoes`
+ * (tipo='texto'), o mesmo dado que o Cartão-resposta (Streamlit) já
+ * usa pra explicação -- sem tabela nova. Só aparece quando existe
+ * pelo menos uma resolução de texto pra esta questão; nenhuma questão
+ * ainda validada tem isso preenchido, então em silêncio (sem erro
+ * visível) é o comportamento certo pra maioria das questões hoje.
+ */
+function ExplicacaoQuestao({ idQuestao }: { idQuestao: string }) {
+  const [resolucoes, setResolucoes] = useState<Resolucao[] | null>(null);
+  const [aberto, setAberto] = useState(false);
+
+  useEffect(() => {
+    setResolucoes(null);
+    setAberto(false);
+    getResolucoes(idQuestao)
+      .then((r) => setResolucoes(r.filter((res) => res.tipo === 'texto')))
+      .catch(() => setResolucoes([]));
+  }, [idQuestao]);
+
+  if (!resolucoes || resolucoes.length === 0) return null;
+
+  return (
+    <View style={styles.explicacaoBox}>
+      <Pressable style={styles.explicacaoToggle} onPress={() => setAberto((v) => !v)}>
+        <Feather name={aberto ? 'chevron-up' : 'chevron-down'} size={15} color={Brand.roxoClaro} />
+        <Text style={styles.explicacaoToggleTexto}>{aberto ? 'Ocultar explicação' : '💡 Por que essa resposta'}</Text>
+      </Pressable>
+      {aberto &&
+        resolucoes.map((r) => (
+          <Text key={r.id_resolucao} style={styles.explicacaoTexto}>
+            {r.conteudo}
+          </Text>
+        ))}
+    </View>
+  );
+}
+
 function QuestaoAtual({
   questao,
   posicao,
   total,
+  materia,
+  chave,
   escolha,
   resultado,
   enviando,
@@ -996,10 +1274,13 @@ function QuestaoAtual({
   onConfirmar,
   onContinuar,
   onPular,
+  onVerConteudo,
 }: {
   questao: NoTrilha['questoes'][number];
   posicao: number;
   total: number;
+  materia: string;
+  chave: string | undefined;
   escolha: string | null;
   resultado: ResultadoTentativa | null;
   enviando: boolean;
@@ -1009,6 +1290,7 @@ function QuestaoAtual({
   onConfirmar: (idQuestao: string, duracaoMs: number) => void;
   onContinuar: () => void;
   onPular: () => void;
+  onVerConteudo: () => void;
 }) {
   const { corpo, alternativas } = separarAlternativas(questao.enunciado_texto ?? '');
   const temAlternativas = Object.keys(alternativas).length === 5;
@@ -1047,7 +1329,7 @@ function QuestaoAtual({
   const entrada = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     entrada.setValue(0);
-    Animated.timing(entrada, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    Animated.timing(entrada, { toValue: 1, duration: 240, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
   }, [questao.id_questao, entrada]);
   const translateX = entrada.interpolate({ inputRange: [0, 1], outputRange: [46, 0] });
 
@@ -1069,6 +1351,16 @@ function QuestaoAtual({
           média {formatarTempo(mediaMs)}/questão · faltam ~{formatarTempo(restantesMs)} pro fim do bloco
         </Text>
       )}
+
+      <View style={styles.acoesQuestaoRow}>
+        {resumoDoNo(materia, chave) && (
+          <Pressable style={styles.acaoQuestaoBtn} onPress={onVerConteudo}>
+            <Feather name="book-open" size={13} color={Brand.roxoClaro} />
+            <Text style={styles.acaoQuestaoTexto}>Rever conteúdo base</Text>
+          </Pressable>
+        )}
+        <BotaoReportar idQuestao={questao.id_questao} />
+      </View>
 
       <View style={styles.cardEnunciado}>
         {questao.fonte && <Text style={styles.fonteTexto}>🧠 Banco de prática · fonte: {questao.fonte}</Text>}
@@ -1106,6 +1398,7 @@ function QuestaoAtual({
               ? `✅ Certo! A resposta era ${resultado.alternativa_correta}.`
               : `❌ Você marcou ${resultado.resposta_escolhida ?? '— (em branco)'}. A resposta certa era ${resultado.alternativa_correta}.`}
           </CardFeedback>
+          <ExplicacaoQuestao idQuestao={questao.id_questao} />
           <BotaoPrimario onPress={onContinuar}>Continuar ➜</BotaoPrimario>
         </>
       )}
@@ -1396,6 +1689,99 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.corpoNegrito,
     fontSize: 12.5,
     color: Brand.textoApagado,
+  },
+  acoesQuestaoRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 2,
+  },
+  acaoQuestaoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    backgroundColor: Brand.bgCard,
+  },
+  acaoQuestaoTexto: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 11.5,
+    color: Brand.roxoClaro,
+  },
+  relatoCaixa: {
+    flex: 1,
+    minWidth: '100%',
+    backgroundColor: Brand.bgCard,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+  },
+  relatoLabel: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 12,
+    color: Brand.textoSuave,
+  },
+  relatoInput: {
+    fontFamily: Fontes.corpo,
+    fontSize: 13,
+    color: Brand.texto,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    borderRadius: 10,
+    padding: 10,
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  relatoBotoesRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  relatoBotaoCancelar: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  relatoBotaoEnviar: {
+    backgroundColor: Brand.laranja,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  relatoBotaoEnviarTexto: {
+    fontFamily: Fontes.titulo,
+    fontSize: 13,
+    color: '#2A1400',
+  },
+  explicacaoBox: {
+    backgroundColor: Brand.roxoBgEscuro,
+    borderWidth: 1,
+    borderColor: Brand.roxoBordaEscura,
+    borderRadius: 14,
+    padding: 12,
+    gap: 8,
+    marginVertical: 4,
+  },
+  explicacaoToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  explicacaoToggleTexto: {
+    fontFamily: Fontes.corpoExtraNegrito,
+    fontSize: 12.5,
+    color: Brand.roxoTextoEscuro,
+  },
+  explicacaoTexto: {
+    fontFamily: Fontes.corpo,
+    fontSize: 13.5,
+    lineHeight: 19,
+    color: Brand.roxoTextoSuave,
   },
   cardEnunciado: {
     padding: 18,

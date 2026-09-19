@@ -204,3 +204,32 @@ def resumo_geral() -> dict:
 @app.get("/explorar")
 def explorar(grande_area: str) -> list[dict]:
     return db.explorar_materias(grande_area)
+
+
+# ============================================================
+# FASE 3 — Reportar questão + resolução/explicação por questão.
+# Pedido explícito do usuário: enquanto ele valida o banco de
+# questões pergunta por pergunta, precisa de um jeito de sinalizar
+# "acho que isto está errado" sem sair do fluxo de resolver, e de
+# ver a explicação/resolução já cadastrada de uma questão (mesma
+# db.resolucoes_da_questao() que o Cartão-resposta já usa) quando
+# existir uma.
+# ============================================================
+
+class RelatoRequest(BaseModel):
+    id_questao: str
+    comentario: str
+
+
+@app.post("/relatos")
+def relatos(corpo: RelatoRequest) -> dict:
+    try:
+        id_relato = db.reportar_questao(corpo.id_questao, corpo.comentario)
+        return {"id_relato": id_relato}
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+
+
+@app.get("/resolucoes")
+def resolucoes(id_questao: str) -> list[dict]:
+    return db.resolucoes_da_questao(id_questao)
