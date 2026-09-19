@@ -39,3 +39,4 @@ core/corpus_analise.db*
 docs/plano_50_dias*.md
 core/inep_itens/
 rows.pkl
+docs/registro_estudo.csv
