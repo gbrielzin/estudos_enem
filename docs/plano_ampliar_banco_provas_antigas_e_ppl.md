@@ -31,9 +31,23 @@ Fazer em duas fases, da mais barata e segura para a mais cara.
 - Questões com imagem: entram **marcadas** (⚠️, como no beta de "Prova com enunciado"), e ficam fora de simulados até a figura ser recuperada.
 
 ### Fase 2: PPL (fonte externa)
+- PPL = Pessoas Privadas de Liberdade. No INEP, os arquivos se chamam `..._reaplicacao_PPL_...`.
 - Precisa dos PDFs oficiais do INEP (prova e gabarito). Depois usar os scripts existentes: gabarito primeiro, texto e figuras depois.
 - Caderno próprio (`ppl`), para nunca misturar com a prova regular do mesmo ano.
-- **Depende de baixar os PDFs**; até isso, nada é gravado.
+- **Nada é gravado no banco** até a validação; os PDFs ficam em `core/inep_ppl/` (ignorado pelo git).
+
+**Status do download (2026-09-21), confirmado abrindo cada PDF:**
+
+| Anos | Prova (PV) | Gabarito (GB) | Onde |
+|---|---|---|---|
+| 2015, 2016 | 4 cadernos, dia 1 (Natureza) | **não encontrado** no mesmo padrão | `educacao_basica/enem/provas/<ano>/` |
+| 2017 a 2019 | 4 a 9 cadernos, dia 2 (Natureza + Matemática) | **não encontrado** no mesmo padrão | idem |
+| 2020 a 2024 | 4 cadernos por ano (amarelo, cinza, azul ou verde, rosa), dia 2 | 4 por ano | `enem/provas_e_gabaritos/` |
+| 2025 | não encontrado | não encontrado | possivelmente ainda não publicado |
+
+- Total: 66 PDFs, 221 MB. Todos com "Natureza" na primeira página.
+- Os cadernos extras (ex.: 2016 CD10 com 64 páginas; 2017 CD11/17 a 20; 2019 CD9 laranja) parecem versões especiais (ampliada etc.). **Não confirmado**: precisa abrir e conferir antes de tratar como caderno normal.
+- Anos 2015 a 2016: Natureza está no dia 1. De 2017 em diante, no dia 2 (mesmo layout do corpus).
 
 ## Salvaguardas (valem para as duas fases)
 
@@ -56,4 +70,6 @@ Fazer em duas fases, da mais barata e segura para a mais cara.
 1. Rodar o portão de validação (a) da Fase 1 (só leitura) e registrar a taxa de divergência.
 2. Decidir o limite aceitável com base nesse número.
 3. Só então gravar, com backup.
-4. Localizar e baixar os PDFs do PPL e repetir o processo na Fase 2.
+4. Localizar os **gabaritos do PPL de 2015 a 2019** (nome antigo, fora do padrão `GB_reaplicacao_PPL`) e confirmar se o PPL de 2025 já saiu.
+5. Identificar quais dos cadernos extras são versões especiais e descartá-las.
+6. Repetir o processo da Fase 1 (só leitura, validação, backup, gravação) na Fase 2.
