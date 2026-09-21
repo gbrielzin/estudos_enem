@@ -38,16 +38,23 @@ Fazer em duas fases, da mais barata e segura para a mais cara.
 
 **Status do download (2026-09-21), confirmado abrindo cada PDF:**
 
-| Anos | Prova (PV) | Gabarito (GB) | Onde |
+Correção importante: os arquivos `..._reaplicacao_PPL_...` do INEP são, em quase todos os casos, a **2ª aplicação (reaplicação)**, e não a prova de Pessoas Privadas de Liberdade. Lendo as 4 primeiras páginas de cada prova: 2015, 2017 a 2019 e 2021 a 2024 dizem "2ª aplicação"; 2016 diz "3ª aplicação"; só 2020 (cadernos 5 e 6) cita "PPL" no texto. **Não dá para separar PPL de reaplicação pelo nome do arquivo**, e não confirmei se o INEP publicou o PPL como prova própria em cada ano.
+
+| Ano | Provas (PV) | Gabaritos (GB) | Aplicação declarada |
 |---|---|---|---|
-| 2015, 2016 | 4 cadernos, dia 1 (Natureza) | **não encontrado** no mesmo padrão | `educacao_basica/enem/provas/<ano>/` |
-| 2017 a 2019 | 4 a 9 cadernos, dia 2 (Natureza + Matemática) | **não encontrado** no mesmo padrão | idem |
-| 2020 a 2024 | 4 cadernos por ano (amarelo, cinza, azul ou verde, rosa), dia 2 | 4 por ano | `enem/provas_e_gabaritos/` |
+| 2015 | 4 cadernos (9 a 12), Natureza no dia 1 | **falta** (só achei "2ª aplicação" de 2015 em outro padrão, cadernos 1 a 4, ainda não baixado) | 2ª aplicação |
+| 2016 | 4 cadernos (9 a 12) | 4 (branco 9 a 12) | 3ª aplicação |
+| 2017 | cadernos 5 a 8, 11, 17 a 20 | 7 (cadernos 5, 6, 8, 17 a 20); **faltam 7 e 11** | 2ª aplicação |
+| 2018 | cadernos 17 a 20 | 4 (17 a 20) | 2ª aplicação |
+| 2019 | cadernos 5 a 9 | 4 (5 a 8); **falta 9** | 2ª aplicação |
+| 2020 a 2024 | 4 cadernos por ano | 4 por ano | 2ª aplicação (2020 cad. 5/6 citam PPL) |
 | 2025 | não encontrado | não encontrado | possivelmente ainda não publicado |
 
-- Total: 66 PDFs, 221 MB. Todos com "Natureza" na primeira página.
-- Os cadernos extras (ex.: 2016 CD10 com 64 páginas; 2017 CD11/17 a 20; 2019 CD9 laranja) parecem versões especiais (ampliada etc.). **Não confirmado**: precisa abrir e conferir antes de tratar como caderno normal.
-- Anos 2015 a 2016: Natureza está no dia 1. De 2017 em diante, no dia 2 (mesmo layout do corpus).
+- Total: 66 PDFs de prova (221 MB) em `core/inep_ppl/` e 19 gabaritos antigos em `core/inep_ppl/gabaritos_antigos/`. Tudo ignorado pelo git.
+- Padrões de nome dos gabaritos antigos: 2016 `ppl/2016/gabarito_caderno_branco_<n>_2016.pdf`; 2017 `ppl/2017/gabaritos/GAB_ENEM_2017_2_APL_DIA_2_<Cor>_cad_<n>.pdf`; 2018 `gabaritos/2018/GAB_ENEM_2018_DIA_2_P2_<Cor>.pdf`; 2019 `ppl/2019/gabaritos/gabarito_2_dia_caderno_<n>_<cor>_2_aplicacao.pdf`.
+- Cadernos extras (2016 CD10 com 64 páginas; 2017 CD11; 2019 CD9 laranja) parecem versões especiais. **Não confirmado.**
+- Natureza está no dia 1 em 2015 e 2016 e no dia 2 de 2017 em diante.
+- Uma busca web descreveu PPL de forma errada ("pessoas livres"); PPL = Pessoas Privadas de Liberdade.
 
 ## Salvaguardas (valem para as duas fases)
 
