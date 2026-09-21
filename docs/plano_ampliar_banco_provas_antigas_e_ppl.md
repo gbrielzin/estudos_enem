@@ -1,0 +1,59 @@
+# Plano: ampliar o banco de estudo com provas antigas e PPL
+
+Status: **plano, nada foi escrito no `enem.db`**. Data: 2026-09-21.
+
+## Situação hoje (medida)
+
+| Base | Cobertura |
+|---|---|
+| `core/enem.db` (banco de estudo) | Natureza e Matemática, **2019 a 2025**, sem PPL |
+| `core/corpus_analise.db` (análises) | 1 prova regular por ano, **2009 a 2025**, sem PPL |
+
+Natureza no corpus, 2009 a 2018: **45 questões por ano, todas com gabarito** (contagem por `indice`, ver `docs/padroes_de_prova_corpus.md` §0.1 para o layout de cada ano). Entre 16 e 25 por ano têm `tem_imagem = 1`.
+
+As análises de padrão de prova usaram o corpus, não o banco de estudo. Por isso "estar nas análises" não significa "estar no banco".
+
+## Restrições do pipeline atual (de `core/CLAUDE.md`)
+
+1. Cada `(ano, caderno, grande_area)` é um simulado independente, com `id_questao` próprio.
+2. `extrair_enunciados_pdf.py`, `extrair_figuras_pdf.py` e `importar_enem_dev.py` **só preenchem** questões que já existem. Primeiro entra o gabarito (`carregar_gabarito_csv` / `extrair_gabarito_pdf.py`), depois o texto.
+3. `importar_enem_dev.py` cobre 2009 a 2023 e confere o caderno azul antes de gravar. Para PPL, **não confirmado** que a API tenha os dados.
+
+## Decisão (trade-off)
+
+Fazer em duas fases, da mais barata e segura para a mais cara.
+
+### Fase 1: provas regulares 2010 a 2018, Natureza (fonte local, sem rede)
+- Fonte: `corpus_analise.db` (texto, alternativas e gabarito já validados contra a estrutura do corpus).
+- Custo: baixo, sem download. Ganho: 9 provas x 45 = **405 questões**.
+- 2009 fica de fora por enquanto: matriz diferente (mudou em 2009), fica numa segunda rodada.
+- **Portão de validação antes de gravar:** (a) comparar o gabarito do corpus com o oficial nos anos em que os dois existem (2019 a 2023) para medir a taxa de divergência; (b) conferir uma amostra de cada ano antigo contra o PDF oficial do INEP. Se a divergência passar de um limite acordado, parar.
+- Questões com imagem: entram **marcadas** (⚠️, como no beta de "Prova com enunciado"), e ficam fora de simulados até a figura ser recuperada.
+
+### Fase 2: PPL (fonte externa)
+- Precisa dos PDFs oficiais do INEP (prova e gabarito). Depois usar os scripts existentes: gabarito primeiro, texto e figuras depois.
+- Caderno próprio (`ppl`), para nunca misturar com a prova regular do mesmo ano.
+- **Depende de baixar os PDFs**; até isso, nada é gravado.
+
+## Salvaguardas (valem para as duas fases)
+
+1. Backup do `enem.db` antes de qualquer gravação (`core/backup_db.py`).
+2. Rodar primeiro em modo de leitura (sem `--aplicar`) e revisar a saída.
+3. `origem` distinta nas linhas novas, para as análises poderem incluir ou excluir esse bloco.
+4. `topico` fica vazio: a classificação por tópico é um passo separado (a coluna está vazia nas questões de biologia hoje).
+5. Antes de importar, avaliar o efeito em `prioridade_de_estudo()`: centenas de questões novas mudam recorrência e ranking.
+6. Nenhum número novo sem consulta rodada; toda aproximação registra o limite.
+
+## Riscos abertos
+
+- O gabarito do corpus (fonte `enem.dev`) pode divergir do oficial em casos de questão anulada (já houve um em 2020).
+- A ordem das questões do corpus pode não bater com o caderno azul em alguns anos (já observado em 2023).
+- Sem figura, cerca de 40% das questões ficam incompletas.
+- O PPL depende de fonte que ainda não foi localizada nem baixada.
+
+## Próximos passos
+
+1. Rodar o portão de validação (a) da Fase 1 (só leitura) e registrar a taxa de divergência.
+2. Decidir o limite aceitável com base nesse número.
+3. Só então gravar, com backup.
+4. Localizar e baixar os PDFs do PPL e repetir o processo na Fase 2.
