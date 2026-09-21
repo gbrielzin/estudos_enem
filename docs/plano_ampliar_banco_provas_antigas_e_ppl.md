@@ -42,7 +42,7 @@ Correção importante: os arquivos `..._reaplicacao_PPL_...` do INEP são, em qu
 
 | Ano | Provas (PV) | Gabaritos (GB) | Aplicação declarada |
 |---|---|---|---|
-| 2015 | 4 cadernos (9 a 12), Natureza no dia 1 | **falta** (só achei "2ª aplicação" de 2015 em outro padrão, cadernos 1 a 4, ainda não baixado) | 2ª aplicação |
+| 2015 | 4 cadernos (9 a 12), Natureza no dia 1 | 4 baixados (cadernos 1 a 4: azul, amarelo, branco, rosa), **rotulados 2ª aplicação**; **mapeamento entre CD 9 a 12 e cadernos 1 a 4 ainda não conferido** | 2ª aplicação |
 | 2016 | 4 cadernos (9 a 12) | 4 (branco 9 a 12) | 3ª aplicação |
 | 2017 | cadernos 5 a 8, 11, 17 a 20 | 7 (cadernos 5, 6, 8, 17 a 20); **faltam 7 e 11** | 2ª aplicação |
 | 2018 | cadernos 17 a 20 | 4 (17 a 20) | 2ª aplicação |
