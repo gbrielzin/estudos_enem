@@ -172,7 +172,7 @@ else:
 
     print(f"  Tentativas registradas: {registradas} (esperado: 37)")
     print(f"  Falharam (questão não encontrada): {falharam}")
-    print(f"  Fora do escopo, sem resposta confiável: 136, 137, 146, 154, 157, 178, 177(?), 179(?) -- 8 questões")
+    print("  Fora do escopo, sem resposta confiável: 136, 137, 146, 154, 157, 178, 177(?), 179(?) -- 8 questões")
 
 # ============================================================
 # 3. VERIFICAÇÃO FINAL
