@@ -1,56 +1,61 @@
-# Welcome to your Expo app 👋
+# ENEM GI — app mobile/web
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App Expo (React Native + Expo Router, TypeScript) do ENEM GI. Um único código roda no celular (Expo Go) e no navegador. O app não guarda regra de negócio: tudo o que diz o que estudar, quando revisar e se a resposta está certa vem da API FastAPI em `core/api.py`, que é uma camada fina sobre `core/db.py`. Contexto da decisão em [`adr/0007`](../adr/0007-api-rest-mais-cliente-expo.md).
 
-## Get started
+## Telas (`src/app/`)
 
-1. Install dependencies
+| Arquivo | O que faz |
+|---|---|
+| `index.tsx` | Trilha de estudo (fixa, por matéria), exercício e resultado de cada nó |
+| `explore.tsx` | Navegar e buscar todas as matérias da taxonomia (`GET /explorar`) |
+| `simulado.tsx` | Montar um simulado ("Escolher a prova") e emitir o bilhete (`components/tela-bilhete.tsx`) |
+| `missoes.tsx` | Missões do dia |
+| `liga.tsx` / `perfil.tsx` | Nível, XP, dias até a prova, resumo geral. A liga é decorativa: o sistema ainda é de um usuário só |
+| `_layout.tsx` | Tema escuro fixo, fontes e navegação por abas (`components/tab-bar.tsx`) |
 
-   ```bash
-   npm install
-   ```
+Toda chamada HTTP passa por `src/lib/api.ts`. As cores e a identidade visual vêm de `src/constants/brand.ts`, seguindo o handoff em `docs/design_handoff_enem_gamificado/`.
 
-2. Start the app
+## Rodar
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+A API precisa estar no ar antes do app:
 
 ```bash
-npm run reset-project
+# na raiz do repo
+cd core
+uvicorn api:app --host 0.0.0.0 --port 8000
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Depois, em outro terminal:
 
-### Other setup steps
+```bash
+cd mobile
+npm install
+npx expo start --web     # navegador
+npx expo start           # QR code pro Expo Go (celular na MESMA wifi do computador)
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+O app descobre sozinho o endereço da API (`getApiBaseUrl()` em `src/lib/api.ts`). No Expo Go ele usa o IP do computador que roda o Metro, na porta 8000. No navegador usa `localhost:8000`.
 
-## Learn more
+### Trava da API (opcional)
 
-To learn more about developing your project with Expo, look at the following resources:
+Se a API estiver com `API_AUTH_TOKEN` configurado (ver `.env.example` na raiz e [`adr/0009`](../adr/0009-trava-simples-antes-de-autenticacao-real.md)), crie `mobile/.env` com o mesmo valor:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+EXPO_PUBLIC_API_AUTH_TOKEN=<mesmo valor do API_AUTH_TOKEN>
+```
 
-## Join the community
+Isso é um token compartilhado, não é login de usuário. Qualquer variável `EXPO_PUBLIC_` vai embutida no bundle do app.
 
-Join our community of developers creating universal apps.
+## Testes
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd mobile
+npm test
+```
+
+Jest com `jest-expo`. Hoje só `src/lib/` tem teste (`alternativas.test.ts`, `api.test.ts`). Componentes e telas ainda não têm.
+
+## Notas
+
+- Expo SDK 57. A API do Expo mudou bastante entre versões: consulte a doc da versão exata (https://docs.expo.dev/versions/v57.0.0/) antes de mexer (ver `AGENTS.md`).
+- `npm run reset-project` é resto do template do `create-expo-app`. Ele **move `src/` inteiro para `example/` e deixa um app vazio**. Não rode.

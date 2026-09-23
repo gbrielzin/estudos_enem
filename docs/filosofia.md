@@ -14,7 +14,9 @@ Ao contrário dos cursinhos tradicionais que vendem cronogramas lineares de 1 an
 
 ---
 
-## 📊 2. Tabela Oficial de Pesos: Ecologia (O Coração de Natureza)
+## 📊 2. Tabela de Pesos (hipótese, não confirmada): Ecologia (O Coração de Natureza)
+
+> ⚠️ **Status dos números abaixo: hipótese sem fonte, e já com dado contra.** Os percentuais de incidência nunca tiveram fonte citada. Em 2026-09-17 (`docs/proximos_passos_e_diferencial_2026-09-17.md`), a medição nas questões oficiais de Ecologia já classificadas achou **zero** ocorrências de Poluição Atmosférica (a F4 "28%") e Relações Ecológicas como o padrão mais recorrente. Em 2026-09-23 o banco ainda tinha só 11 questões oficiais classificadas como `ecologia` (446 de Natureza seguem em triagem), pouco para substituir a tabela por números medidos. Até existir fonte citada ou medição com amostra razoável, **não usar estes percentuais nem esta ordem como fato** (nem na trilha, nem em material de estudo). A ordem e os pesos finais continuam em aberto.
 
 Para o MVP, a árvore do Duolingo dividirá o ecossistema de Ecologia em **6 Fases Estritas**, organizadas por volume de manobra (20 cenários clones por fase, totalizando 120 questões):
 
@@ -42,7 +44,7 @@ Nosso diferencial competitivo contra aplicativos gerados por IAs genéricas e li
 O algoritmo de trilha, exposto pelo backend FastAPI (`core/api.py`, endpoint `/trilha`) e consumido pelo app Expo/React Native (`mobile/src/components/trilha-path.tsx`), deve obedecer a seguinte ordem de destravamento de nós, garantindo que o usuário mude de matéria assim que o ROI da atual bater no teto:
 
 ```text
-[Nó 1: Ecologia F1] ➔ [Nó 2: Óptica F1] ➔ [Nó 3: Ecologia F4 (28%)] ➔ [Nó 4: Cinemática F1] ➔ [Nó 5: Ecologia F3] ➔ [Nó 6: Eletrodinâmica F1 (SVG)]
+[Nó 1: Ecologia F1] ➔ [Nó 2: Óptica F1] ➔ [Nó 3: Ecologia F4 (28%, hipótese — ver aviso da seção 2)] ➔ [Nó 4: Cinemática F1] ➔ [Nó 5: Ecologia F3] ➔ [Nó 6: Eletrodinâmica F1 (SVG)]
 ```
 
 Se o estudante tentar avançar linearmente para uma fase de baixo ROI (ex: Saneamento) antes de garantir a base de uma matéria de alta incidência (ex: Cinemática), o sistema dispara o **Bloqueio Informativo do Pipoco**, redirecionando o usuário para a pista mais lucrativa de pontos.
