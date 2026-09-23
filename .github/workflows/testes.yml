@@ -36,5 +36,8 @@ jobs:
           cache: npm
           cache-dependency-path: mobile/package-lock.json
       - run: npm ci
+      # expo-env.d.ts é gerado pelo Expo e fica no .gitignore, mas é ele que
+      # declara os tipos de import .css pro tsc.
+      - run: echo '/// <reference types="expo/types" />' > expo-env.d.ts
       - run: npx tsc --noEmit
       - run: npm test
