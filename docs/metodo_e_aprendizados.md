@@ -46,3 +46,27 @@ Rascunho pra revisão. Baseado em ~4h de estudo real (citologia, do zero) e no t
 - O relato de confiança (1-5) prevê o acerto na revisão seguinte?
 - Quanto do ganho vem do método e quanto da simples exposição repetida? Precisa de comparação (mesmo tema, com e sem diagnóstico).
 - Quanto vale, em pontos de nota, cada hora de estudo por matéria? Falta a série de tempo.
+
+## 6. Atualização 2026-09-23 — o que um dia de ~5h (revisão + 2 matérias novas) acrescentou
+
+Mesma ressalva: 1 aluno, 1 dia. Observações, não conclusões.
+
+**Regras de produto candidatas** (pedidas pelo próprio estudante):
+
+| Regra | Evidência no dia | Implicação pro sistema |
+|---|---|---|
+| **Amplitude: "um pezinho" em várias matérias por dia**, em vez de esgotar uma | Revisão de 4 matérias + 2 novas (termologia, cinemática) no mesmo dia; o estudante relatou achar mais eficaz que ficar numa só | Trilha/plano do dia com vários blocos curtos de matérias diferentes, não um bloco longo de uma matéria |
+| **Kit = poucas fórmulas + gatilho + apelido** | Eletrodinâmica travou com fórmulas soltas e destravou com 3 "pirâmides" e o gatilho de cada ("Você Ri", "É Pt"); o apelido "Que macete" grudou na hora; um recall sem apelido falhou e com apelido acertou | Cada matéria de conta tem um kit curado (fórmula, quando usar, apelido), mostrado antes do exercício |
+| **Molde: mesma questão com números trocados** | Questões oficiais que ele não conseguia montar (carro elétrico, aquário, frenagem) saíram sozinho depois de 2-3 variações | Questão parametrizada gera repetição sem depender de achar outra questão oficial igual (ataca o gargalo de falta de questão) |
+| **Resolveu com ajuda → faz outra sozinho** | Regra enunciada pelo estudante; resolver guiado não conta como acerto | Questão resolvida com dica marca "rever" e dispara uma variação do molde sem dica |
+| **Mistura de fórmulas depois de aprender** | Rodada embaralhada: escolher a fórmula pelo gatilho acertou 4/4 | Revisão intercalada (misturar matérias/fórmulas), não em bloco por fórmula |
+| **Revisão espaçada com 1 dia de intervalo confirma** | Pares confundidos (hábitat × nicho etc.): 3/3 no reteste imediato e 3/3 de novo no dia seguinte | Leitner já cobre; o reteste imediato não substitui o do dia seguinte |
+
+**Padrões de erro novos:**
+- **Vocabulário técnico esconde ideia simples** (fótons, efluentes, excretas nitrogenadas, teia trófica). Ele sabe a ideia, a palavra trava. → glossário de 1 linha ligado à questão.
+- **Estrutura × enzima** ("-somo" é a bolsa que guarda enzima, não a enzima): 3 ocorrências em 2 dias.
+- **Conta final escorrega com o raciocínio certo** (150/6, 220/11, divisão não terminada). → sugerir "multiplique de volta pra conferir"; resultado fora das alternativas = conferir a conta.
+- **Alternativas de passo pela metade** (ENEM põe o resultado parcial como distrator; ele caiu em uma). → na correção, mostrar qual passo cada alternativa errada representa.
+- **Troca de unidade no nome** (energia chamada de "kW", potência de "volts"). → reforçar W = potência, J/kWh = energia, V = tensão.
+
+**Sinal de fadiga medido:** a mesma habilidade caiu de 4/4 pra 1/4 entre duas rodadas seguidas, depois de ~5h, junto com "não sei". → queda brusca de acerto em algo já dominado no mesmo dia = sugerir pausa, não mais conteúdo.

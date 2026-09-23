@@ -268,5 +268,29 @@ class TestAutenticacao(_TestComBancoTemporario):
         self.assertEqual(resposta.status_code, 401)
 
 
+
+
+class TestMoldes(_TestComBancoTemporario):
+    """Só a camada HTTP: rota, parâmetros e 404. A lógica do gerador é
+    testada em test_moldes.py."""
+
+    def test_listar_moldes(self):
+        resposta = self.client.get("/moldes")
+        self.assertEqual(resposta.status_code, 200)
+        self.assertIn("frenagem", {m["id_molde"] for m in resposta.json()})
+
+    def test_variacao_com_seed_e_deterministica(self):
+        r1 = self.client.get("/moldes/aquario/variacao", params={"seed": 5}).json()
+        r2 = self.client.get("/moldes/aquario/variacao", params={"seed": 5}).json()
+        self.assertEqual(r1, r2)
+
+    def test_variacao_original_repassa_o_parametro(self):
+        corpo = self.client.get("/moldes/carro_eletrico/variacao", params={"original": True}).json()
+        self.assertEqual(corpo["parametros"]["distancia_km"], 110)
+
+    def test_molde_inexistente_da_404(self):
+        self.assertEqual(self.client.get("/moldes/nao_existe/variacao").status_code, 404)
+
+
 if __name__ == "__main__":
     unittest.main()
