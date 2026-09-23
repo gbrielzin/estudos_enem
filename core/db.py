@@ -2194,7 +2194,6 @@ def evolucao_semanal_por_materia(grande_area: str, n_semanas: int = 4) -> dict:
 
     corte = len(janela) // 2
     metade_1 = set(janela[:corte])
-    metade_2 = set(janela[corte:])
 
     stats: dict[str, dict[str, list[int]]] = {}
     for semana, materia, resultado in linhas:
@@ -3138,7 +3137,6 @@ def plano_periodizacao() -> dict:
     fase muda de verdade, é intencional -- diferente da versão anterior
     (proporcional), esta reflete um cronograma escrito à mão."""
     prova = dias_ate_prova()
-    data_prova = date.fromisoformat(prova["data_prova"])
     hoje = date.today()
     dias_restantes = prova["dias_restantes"]
 

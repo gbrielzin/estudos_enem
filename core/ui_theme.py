@@ -1320,12 +1320,12 @@ def mascote_html(
         if fechado else ""
     )
     sparkle_html = (
-        f'<div style="position:absolute;right:-10px;top:-6px;width:15px;height:15px;'
-        f'transform:rotate(45deg);border-radius:4px;background:#FFC42E"></div>'
+        '<div style="position:absolute;right:-10px;top:-6px;width:15px;height:15px;'
+        'transform:rotate(45deg);border-radius:4px;background:#FFC42E"></div>'
         if mood == "cheer" else ""
     )
     boca_html = (
-        f'<div class="pipo-boca-aberta"></div>' if mood == "cheer"
+        '<div class="pipo-boca-aberta"></div>' if mood == "cheer"
         else f'<div class="pipo-boca-fechada" style="border-color:{shadow}"></div>'
     )
     manchas_html = ""
