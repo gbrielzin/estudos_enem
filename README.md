@@ -105,9 +105,9 @@ em vez de rejeitada, alimentando uma fila de triagem manual.
 - **800 tentativas** de usuário processadas pelo sistema
 - **18 endpoints REST** (`core/api.py`)
 - **9 tabelas** relacionais (SQLite)
-- **123 testes automatizados** — 80 na regra de negócio + 28 na camada
+- **126 testes automatizados** — 80 na regra de negócio + 28 na camada
   HTTP + 8 no gerador de moldes (`core/test_db.py`/`test_api.py`/
-  `test_moldes.py`) + 7 no app mobile (Jest), rodando
+  `test_moldes.py`) + 10 no app mobile (Jest), rodando
   em CI (GitHub Actions, `.github/workflows/testes.yml`) junto com lint
   (`ruff`) e checagem de tipo (`tsc`) a cada push/PR
 - **9 ADRs** documentando as principais decisões de arquitetura (`adr/`)

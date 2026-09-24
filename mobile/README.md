@@ -7,7 +7,7 @@ App Expo (React Native + Expo Router, TypeScript) do ENEM GI. Um único código 
 | Arquivo | O que faz |
 |---|---|
 | `index.tsx` | Trilha de estudo (fixa, por matéria), exercício e resultado de cada nó |
-| `explore.tsx` | Navegar e buscar todas as matérias da taxonomia (`GET /explorar`) |
+| `explore.tsx` | Navegar e buscar todas as matérias da taxonomia (`GET /explorar`). No topo, o card **Treino com moldes** abre `components/tela-moldes.tsx`: variações de questões oficiais com números novos, kit de fórmulas e passo a passo (`GET /moldes`, ver `core/moldes.py`) |
 | `simulado.tsx` | Montar um simulado ("Escolher a prova") e emitir o bilhete (`components/tela-bilhete.tsx`) |
 | `missoes.tsx` | Missões do dia |
 | `liga.tsx` / `perfil.tsx` | Nível, XP, dias até a prova, resumo geral. A liga é decorativa: o sistema ainda é de um usuário só |
@@ -53,7 +53,7 @@ cd mobile
 npm test
 ```
 
-Jest com `jest-expo`. Hoje só `src/lib/` tem teste (`alternativas.test.ts`, `api.test.ts`). Componentes e telas ainda não têm.
+Jest com `jest-expo`. Hoje só `src/lib/` tem teste (`alternativas.test.ts`, `api.test.ts`, 10 testes). Componentes e telas ainda não têm.
 
 ## Notas
 
