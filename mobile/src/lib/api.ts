@@ -315,3 +315,53 @@ export async function reportarQuestao(idQuestao: string, comentario: string): Pr
     throw new ErroApi(`Backend respondeu ${resposta.status} ao enviar o relato.`);
   }
 }
+
+// ============================================================
+// Moldes -- variações de questão oficial com números trocados (ver
+// core/moldes.py). A resposta e o motivo de cada alternativa errada vêm
+// prontos do backend; o app só mostra.
+// ============================================================
+
+export interface ItemKit {
+  formula: string;
+  apelido: string;
+  gatilho: string;
+}
+
+export interface Molde {
+  id_molde: string;
+  titulo: string;
+  materia: string;
+  id_questao_ancora: string;
+  kit: ItemKit[];
+}
+
+export interface VariacaoMolde {
+  id_molde: string;
+  id_questao_ancora: string;
+  seed: number | null;
+  parametros: Record<string, number>;
+  enunciado: string;
+  unidade: string;
+  alternativas: Record<string, string>;
+  correta: string;
+  distratores: Record<string, string>;
+  passos: string[];
+  kit: ItemKit[];
+}
+
+export function getMoldes(): Promise<Molde[]> {
+  return buscarJson(`/moldes`);
+}
+
+export function caminhoVariacaoMolde(idMolde: string, opcoes: { seed?: number; original?: boolean } = {}): string {
+  const params = new URLSearchParams();
+  if (opcoes.original) params.set('original', 'true');
+  else if (opcoes.seed !== undefined) params.set('seed', String(opcoes.seed));
+  const query = params.toString();
+  return `/moldes/${encodeURIComponent(idMolde)}/variacao${query ? `?${query}` : ''}`;
+}
+
+export function getVariacaoMolde(idMolde: string, opcoes: { seed?: number; original?: boolean } = {}): Promise<VariacaoMolde> {
+  return buscarJson(caminhoVariacaoMolde(idMolde, opcoes));
+}

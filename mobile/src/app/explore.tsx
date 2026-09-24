@@ -1,9 +1,10 @@
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BarraProgresso } from '@/components/barra-progresso';
+import { TelaMoldes } from '@/components/tela-moldes';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import { GrandeArea, MateriaExplorada, getExplorarMaterias } from '@/lib/api';
 
@@ -35,6 +36,7 @@ export default function ExploreScreen() {
   const [materias, setMaterias] = useState<MateriaExplorada[] | null>(null);
   const [busca, setBusca] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  const [moldesAberto, setMoldesAberto] = useState(false);
 
   useEffect(() => {
     setMaterias(null);
@@ -50,11 +52,26 @@ export default function ExploreScreen() {
     return materias.filter((m) => m.materia.toLowerCase().includes(termo));
   }, [materias, busca]);
 
+  if (moldesAberto) {
+    return <TelaMoldes onVoltar={() => setMoldesAberto(false)} />;
+  }
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scroll}>
           <Text style={styles.titulo}>Explorar matérias</Text>
+
+          <Pressable style={styles.cardMoldes} onPress={() => setMoldesAberto(true)}>
+            <View style={[styles.badge, { backgroundColor: Brand.roxo }]}>
+              <Feather name="repeat" size={18} color={Brand.bg} />
+            </View>
+            <View style={styles.linhaCorpo}>
+              <Text style={styles.linhaTitulo}>Treino com moldes</Text>
+              <Text style={styles.linhaMeta}>Questões do ENEM com números novos a cada rodada</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={Brand.textoSuave} />
+          </Pressable>
 
           <View style={styles.buscaContainer}>
             <Feather name="search" size={16} color={Brand.textoApagado} />
@@ -197,6 +214,16 @@ const styles = StyleSheet.create({
     backgroundColor: Brand.bgCard,
     borderWidth: 1,
     borderColor: Brand.borda,
+    borderRadius: RaioCard,
+    padding: 14,
+    alignItems: 'center',
+  },
+  cardMoldes: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: Brand.roxoBgEscuro,
+    borderWidth: 1,
+    borderColor: Brand.roxoBordaEscura,
     borderRadius: RaioCard,
     padding: 14,
     alignItems: 'center',
