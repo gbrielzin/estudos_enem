@@ -142,46 +142,26 @@ For a UI-only request:
 4. Do not refactor unrelated code.
 5. Do not modify backend/database logic unless necessary.
 
-## NUNCA UTILIZAR COMANDOS GIT
+## Git: Claude pode commitar e dar push
 
-Claude nunca roda `git` (add, commit, push, branch, ou qualquer outro) neste
-projeto, em nenhuma pasta — vale pro repositório inteiro, não só `core/`.
-Editar/criar/apagar arquivo continua normal. Staging, commit e push ficam
-100% com o Gabriel, no momento e do jeito que ele quiser.
+Desde 2026-09-24 (pedido do Gabriel, que quer os commits aparecendo no perfil
+do GitHub) a antiga regra "nunca rodar git" não vale mais. Claude pode rodar
+`git add`, `git commit` e `git push` no branch de trabalho atual.
 
-### Sempre sugerir o commit, nunca executar
+- Commits em Conventional Commits (`feat`, `fix`, `docs`, `refactor`,
+  `chore`, `test`...), mensagem curta em português descrevendo o "quê".
+- Mudanças sem relação entre si viram commits separados.
+- Nunca commitar os arquivos pessoais de estudo (`docs/registro_estudo.csv`,
+  `docs/sessao_estudo_chat.md`, `docs/plano_50_dias*.md` etc. — já estão no
+  `.gitignore`) nem `enem.db`/`corpus_analise.db`.
+- Antes do commit: `ruff check core --select F,E9` limpo e a suíte de testes
+  passando.
 
-Toda vez que uma alteração feita na conversa (código, doc, dado) chegar a um
-ponto que valeria um commit, Claude deve **sugerir** o commit em texto — nunca
-rodar `git commit`. A sugestão vem em bloco de código pronto pra copiar/colar,
-no formato:
+### Branches e master
 
-```
-git commit -m "tipo: mensagem curta no imperativo"
-```
-
-- `tipo` segue Conventional Commits (`feat`, `fix`, `docs`, `refactor`,
-  `chore`, `test`, etc.) condizente com o que mudou.
-- Mensagem em português, curta, descrevendo o "quê" da mudança.
-- Se fizer sentido separar em mais de um commit (mudanças sem relação entre
-  si), sugerir os blocos separados, cada um com seu próprio `git add
-  <arquivos>` + `git commit -m "..."`.
-- Isso não substitui a regra acima: Claude nunca executa o `git add`/`commit`
-  sugerido, só mostra pra Gabriel decidir e rodar ele mesmo.
-
-### Branch de trabalho: `algumas-mod`, não `master`
-
-`master` é o branch principal (usado pra PR), mas o trabalho do dia a dia
-acontece em `algumas-mod` (já sincronizado com `origin/algumas-mod`) —
-`master` fica deliberadamente atrasado como um "intermediário" antes do
-GitHub principal. Por causa disso:
-
-- Commits sugeridos por Claude (pela seção acima) presumem que Gabriel está
-  commitando em `algumas-mod`, não em `master`.
-- Levar mudanças de `algumas-mod` pra `master` (merge, PR, ou push direto em
-  `master`) é sempre uma decisão manual e explícita do Gabriel — Claude nunca
-  sugere isso como próximo passo automático depois de um commit, e muito menos
-  executa (vale a mesma regra de nunca rodar `git`).
-- Se em algum momento Gabriel confirmar que já promoveu `algumas-mod` pra
-  `master` (ou trocou de branch de trabalho), atualizar este trecho pra
-  refletir o branch atual.
+O trabalho acontece em branches de feature (`feat-*`), que chegam no `master`
+por PR no GitHub. O gráfico de contribuições só conta commit que chegou no
+`master`, então abrir e dar merge no PR é o passo que faz aparecer no perfil.
+Merge/PR pra `master`, push direto em `master` e qualquer operação destrutiva
+(`reset --hard`, `push --force`, apagar branch) continuam pedindo confirmação
+explícita do Gabriel antes.
