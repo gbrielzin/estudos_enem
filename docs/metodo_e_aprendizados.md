@@ -70,3 +70,17 @@ Mesma ressalva: 1 aluno, 1 dia. Observações, não conclusões.
 - **Troca de unidade no nome** (energia chamada de "kW", potência de "volts"). → reforçar W = potência, J/kWh = energia, V = tensão.
 
 **Sinal de fadiga medido:** a mesma habilidade caiu de 4/4 pra 1/4 entre duas rodadas seguidas, depois de ~5h, junto com "não sei". → queda brusca de acerto em algo já dominado no mesmo dia = sugerir pausa, não mais conteúdo.
+
+## 7. Atualização 2026-09-24 — do método pra regra do produto (pauta da sessão de projeto)
+
+**Evidência:** no dia seguinte, 3 de 4 questões originais que estavam em branco/erradas saíram sem ajuda (carro elétrico, frenagem com tempo de reação, pedágio); a 4ª teve o método certo e errou só a conta. O aluno atribui a: sono entre estudo e revisão + rever a original no dia seguinte. Ainda 1 aluno, 1 dia de intervalo.
+
+**Ciclo que funcionou:** erro/diagnóstico -> **kit** (fórmula + gatilho por unidade + apelido; ou conceito + pista no nome) -> **molde** feito sozinho -> a **original** volta espaçada.
+
+**Diferença pro Anki/Leitner puro:** repetir o mesmo cartão treina lembrar a resposta, não o raciocínio (caso real: questão da geladeira acertada "por memória da correção" sem saber o mecanismo). O Leitner cobre só a etapa final; kit e molde são o que falta.
+
+**Molde não é só número trocado:**
+- *Numérico* (física, química de cálculo, matemática): mesma estrutura, números trocados. Já existe a tela de moldes.
+- *Conceitual* (biologia, ecologia): mesmo conceito com **pistas/contexto trocados** (bioma descrito por outras pistas), **contraste de pares vizinhos** (nicho x hábitat, organela x enzima que ela guarda) e **o mesmo mecanismo cobrado por ângulos diferentes** (endossimbiose: DNA circular, dupla membrana, qual organela recebe transgene).
+
+**Regra candidata:** errou -> kit -> molde sozinho -> original espaçada; o tipo de molde depende da matéria. Não implementar antes da sessão de projeto (ligado à trilha ROI / filosofia.md, ainda em aberto).
