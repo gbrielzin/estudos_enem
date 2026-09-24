@@ -103,10 +103,11 @@ em vez de rejeitada, alimentando uma fila de triagem manual.
 - **1504 questões** no banco (1157 de provas oficiais 2010-2025 + 347 de
   banco de prática próprio)
 - **800 tentativas** de usuário processadas pelo sistema
-- **16 endpoints REST** (`core/api.py`)
+- **18 endpoints REST** (`core/api.py`)
 - **9 tabelas** relacionais (SQLite)
-- **111 testes automatizados** — 80 na regra de negócio + 24 na camada
-  HTTP (`core/test_db.py`/`test_api.py`) + 7 no app mobile (Jest), rodando
+- **123 testes automatizados** — 80 na regra de negócio + 28 na camada
+  HTTP + 8 no gerador de moldes (`core/test_db.py`/`test_api.py`/
+  `test_moldes.py`) + 7 no app mobile (Jest), rodando
   em CI (GitHub Actions, `.github/workflows/testes.yml`) junto com lint
   (`ruff`) e checagem de tipo (`tsc`) a cada push/PR
 - **9 ADRs** documentando as principais decisões de arquitetura (`adr/`)

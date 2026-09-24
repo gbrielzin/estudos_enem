@@ -29,6 +29,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 import db
+import moldes
 
 # Carrega o .env da raiz do projeto pra dentro de os.environ -- é assim
 # que API_AUTH_TOKEN (ver _verificar_autenticacao abaixo) chega até
@@ -233,3 +234,22 @@ def relatos(corpo: RelatoRequest) -> dict:
 @app.get("/resolucoes")
 def resolucoes(id_questao: str) -> list[dict]:
     return db.resolucoes_da_questao(id_questao)
+
+
+# ============================================================
+# Moldes — variações de questão oficial com números trocados (ver
+# moldes.py). Módulo puro, não toca no banco: estes endpoints só geram
+# a variação; registrar a tentativa continua sendo de /tentativas.
+# ============================================================
+
+@app.get("/moldes")
+def listar_moldes() -> list[dict]:
+    return moldes.listar_moldes()
+
+
+@app.get("/moldes/{id_molde}/variacao")
+def variacao_molde(id_molde: str, seed: int | None = None, original: bool = False) -> dict:
+    try:
+        return moldes.gerar_variacao(id_molde, seed=seed, original=original)
+    except ValueError as erro:
+        raise HTTPException(status_code=404, detail=str(erro))
