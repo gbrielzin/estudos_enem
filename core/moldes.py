@@ -196,6 +196,62 @@ def _sortear_frenagem(rng: random.Random) -> dict:
 
 
 # ------------------------------------------------------------
+# Molde 4 — pedágio, carro x caminhão (âncora 2023_cinza_118)
+# ------------------------------------------------------------
+
+def _pedagio(p: dict) -> dict:
+    viagem_carro = p["distancia_km"] / p["v_carro"] * 60  # min
+    viagem_caminhao = p["distancia_km"] / p["v_caminhao"] * 60  # min
+    pedagio_total = p["pracas"] * p["minutos_por_praca"]
+    total_carro = viagem_carro + pedagio_total
+    resposta = viagem_caminhao - total_carro
+    return {
+        "enunciado": (
+            f"Uma rodovia de {_fmt(p['distancia_km'])} km tem {_fmt(p['pracas'])} praças de pedágio; em cada "
+            f"cabine, a passagem leva em média {_fmt(p['minutos_por_praca'])} min. Um carro viaja a "
+            f"{_fmt(p['v_carro'])} km/h e um caminhão a {_fmt(p['v_caminhao'])} km/h, ambos com velocidade "
+            "constante, e só o caminhão tem o serviço automático (não para nas cabines). "
+            "Comparado ao caminhão, quantos minutos a menos o carro leva para percorrer toda a rodovia?"
+        ),
+        "resposta": resposta,
+        "passos": [
+            f"Carro rodando (regra de 3): {_fmt(p['distancia_km'])} ÷ {_fmt(p['v_carro'])} = "
+            f"{_fmt(viagem_carro / 60)} h = {_fmt(viagem_carro)} min",
+            f"Pedágio só do carro: {_fmt(p['pracas'])} × {_fmt(p['minutos_por_praca'])} = {_fmt(pedagio_total)} min",
+            f"Total do carro: {_fmt(viagem_carro)} + {_fmt(pedagio_total)} = {_fmt(total_carro)} min",
+            f"Caminhão: {_fmt(p['distancia_km'])} ÷ {_fmt(p['v_caminhao'])} = "
+            f"{_fmt(viagem_caminhao / 60)} h = {_fmt(viagem_caminhao)} min",
+            f"Diferença: {_fmt(viagem_caminhao)} − {_fmt(total_carro)} = {_fmt(resposta)} min",
+        ],
+        "candidatos": [
+            (viagem_caminhao - viagem_carro, "esqueceu o tempo parado no pedágio"),
+            (pedagio_total, "respondeu só o tempo de pedágio"),
+            (viagem_carro, "respondeu o tempo do carro sem pedágio"),
+            (viagem_caminhao, "respondeu o tempo do caminhão"),
+            (viagem_caminhao - viagem_carro - 2 * pedagio_total, "somou o pedágio duas vezes"),
+            (total_carro, "respondeu o tempo total do carro"),
+        ],
+    }
+
+
+def _sortear_pedagio(rng: random.Random) -> dict:
+    # Distâncias múltiplas de 120 dão tempo inteiro em minutos pra todas as
+    # velocidades abaixo. Sorteia de novo se o pedágio engolir a vantagem do
+    # carro (resposta <= 0 não faz sentido pra pergunta "quantos a menos").
+    while True:
+        p = {
+            "distancia_km": rng.choice([240, 360, 480, 600]),
+            "pracas": rng.choice([4, 5, 6, 8, 10]),
+            "minutos_por_praca": rng.choice([2, 3, 4]),
+            "v_carro": rng.choice([90, 100, 120]),
+            "v_caminhao": rng.choice([60, 80]),
+        }
+        diferenca = p["distancia_km"] * 60 / p["v_caminhao"] - p["distancia_km"] * 60 / p["v_carro"]
+        if diferenca - p["pracas"] * p["minutos_por_praca"] >= 5:
+            return p
+
+
+# ------------------------------------------------------------
 # Catálogo
 # ------------------------------------------------------------
 
@@ -241,6 +297,20 @@ MOLDES: dict[str, dict] = {
         "resposta_original": 17.4,
         "calcular": _frenagem,
         "sortear": _sortear_frenagem,
+    },
+    "pedagio": {
+        "titulo": "Pedágio: carro x caminhão",
+        "materia": "cinematica",
+        "id_questao_ancora": "2023_cinza_118",
+        "kit": [
+            {"formula": "t = d ÷ v", "apelido": "regra de 3", "gatilho": "velocidade constante, pede tempo; separa uma linha por veículo"},
+            {"formula": "h × 60 = min", "apelido": "tudo em minutos", "gatilho": "a pergunta é em minutos; converte antes de somar o pedágio"},
+        ],
+        "unidade": "min",
+        "original": {"distancia_km": 480, "pracas": 10, "minutos_por_praca": 3, "v_carro": 100, "v_caminhao": 80},
+        "resposta_original": 42.0,
+        "calcular": _pedagio,
+        "sortear": _sortear_pedagio,
     },
 }
 
