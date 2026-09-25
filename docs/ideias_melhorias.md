@@ -162,3 +162,13 @@ dos apps, só pelas descrições das lojas/notícias.
 | **6. Uso pessoal** | alerta de vaga nova que combina com o perfil dele; "o que me falta pra essa vaga" | produto | depois |
 
 **Lições da coleta manual (não repetir):** "Programa de Estágio" casava com "programação"; "Desenvolvimento Humano/de Fornecedores" casava com desenvolvimento; regex escrito via heredoc virou caractere de backspace (usar arquivo .py, não heredoc); a busca deslogada do LinkedIn devolve no máximo ~60 por consulta e mistura júnior/aprendiz (não serve pra volume).
+
+---
+
+## 6. Ideias de 2026-09-25 (diagnóstico de Matemática)
+
+- **Sem vidas/corações, confirmado pelo usuário** (2026-09-25): o Duolingo inspira só a trilha. Reforça a 2.2: o erro abre o kit, não bloqueia.
+- **Tempo por questão** (2026-09-25): pedido do usuário. `registrar_tentativa` já aceita `duracao_segundos`; falta a tela medir (início ao abrir, fim ao confirmar) e mostrar contra a referência de ~3 min/questão do ENEM. Evidência: no mesmo bloco, uma questão levou ~10 min (densidade) e uma variação 2 min.
+- **"Não bateu? Relê as 5"** (2026-09-25): quando a resposta marcada é um distrator do tipo "ordem de grandeza" (×10, ÷10), o feedback manda reler as alternativas e refazer a conta, nunca ajustar o resultado. Evidência: 2 vezes em 2 dias o aluno chegou no número certo (93; 0,09) e mudou pra alternativa ×10 porque não viu a certa.
+- **Molde de fator de escala: linha × área × volume** (2026-09-25): família que derrubou 3 questões reais (caixa-d'água/escala, docinhos esféricos, e as mesmas em agosto). Molde com números trocados (fator 2, 3, 10; esfera, cubo, maquete) e o desenho azulejo (×4) x dado (×8) como kit. Saiu sozinho em 2 min na 2ª variação.
+- **Diagnóstico por padrão de desvio, não por matéria** (2026-09-25): em Matemática a base existia; o que derrubou foram 3 desvios repetidos (conferir alternativas, ler decimal, área x volume). O painel poderia mostrar "seus 3 desvios" com contagem, alimentado pelos `distratores` que o aluno escolhe.
