@@ -4,5 +4,20 @@
       "Bash(git *)",
       "PowerShell(git *)"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/testes_core.py\"",
+            "timeout": 180,
+            "statusMessage": "Rodando testes do core..."
+          }
+        ]
+      }
+    ]
   }
 }
