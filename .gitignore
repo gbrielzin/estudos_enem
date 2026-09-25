@@ -44,3 +44,6 @@ core/inep_ppl/
 
 # Plano pessoal de faculdade (renda, cota, prazos)
 docs/plano_faculdade*.md
+
+# Cartilhas do INEP baixadas e textos extraídos (material de terceiros, só consulta local)
+docs/redacao_pesquisa/cartilhas/
