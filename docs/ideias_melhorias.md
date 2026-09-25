@@ -128,3 +128,37 @@ dos apps, só pelas descrições das lojas/notícias.
 - Análise do sistema de corações/energia do Duolingo — https://trophy.so/blog/why-duolingos-energy-system-works-and-when-to-copy-it
 - INEP, aplicativo MEC Enem — https://www.gov.br/inep/pt-br/centrais-de-conteudo/noticias/enem/aplicativo-mec-enem-apresenta-questoes-e-simulados-do-exame
 - TechTudo, apps grátis pro Enem 2026 — https://www.techtudo.com.br/listas/2026/09/enem-2026-8-aplicativos-gratis-para-estudar-para-a-prova-edapps.ghtml
+
+---
+
+## 4. Ideias de 2026-09-25 (sessão de faculdade e estágio)
+
+- **Simulador "onde eu entro"** (2026-09-25): o aluno digita as 5 notas (ou o app estima a partir dos acertos, via tabela TRI) e vê cursos com nota ponderada pelos pesos de cada curso vs corte da cota dele. Protótipo já existe como página (ranking de 24 cursos de tecnologia, cortes SISU 2025 + Enem-USP 2026). Cuidados aprendidos: pesos têm decimal (UFABC 1,5), confiar só em PDF oficial, corte varia 10-30 pontos por ano.
+- **"Quanto vale cada acerto pro meu curso"** (2026-09-25): usar os pesos do curso-alvo pra priorizar matéria (ex.: em SI USP, +1 acerto em Matemática ≈ +2,4 na nota final vs ≈ +0,7 em Humanas). Liga com `prioridade_de_estudo()`.
+- **Estimativa de nota por área a partir dos acertos do app** (2026-09-25): já foi feita à mão nesta sessão (Natureza ~560, Matemática ~695 pelas provas inteiras); virar função/tela, com aviso de que TRI pesa coerência.
+
+---
+
+## 5. Projeto 3 (separado do ENEM): "Radar de Estágios" — plano de fases (2026-09-25)
+
+**Status:** ideia aprovada pra backlog; **não começar antes do ENEM (08 e 15/11/2026)**, no máximo a Fase 0-1 se sobrar tempo.
+
+**O que é:** sistema que coleta vagas de estágio de TI todo dia, usa IA pra extrair o que cada vaga pede e mostra num painel quais habilidades/cidades/áreas estão em alta e como mudam no tempo.
+
+**Por que este projeto:** cobre os 3 diferenciais que faltam no currículo, vistos nas vagas "elite" de 25/09 (Salesforce AI Builder Intern, BCG X AI Engineering Intern, AWS, Artefact Engenharia de Dados, 99 AI Transformation): **pipeline de dados automatizado**, **IA via API** (não só chat) e **cloud**. Tem uso real (achar a própria vaga).
+
+**Ponto de partida:** a coleta manual de 25/09 — script e amostra salvos fora do repo em `Desktop/radar_estagios_rascunho/` (`coleta_gupy.py`, `amostra_2026-09-25.json`, 104 estágios de TI).
+
+**Regra de fonte:** só fontes abertas (busca pública da Gupy e similares). **Nada de raspagem do LinkedIn** num projeto público (termos de uso proíbem); LinkedIn só como conferência manual.
+
+| Fase | Entrega | Habilidade que prova | Tamanho |
+|---|---|---|---|
+| **0. Esqueleto** | repo novo, README com o problema, `coleta_gupy.py` limpo, testes do filtro (título de TI x "Programa de Estágio", "Desenvolvimento Humano") | Python, Git, testes | 1 sessão |
+| **1. Banco + histórico** | coleta grava em SQLite/DuckDB com data; roda de novo sem duplicar vaga | SQL, modelagem, idempotência | 1-2 sessões |
+| **2. Agendamento** | GitHub Actions roda a coleta todo dia e salva o resultado | automação, CI/CD | 1 sessão |
+| **3. IA estruturada** | LLM via API lê a descrição e devolve JSON (habilidades, área, suporte x dev x dados x IA, remoto, nível); comparar com o filtro por regex e medir a diferença | IA aplicada, saída estruturada, avaliação | 2 sessões |
+| **4. Painel** | habilidades mais pedidas, vagas por cidade e área, evolução semanal (Streamlit ou Power BI) | visualização, BI | 1-2 sessões |
+| **5. Cloud** | banco e painel hospedados (ex.: um serviço gratuito/barato de nuvem) com link público | cloud, deploy | 1-2 sessões |
+| **6. Uso pessoal** | alerta de vaga nova que combina com o perfil dele; "o que me falta pra essa vaga" | produto | depois |
+
+**Lições da coleta manual (não repetir):** "Programa de Estágio" casava com "programação"; "Desenvolvimento Humano/de Fornecedores" casava com desenvolvimento; regex escrito via heredoc virou caractere de backspace (usar arquivo .py, não heredoc); a busca deslogada do LinkedIn devolve no máximo ~60 por consulta e mistura júnior/aprendiz (não serve pra volume).
