@@ -41,3 +41,6 @@ core/inep_itens/
 rows.pkl
 docs/registro_estudo.csv
 core/inep_ppl/
+
+# Plano pessoal de faculdade (renda, cota, prazos)
+docs/plano_faculdade*.md
