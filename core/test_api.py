@@ -37,6 +37,11 @@ os.environ.setdefault("API_PERMITIR_SEM_TOKEN", "1")
 import api  # noqa: E402
 import db  # noqa: E402
 
+# `import api` roda load_dotenv(): se o .env de verdade tiver
+# API_AUTH_TOKEN, ele vence a flag de dev e toda rota daria 401 aqui.
+# O token real não pertence à suíte; TestAutenticacao seta o dela.
+os.environ.pop("API_AUTH_TOKEN", None)
+
 
 class _TestComBancoTemporario(unittest.TestCase):
     """Mesma técnica de test_db.py -- ver docstring lá. Duplicado aqui
