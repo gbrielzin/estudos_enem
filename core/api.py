@@ -21,6 +21,7 @@ com `ipconfig` (Windows) -- é esse IP que o app no celular usa, não
 """
 from __future__ import annotations
 
+import hmac
 import os
 
 from dotenv import load_dotenv
@@ -52,25 +53,42 @@ def _verificar_autenticacao(authorization: str | None = Header(default=None)) ->
     o módulo, mesmo espírito de `db.DB_PATH` ser reatribuível de fora
     pros testes de banco.
 
-    Sem a variável configurada, a API roda ABERTA -- mesmo
-    comportamento de hoje (uso pessoal, wifi doméstica). Configurar a
-    variável é o que liga a trava; não quebra ninguém que ainda não
-    setou nada."""
+    Fechada por padrão (atualização de 2026-09-26 no adr/0009): sem
+    `API_AUTH_TOKEN` configurado, recusa tudo com 503, em vez de rodar
+    aberta. Só roda aberta com `API_PERMITIR_SEM_TOKEN=1`, que é pra
+    desenvolvimento local e pra suíte de testes -- esquecer de configurar
+    o token não pode mais virar "API aberta pra rede" sem ninguém notar.
+    A comparação do token usa `hmac.compare_digest` (tempo constante)."""
     token_esperado = os.environ.get("API_AUTH_TOKEN")
     if not token_esperado:
-        return
-    if authorization != f"Bearer {token_esperado}":
+        if os.environ.get("API_PERMITIR_SEM_TOKEN") == "1":
+            return
+        raise HTTPException(
+            status_code=503,
+            detail="API sem API_AUTH_TOKEN configurado. Configure no .env "
+            "(ou API_PERMITIR_SEM_TOKEN=1 só pra desenvolvimento local).",
+        )
+    recebido = (authorization or "").encode("utf-8")
+    if not hmac.compare_digest(recebido, f"Bearer {token_esperado}".encode("utf-8")):
         raise HTTPException(status_code=401, detail="Token de autenticação ausente ou inválido.")
+
+
+def _origens_cors() -> list[str]:
+    """Origens liberadas pro navegador (só afeta o app rodando na web;
+    o app nativo não passa por CORS). Vem de `API_CORS_ORIGENS`,
+    separadas por vírgula; sem a variável, só o Expo web local."""
+    valor = os.environ.get("API_CORS_ORIGENS", "")
+    origens = [o.strip() for o in valor.split(",") if o.strip()]
+    return origens or ["http://localhost:8081", "http://127.0.0.1:8081"]
 
 
 app = FastAPI(title="ENEM GI API", dependencies=[Depends(_verificar_autenticacao)])
 
-# CORS liberado geral: uso pessoal/local (mesma wifi de casa), sem usuário
-# de terceiros nem dado sensível exposto pra internet -- não é uma API
-# pública. Reavaliar se algum dia isso for hospedado fora da rede local.
+# CORS restrito às origens de _origens_cors() (antes era "*"; ver a
+# atualização de 2026-09-26 no adr/0009).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origens_cors(),
     allow_methods=["*"],
     allow_headers=["*"],
 )

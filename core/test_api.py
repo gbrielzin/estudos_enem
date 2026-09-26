@@ -29,8 +29,13 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-import api
-import db
+# A trava da API é fechada por padrão (ver api._verificar_autenticacao);
+# o resto da suíte testa rota e validação, não a trava, então roda no
+# modo de desenvolvimento. TestAutenticacao controla as variáveis na mão.
+os.environ.setdefault("API_PERMITIR_SEM_TOKEN", "1")
+
+import api  # noqa: E402
+import db  # noqa: E402
 
 
 class _TestComBancoTemporario(unittest.TestCase):
@@ -233,17 +238,26 @@ class TestPerfilEExplorar(_TestComBancoTemporario):
 
 
 class TestAutenticacao(_TestComBancoTemporario):
-    """A trava (ver adr/0009) só entra em vigor quando API_AUTH_TOKEN
-    está configurado -- todo o resto desta suíte roda sem a variável
-    setada de propósito, provando que o comportamento de hoje (API
-    aberta) continua intacto quando ninguém configurou nada."""
+    """A trava (ver adr/0009): fechada por padrão, aberta só com a flag
+    de desenvolvimento, e com token configurado exige o header certo."""
 
-    def test_sem_variavel_configurada_continua_aberta(self):
-        # Garante que a env de teste não vaza um token de outra parte.
+    def test_sem_token_e_sem_flag_de_dev_recusa(self):
         with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("API_AUTH_TOKEN", None)
+            os.environ.pop("API_PERMITIR_SEM_TOKEN", None)
+            resposta = self.client.get("/health")
+        self.assertEqual(resposta.status_code, 503)
+
+    def test_sem_token_com_flag_de_dev_fica_aberta(self):
+        with patch.dict(os.environ, {"API_PERMITIR_SEM_TOKEN": "1"}, clear=False):
             os.environ.pop("API_AUTH_TOKEN", None)
             resposta = self.client.get("/health")
         self.assertEqual(resposta.status_code, 200)
+
+    def test_flag_de_dev_nao_abre_quando_ha_token(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste", "API_PERMITIR_SEM_TOKEN": "1"}):
+            resposta = self.client.get("/health")
+        self.assertEqual(resposta.status_code, 401)
 
     def test_com_variavel_configurada_barra_sem_header(self):
         with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):

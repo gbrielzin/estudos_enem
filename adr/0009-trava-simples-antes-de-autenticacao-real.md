@@ -81,3 +81,20 @@ diferenciar quem está pedindo o quê (não só "tem o segredo ou não") —
 nesse momento, substituir a trava por login/sessão de verdade, mantendo
 os mesmos endpoints (só troca o que valida a requisição, não a forma da
 API).
+
+## Atualização 2026-09-26: trava fechada por padrão
+
+Motivo: num teste de 25/09 (`/run`), a API subiu sem `API_AUTH_TOKEN` no
+`.env` e respondeu sem senha — "opcional" na prática virou "aberta sem
+ninguém perceber". Mudanças:
+
+- **Sem `API_AUTH_TOKEN`, a API recusa tudo com 503.** Rodar aberta passou
+  a exigir `API_PERMITIR_SEM_TOKEN=1`, explícito, só pra desenvolvimento
+  local e pra suíte de testes. Com token configurado, a flag não abre nada.
+- Comparação do token com `hmac.compare_digest` (tempo constante), no
+  lugar de `!=`.
+- **CORS deixou de ser `*`**: origens vêm de `API_CORS_ORIGENS`; sem ela,
+  só o Expo web local. O app nativo não passa por CORS, então não muda.
+
+Continua valendo tudo da seção "Consequências" sobre isto não ser
+autenticação de usuário de verdade.
