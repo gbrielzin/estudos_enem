@@ -47,3 +47,6 @@ docs/plano_faculdade*.md
 
 # Cartilhas do INEP baixadas e textos extraídos (material de terceiros, só consulta local)
 docs/redacao_pesquisa/cartilhas/
+
+# Banco de redações nota 1000 (texto de terceiros, só análise local)
+docs/redacao_pesquisa/banco_1000/
