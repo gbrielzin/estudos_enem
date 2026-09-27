@@ -99,3 +99,42 @@ A maioria das 16 tem **2 agentes ou 2 ações** (ex.: "Ministério da Saúde + m
 - Cartilhas do INEP 2019, 2022, 2024, 2025 (arquivos locais em `cartilhas/`).
 - Estratégia Vestibulares, notas 1000 ENEM 2025: https://vestibulares.estrategia.com/portal/noticias/redacao-nota-1000-leia-redacoes-do-enem-2025/
 - Estratégia Vestibulares, notas 1000 ENEM 2023: https://vestibulares.estrategia.com/portal/materias/redacao/redacao-nota-1000-leia-10-redacoes-do-enem-2023/
+
+---
+
+## Microdados do ENEM 2025: nota de redação por competência de TODOS os participantes
+
+Fonte: `RESULTADOS_2025.csv` dos microdados do INEP, lido em fluxo do ZIP oficial por `core/inep_itens/redacao_microdados.py` (nada do arquivo fica no disco; só o resumo `core/inep_itens/redacao_2025.json`). 4.810.772 linhas; 3.457.555 com nota de redação.
+
+| Nota | Quantas pessoas | Percentual (de quem tem nota) |
+|---|---|---|
+| 1000 | 10 | 0,0003% |
+| ≥ 980 | 850 | 0,02% |
+| ≥ 960 | 16.226 | 0,47% |
+| ≥ 940 | 55.047 | 1,6% |
+| ≥ 920 | 115.085 | 3,3% |
+| ≥ 900 | 173.543 | 5,0% |
+| ≥ 880 | 250.370 | 7,2% |
+| exatamente 880 | 76.827 | a nota mais frequente da faixa alta |
+
+**Média de cada competência e % que NÃO tirou 200, por faixa de nota:**
+
+| Faixa | n | C1 | C2 | C3 | C4 | C5 |
+|---|---|---|---|---|---|---|
+| 860-880 | 137.887 | 157 (100% sem 200) | 181 (69%) | 163 (98%) | 182 (70%) | 189 (41%) |
+| 900-940 | 157.317 | 161 (100%) | 192 (35%) | 176 (86%) | 193 (31%) | 195 (20%) |
+| 960-980 | 16.216 | 167 (96%) | 199 (5%) | 196 (18%) | 199 (3%) | 199 (3%) |
+| 1000 | 10 | 200 | 200 | 200 | 200 | 200 |
+
+**O que isso diz:**
+1. **Em 2025, a C1 (gramática/norma culta) foi o gargalo de todo mundo da faixa alta**: praticamente ninguém de 860 a 940 tirou 200 em C1, e 96% dos 960-980 também não. É o que separa 980 de 1000 — confirma, com 16 mil redações, o que as duas 980 do IFMG e o aluno 880→1000 mostravam.
+2. **De 880 pra 900-940, o ganho vem de C3 e C2** (projeto de texto/argumentação e repertório): C3 sobe de 163 pra 176 e C2 de 181 pra 192. **De 940 pra 960+, C3 quase fecha** (196).
+3. **880 é a nota mais comum da faixa alta** (76.827 pessoas). Sair dela exige mexer em C3/C2 primeiro e C1 por último.
+
+---
+
+## Redações 900-980 (loop de coleta)
+
+- Iteração 1: +21 (Cartilha do 900+ da Profª Luma — 17 do ENEM 2021, 900-980, só nome e nota; 4 alunos 980 do ENEM 2024 por secretarias e imprensa).
+- Iteração 2: +2 do ENEM 2015 (980 e 960, Colégio Bandeirantes; texto publicado no Blog do Enem, não extraído) e +4 relatos. Total 900-980 no banco: 25, quase todos sem texto — as fontes de 900+ publicam a notícia, raramente a redação.
+- Common Crawl (2026-09-27): 197 URLs candidatas em 28 domínios; +6 notas 1000 de 2014-2016 (coRedação). Banco: **274 redações únicas** (inclui as 25 de 900-980).

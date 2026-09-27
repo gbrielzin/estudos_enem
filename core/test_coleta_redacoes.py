@@ -117,3 +117,10 @@ class TestBanco(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCommonCrawl(unittest.TestCase):
+    def test_normalizar_url_tira_query_e_barra_e_forca_https(self):
+        import commoncrawl_redacoes as cc
+        self.assertEqual(cc.normalizar_url("http://site.com/redacao-nota-1000/?utm=x#topo"),
+                         "https://site.com/redacao-nota-1000")

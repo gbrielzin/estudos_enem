@@ -17,6 +17,12 @@ e as conclusões em [padroes_1000.md](padroes_1000.md), sem copiar redação.
 | Estratégia Vestibulares, coRedação, Quero Bolsa, Imaginie | portal/cursinho | 2013-2025 | Esqueleto feito por nós (abertura, 2 causas, repertórios, proposta) + link | Só o esqueleto (análise nossa), nunca o texto |
 | Reportagens (Terra, CNN Brasil, INEP, secretarias, IFs) | imprensa / relato | 2021-2025 | Relatos do que o aluno fez (tabela `relatos`) | Só o resumo + link |
 
+## Descoberta de páginas: Common Crawl
+
+`core/commoncrawl_redacoes.py` consulta o índice aberto do Common Crawl (varredura mensal da web) domínio por domínio, com filtro de URL de redação nota alta, em 4 coletas (2025-51 a 2026-34), e grava só a lista de URLs em `banco_1000/commoncrawl_urls.csv`. Rodada de 2026-09-27: 28 domínios, **197 URLs**, entre elas as páginas por ano do coRedação (2014-2025, que trouxeram as de 2014-2016) e uma página do g1 com 100 notas mil. O índice mais recente (2026-39) respondia 502/504 sob carga; o script tenta de novo e segue.
+
+**g1: não usado.** A ferramenta de leitura de páginas é bloqueada pelo g1; não contornamos o bloqueio por outro caminho.
+
 Não usadas: Reddit, YouTube, X e Instagram (não abrem pelas ferramentas; o
 Instagram exige login). Nada de conta comprada, VPN ou contornar bloqueio.
 
