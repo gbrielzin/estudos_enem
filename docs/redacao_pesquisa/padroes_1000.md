@@ -2,6 +2,8 @@
 
 ## O que o banco diz pro modelo do Gabriel (245 redações únicas, ENEM 2013-2025, fechado em 2026-09-26)
 
+> Atualização 2026-09-27: com o dataset aberto da USP (Hugging Face) o banco passou pra **342 redações únicas (ENEM 2012-2025)**, 63 delas notas 1000 publicadas pelo g1/O Globo. Repertórios mais citados agora: Constituição 73, Dimenstein 19, Simone de Beauvoir 17, Bauman 15, Kant 13, Milton Santos 12. As conclusões abaixo se mantêm.
+
 1. **A estrutura dele é padrão de nota 1000**: há notas 1000 que abrem com a CF/88 quase palavra por palavra como ele (Evely Lima 2021, Nicole C. Almeida 2022, Lucas Malta 2023, Laryssa Melo 2025).
 2. **Abrir com a Constituição funciona, mas é minoria**: 19 de 207 aberturas; livro (49), filme (24), pensador (24) e fato/contexto histórico (40) são mais comuns.
 3. **A Constituição é o repertório mais citado no texto** (56 redações); depois Dimenstein (17), Simone de Beauvoir (13), Milton Santos (12), Kant (11), Bauman (10).

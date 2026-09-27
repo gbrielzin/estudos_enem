@@ -124,3 +124,12 @@ class TestCommonCrawl(unittest.TestCase):
         import commoncrawl_redacoes as cc
         self.assertEqual(cc.normalizar_url("http://site.com/redacao-nota-1000/?utm=x#topo"),
                          "https://site.com/redacao-nota-1000")
+
+
+class TestMesmaRedacao(unittest.TestCase):
+    def test_reconhece_mesma_redacao_com_pequena_diferenca_de_extracao(self):
+        a = "A Constituição Federal de 1988 garante direitos a todos os cidadãos brasileiros, mas a realidade mostra outra coisa."
+        b = "A Constituicao Federal de 1988 garante direitos a todos os cidadaos brasileiros mas a realidade mostra outra coisa"
+        c = "O filme retrata uma família do sertão que enfrenta a seca e a fome sem nenhum apoio do poder público local."
+        self.assertTrue(cr.mesma_redacao(cr.trechos(a), cr.trechos(b)))
+        self.assertFalse(cr.mesma_redacao(cr.trechos(a), cr.trechos(c)))

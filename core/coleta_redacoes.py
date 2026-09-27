@@ -283,6 +283,60 @@ def extrair_redamil_v1(texto: str) -> list[dict]:
 
 
 # ------------------------------------------------------------
+# Dataset aberto da USP no Hugging Face (kamel-usp/aes_enem_dataset, Apache-2.0)
+# ------------------------------------------------------------
+
+URL_HF = "https://huggingface.co/datasets/kamel-usp/aes_enem_dataset"
+
+
+def trechos(texto: str | None, k: int = 6) -> set[str]:
+    """Conjunto de sequências de k palavras (pra achar a mesma redação com
+    pequenas diferenças de extração entre fontes)."""
+    w = re.sub(r"[^a-z ]", " ", normalizar(texto)).split()
+    return {" ".join(w[i:i + k]) for i in range(max(len(w) - k, 0))}
+
+
+def mesma_redacao(a: set[str], b: set[str], limiar: float = 0.3) -> bool:
+    return bool(a) and len(a & b) / len(a) >= limiar
+
+
+def importar_hf_aes(con: sqlite3.Connection, pasta_hf: Path, nota_minima: int = 900) -> int:
+    """Lê os .parquet baixados do dataset (configs JBCS2025, PROPOR2024,
+    gradesThousand, sourceAOnly, sourceAWithGraders) e grava as redações com
+    nota >= nota_minima que ainda não estão no banco (comparando o texto)."""
+    import pandas as pd  # só quando precisa
+    arquivos = sorted(pasta_hf.glob("*.parquet"))
+    if not arquivos:
+        return 0
+    df = pd.concat([pd.read_parquet(a) for a in arquivos], ignore_index=True)
+    df["total"] = df["grades"].apply(lambda g: int(g[-1]) if len(g) == 6 else int(sum(g)))
+    # a mesma redação aparece uma vez por corretor, com notas diferentes:
+    # vale a média dos corretores (senão entra 900+ que só um deles deu)
+    df["chave"] = df["essay_text"].map(lambda t: " ".join(re.sub(r"[^a-z ]", " ", normalizar(t)).split()[:12]))
+    df["total"] = df.groupby("chave")["total"].transform("mean").round().astype(int)
+    df = df.drop_duplicates("chave")
+    df = df[df["total"] >= nota_minima]
+    existentes = [trechos(t) for (t,) in con.execute(
+        "SELECT COALESCE(texto, introducao) FROM redacoes WHERE COALESCE(texto, introducao) IS NOT NULL")]
+    gravadas = 0
+    for _, r in df.iterrows():
+        tr = trechos(r["essay_text"])
+        if any(mesma_redacao(tr, e) for e in existentes):
+            continue
+        existentes.append(tr)
+        fonte_orig = r.get("source") if isinstance(r.get("source"), str) else None
+        g = [int(x) for x in r["grades"][:5]]
+        gravar(con, [dict(
+            fonte="HF kamel-usp/aes_enem_dataset",
+            nivel_fonte="imprensa (via dataset aberto)" if fonte_orig and "globo" in fonte_orig else "dataset acadêmico (avaliadores)",
+            enem=int(r["essay_year"]) if pd.notna(r["essay_year"]) else None, tema=r.get("prompt"), nota=int(r["total"]),
+            texto=r["essay_text"], url=URL_HF, comentario_inep=f"fonte original: {fonte_orig}",
+            c1=g[0], c2=g[1], c3=g[2], c4=g[3], c5=g[4])])
+        gravadas += 1
+    return gravadas
+
+
+# ------------------------------------------------------------
 # Banco
 # ------------------------------------------------------------
 
@@ -360,6 +414,7 @@ def construir_banco(pasta: Path, destino: Path | None = None) -> dict:
         gravar(con, extrator(texto) if extrator else extrair_redamil(texto, edicao))
     carregar_csv_manual(con, pasta / "manual")
     dup = marcar_duplicadas(con)
+    importar_hf_aes(con, pasta / "hf")
     con.commit()
     resumo = {
         "total": con.execute("SELECT COUNT(*) FROM redacoes").fetchone()[0],
