@@ -178,6 +178,8 @@ Postgres, heurística em vez de ML, log imutável de tentativas separado
 de estado mutável de revisão, IA hospedada em vez de modelo local, e a
 migração de monolito Streamlit para API + app mobile.
 
+O histórico de mudanças, PR por PR, está em [`CHANGELOG.md`](CHANGELOG.md).
+
 ## Próximos passos
 
 - Trilha de estudo entrelaçada entre matérias, ponderada por incidência
