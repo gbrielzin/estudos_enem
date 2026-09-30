@@ -106,7 +106,11 @@ def main(saida: str) -> None:
             f_prog.flush()
             if n % 20 == 0:
                 print(f"{n}/{N_ARQUIVOS} arquivos", file=sys.stderr)
-    print(f"fim -> {saida}", file=sys.stderr)
+    # vazio é um resultado possível (ver o achado no topo): diz em vez de
+    # deixar só o cabeçalho no CSV sem explicação
+    print(f"fim -> {saida}: {len(salvas)} transcrições em português no total", file=sys.stderr)
+    if not salvas:
+        print("nenhuma: o YouTube-Commons não tem transcrição PT desses vídeos", file=sys.stderr)
 
 
 if __name__ == "__main__":
