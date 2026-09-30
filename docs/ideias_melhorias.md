@@ -79,6 +79,13 @@ visual e mudar **o que ele celebra**.
   tricoma). Tocar na palavra mostra o significado sem entregar a resposta.
   Cuidado: só o significado da palavra, nunca a função que resolve a questão
   (erro cometido à mão em 24/09, questão 2012_azul_57).
+  - 2026-09-28: a ideia vale também para Linguagens/Humanas (oligarquia,
+    drenagem, monopólio, taramelar, fastidioso). Gabriel pediu glossário
+    pensando em outros usuários do app, não só nele.
+- **Revisão de hoje de volta na UI** (2026-09-28): a barra de modos saiu
+  em 11/09 e o `estado_revisao` acumulou 660 questões atrasadas (quase todas
+  dos simulados de agosto). Precisa de porta de entrada e de algum teto/filtro
+  (ex.: priorizar prática guiada), senão a fila assusta.
 
 ### 2.4 Revisão
 
@@ -166,3 +173,7 @@ dos apps, só pelas descrições das lojas/notícias.
 - **Banco de redações nota 1000 pra análise de padrão** (2026-09-26, ideia do usuário): extrair das cartilhas do INEP já baixadas (2019, 2022-2026, `docs/redacao_pesquisa/cartilhas/*.txt`) cada redação nota 1000 pra uma tabela (tema, ano, abertura/repertório da intro, as 2 causas, repertório de D1/D2, proposta: agente/ação/meio/finalidade/detalhamento, comentário do INEP). Uso: comparar padrões (quantas abrem com CF/88, tipo de causa material x imaterial) e, depois, calibrar o corretor por IA. Bom material de vídeo ("analisei todas as nota 1000").
 - **Mais textos de redação 900+ (2026-09-26, pra depois)**: (1) experimento com o **Common Crawl** (índice de URLs de bilhões de páginas, aberto) procurando páginas de redação 900+ e puxando o HTML arquivado, sem acessar os sites; (2) **Wayback Machine** pra recuperar redações que saíram do ar; (3) **coleta com consentimento no app** ("mande sua redação + foto do espelho" em troca de uma análise contra o banco de notas 1000) — o único caminho pra milhares de textos 900+ legítimos; OCR da foto do espelho. Contexto: notas 1000 de 2018-2025 são só 272 e o banco já tem ~85%; o gargalo das 900+ é que quase ninguém publica o texto (privacidade), não a busca.
 - **Painel de visualização do banco de redações e dos microdados** (2026-09-27, ideia do usuário na revisão do PR #23: "tem muita informação útil, seria interessante visualizar"): aberturas mais usadas, repertórios por ano (ex.: Mbembe surgindo em 2025), distribuição das notas e média por competência por faixa (microdados 2025), consenso das dicas (top 25 + contradições). PR separado do #23.
+
+- **Treino de redação por chunking (27/09, ideia dele):** treinar uma parte da redação por vez (introdução → D1 → D2 → conclusão) com repetição curta em vários temas, como treino de inglês por blocos, até a parte ficar automática. No app: exercício "só a introdução" com tema sorteado, cronômetro curto e checklist da parte (recorte exato, causa do Estado, causa social do tema, repertório ligado à tese).
+- **Ler as alternativas antes (27/09, padrão dele):** quando 3+ alternativas têm os mesmos algarismos e só muda a quantidade de zeros/expoente, o distrator é de unidade/conversão -> a decisão é contar zeros. Dica contextual no app pra questões de escala/unidade.
+- **Corretor de redação por LLM "justo" (27/09, reforço dele):** a correção tem que imitar o corretor humano, não um revisor letra por letra. Nota 1000 tem erros que o humano não pega/não desconta, então um LLM que caça todo desvio fica mais duro que o INEP. Calibrar pelo banco de notas 1000 + comentários das cartilhas (o que é aceitável no conjunto), com 2 corretores e a regra de discrepância do INEP. Página de treino por partes já existe: https://claude.ai/artifact/P6B6NzZFQGVRuXwUufnM4F (introduções salvas no db do artifact).
