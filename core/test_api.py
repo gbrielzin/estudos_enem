@@ -22,7 +22,9 @@ Rodar (de dentro de core/):
 """
 import os
 import shutil
+import sqlite3
 import tempfile
+from contextlib import closing
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -287,6 +289,77 @@ class TestAutenticacao(_TestComBancoTemporario):
         self.assertEqual(resposta.status_code, 401)
 
 
+
+
+class TestVariasPessoas(_TestComBancoTemporario):
+    """API com API_USUARIOS (ver adr/0010): cada código de acesso usa o
+    próprio banco, criado por criar_banco_usuario.py sem dado pessoal."""
+
+    CODIGO_ANA = "codigo-da-ana-123456"
+    CODIGO_BIA = "codigo-da-bia-654321"
+
+    def setUp(self):
+        super().setUp()
+        import criar_banco_usuario
+        self.id_q, _ = db.inserir_questao(
+            ano=2022, caderno="Azul", numero=93, grande_area="ciencias_natureza",
+            materia="Optica", alternativa_correta="A",
+        )
+        db.registrar_tentativa(self.id_q, "B")  # dado pessoal do dono do banco de origem
+        self.pasta = Path(self._pasta_temp) / "bancos"
+        for nome in ("ana", "bia"):
+            criar_banco_usuario.criar_banco(nome, self.pasta, origem=db.DB_PATH)
+        self.env = {
+            "API_USUARIOS": f"ana:{self.CODIGO_ANA},bia:{self.CODIGO_BIA}",
+            "API_PASTA_BANCOS": str(self.pasta),
+        }
+
+    def _tentativas(self, nome):
+        with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
+            return conn.execute("SELECT resposta_escolhida FROM tentativas_usuario").fetchall()
+
+    def _responder(self, codigo, letra):
+        return self.client.post(
+            "/tentativas", json={"id_questao": self.id_q, "resposta_escolhida": letra},
+            headers={"Authorization": f"Bearer {codigo}"},
+        )
+
+    def test_banco_novo_nao_leva_dado_pessoal(self):
+        self.assertEqual(self._tentativas("ana"), [])
+        with closing(sqlite3.connect(self.pasta / "ana.db")) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM questoes").fetchone()[0], 1)
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM sqlite_sequence WHERE name = 'tentativas_usuario'").fetchone()[0], 0)
+
+    def test_cada_codigo_grava_no_proprio_banco(self):
+        with patch.dict(os.environ, self.env):
+            self.assertEqual(self._responder(self.CODIGO_ANA, "A").status_code, 200)
+            self.assertEqual(self._responder(self.CODIGO_BIA, "C").status_code, 200)
+            self.assertEqual(self._responder(self.CODIGO_BIA, "D").status_code, 200)
+        self.assertEqual(self._tentativas("ana"), [("A",)])
+        self.assertEqual(self._tentativas("bia"), [("C",), ("D",)])
+        with closing(sqlite3.connect(db.DB_PATH)) as conn:  # o banco de origem não foi tocado
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM tentativas_usuario").fetchone()[0], 1)
+
+    def test_codigo_errado_ou_token_antigo_recusa(self):
+        with patch.dict(os.environ, {**self.env, "API_AUTH_TOKEN": "token-antigo"}):
+            self.assertEqual(self._responder("codigo-inventado-000000", "A").status_code, 401)
+            self.assertEqual(self._responder("token-antigo", "A").status_code, 401)
+            self.assertEqual(self.client.get("/health").status_code, 401)
+
+    def test_banco_que_falta_responde_503(self):
+        (self.pasta / "bia.db").unlink()
+        with patch.dict(os.environ, self.env):
+            self.assertEqual(self._responder(self.CODIGO_BIA, "A").status_code, 503)
+
+    def test_codigo_curto_demais_e_recusado_na_configuracao(self):
+        with patch.dict(os.environ, {"API_USUARIOS": "ana:curto"}):
+            with self.assertRaises(RuntimeError):
+                api.usuarios_configurados()
+
+    def test_nao_sobrescreve_banco_existente(self):
+        import criar_banco_usuario
+        with self.assertRaises(SystemExit):
+            criar_banco_usuario.criar_banco("ana", self.pasta, origem=db.DB_PATH)
 
 
 class TestMoldes(_TestComBancoTemporario):

@@ -39,5 +39,6 @@ Status possíveis:
 | [0007](0007-api-rest-mais-cliente-expo.md) | API REST (FastAPI) + cliente Expo/React Native, em vez do monolito | aceito |
 | [0008](0008-descontinuar-vinculo-youtube.md) | Descontinuar a automação de vínculo de vídeo do YouTube | aceito |
 | [0009](0009-trava-simples-antes-de-autenticacao-real.md) | Trava simples por chave compartilhada, antes de autenticação real | aceito |
+| [0010](0010-um-banco-por-pessoa.md) | Um banco SQLite por pessoa, escolhido pelo código de acesso | aceito |
 
 Template pra um ADR novo: [`0000-template.md`](0000-template.md).

@@ -12,6 +12,7 @@ core/scratch_enunciados_*.txt
 # clonar o repo do zero recria via `python reconstruir_base.py` (ver
 # README).
 core/enem.db
+core/bancos/
 core/enem.db.bak_pre_import
 
 # Material pessoal de candidatura/marketing (LinkedIn), não documentação
