@@ -75,4 +75,64 @@ describe('separarAlternativas', () => {
     expect(corpo).toBe(texto);
     expect(alternativas).toEqual({});
   });
+
+  it('prova do PDF: tira a letra da proxima alternativa e o A do fim do enunciado', () => {
+    const texto =
+      'Uma medida profilática comum a essas duas doenças é o(a) A\n' +
+      'A\t incineração do lixo orgânico. B\n' +
+      'B\t construção de rede de esgoto. C\n' +
+      'C\t uso de vermífugo pela população. D\n' +
+      'D\t controle das populações dos vetores. E\n' +
+      'E\t consumo de carnes vermelhas bem cozidas.';
+
+    const { corpo, alternativas } = separarAlternativas(texto);
+
+    expect(corpo).toBe('Uma medida profilática comum a essas duas doenças é o(a)');
+    expect(alternativas).toEqual({
+      A: 'incineração do lixo orgânico.',
+      B: 'construção de rede de esgoto.',
+      C: 'uso de vermífugo pela população.',
+      D: 'controle das populações dos vetores.',
+      E: 'consumo de carnes vermelhas bem cozidas.',
+    });
+  });
+
+  it('prova do PDF com a letra sozinha numa linha antes de cada alternativa', () => {
+    const texto = ['O sucesso dessa terapia advém de A', 'A\t um.', 'B', 'B\t dois.', 'C', 'C\t três.', 'D', 'D\t quatro.', 'E', 'E\t cinco.'].join('\n');
+
+    const { corpo, alternativas } = separarAlternativas(texto);
+
+    expect(corpo).toBe('O sucesso dessa terapia advém de');
+    expect(alternativas).toEqual({ A: 'um.', B: 'dois.', C: 'três.', D: 'quatro.', E: 'cinco.' });
+  });
+
+  it('prova da enem.dev: letra, espacos e o texto', () => {
+    const texto = ['Qual caixa?', 'A  5 caixas do tipo A.', 'B  1 caixa', 'C  3 caixas', 'D  5 caixas', 'E  6 caixas do tipo B.'].join('\n');
+
+    const { corpo, alternativas } = separarAlternativas(texto);
+
+    expect(corpo).toBe('Qual caixa?');
+    expect(alternativas.A).toBe('5 caixas do tipo A.');
+    expect(alternativas.E).toBe('6 caixas do tipo B.');
+  });
+
+  it('ignora rodape e marca-dagua do PDF no fim do texto', () => {
+    const texto = [
+      'Quanto vale?',
+      'A\t 1. B',
+      'B\t 2. C',
+      'C\t 3. D',
+      'D\t 4. E',
+      'E\t 5.',
+      '',
+      'CN - 2° dia | Caderno 7 - AZUL - 1ª Aplicação 9 ENEM 2022 ENEM 2022 ENEM 2022 ENEM 2022',
+      '5 CN • 2º DIA • CADERNO 6 • CINZA',
+    ].join('\n');
+
+    const { corpo, alternativas } = separarAlternativas(texto);
+
+    expect(corpo).toBe('Quanto vale?');
+    expect(alternativas.E).toBe('5.');
+  });
 });
+

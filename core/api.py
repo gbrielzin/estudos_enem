@@ -199,8 +199,10 @@ def trilha_fixa() -> list[dict]:
     na ordem de ROI definida em
     docs/arquitetura_questoes/arquitetura-trilha.docx (ver
     db.TRILHA_FIXA_NOS) -- diferente de /trilha, que só monta a
-    sequência de UMA matéria por vez."""
-    return db.trilha_fixa()
+    sequência de UMA matéria por vez. Nos bancos com a configuração
+    'trilha_ativa' = 'semana' (os dos amigos), devolve a trilha da semana
+    no mesmo formato (ver db.TRILHA_SEMANA_NOS)."""
+    return db.trilha_ativa()
 
 
 @app.get("/fases")

@@ -1316,6 +1316,121 @@ def trilha_fixa(tamanho_no: int = 5) -> list[dict]:
     return resultado
 
 
+# Trilha da semana (beta com amigos, out/2026): 8 tópicos de maior retorno
+# (recorrência em docs/padroes_de_prova.md), só questão OFICIAL fácil ou
+# média pela TRI, da mais fácil para a mais difícil. Diferente da trilha
+# fixa acima (banco de prática, só Natureza, nós em sequência): aqui os nós
+# ficam todos abertos -- a pessoa escolhe por onde começar -- e só os
+# blocos dentro do nó seguem em ordem. Quem usa qual trilha: configuração
+# 'trilha_ativa' do banco ('semana' nos bancos dos amigos, ver
+# preparar_servidor.py; ausente = trilha fixa de sempre).
+TRILHA_SEMANA_NOS: list[dict] = [
+    {"chave": "semana_proporcao", "nome": "Matemática — Razão, Proporção e Porcentagem",
+     "grande_area": "matematica", "materias": ["razao_e_proporcao", "porcentagem", "escala"]},
+    {"chave": "semana_eletrodinamica", "nome": "Natureza — Eletrodinâmica",
+     "grande_area": "ciencias_natureza", "materias": ["eletrodinamica"]},
+    {"chave": "semana_estatistica", "nome": "Matemática — Estatística (média, mediana, moda)",
+     "grande_area": "matematica", "materias": ["estatistica"]},
+    {"chave": "semana_ecologia", "nome": "Natureza — Ecologia",
+     "grande_area": "ciencias_natureza", "materias": ["ecologia"]},
+    {"chave": "semana_geometria_espacial", "nome": "Matemática — Geometria Espacial",
+     "grande_area": "matematica", "materias": ["geometria_espacial"]},
+    {"chave": "semana_genetica", "nome": "Natureza — Genética e Biotecnologia",
+     "grande_area": "ciencias_natureza", "materias": ["genetica", "biotecnologia"]},
+    {"chave": "semana_probabilidade", "nome": "Matemática — Probabilidade",
+     "grande_area": "matematica", "materias": ["probabilidade"]},
+    {"chave": "semana_estequiometria", "nome": "Natureza — Estequiometria",
+     "grande_area": "ciencias_natureza", "materias": ["estequiometria"]},
+]
+MAX_QUESTOES_NO_SEMANA = 10
+
+# Espelho de separarAlternativas() em mobile/src/lib/alternativas.ts: a
+# trilha da semana só usa questão cujas 5 alternativas o app consegue
+# transformar em botões com texto (alternativa em desenho, ou texto que a
+# extração quebrou, viraria botão só com a letra). Mantenha os dois iguais.
+_LETRAS_ALT = "ABCDE"
+_PADROES_ALT = (r"^([A-E])\)\s*(.+)$", r"^([A-E])\t\s*(.+)$", r"^([A-E])\s+(.+)$")
+_RODAPE_PDF = (r"(ENEM\s?\d{4}\s*){3,}", r"(\d{4}\s?ENE[MN]\s?){3,}", r"\bDIA\b.*\bCADERNO\b")
+
+
+def alternativas_separaveis(texto: str | None) -> bool:
+    if not texto:
+        return False
+    linhas = [
+        linha for linha in texto.split("\n")
+        if linha.strip() and not any(re.search(p, linha, re.IGNORECASE) for p in _RODAPE_PDF)
+    ]
+    sem_letra_solta = [linha for linha in linhas if not re.fullmatch(r"[A-E]", linha.strip())]
+    for indice, padrao in enumerate(_PADROES_ALT):
+        candidatas = (linhas if indice == 0 else sem_letra_solta)[-5:]
+        casamentos = [re.match(padrao, linha.strip()) for linha in candidatas]
+        if len(candidatas) == 5 and all(m and m.group(1) == _LETRAS_ALT[k] for k, m in enumerate(casamentos)):
+            # "(ver imagem)": a alternativa é um desenho que o banco não tem.
+            return not any("ver imagem" in m.group(2).lower() for m in casamentos)
+    return False
+
+
+
+def questoes_no_semana(config: dict) -> list[dict]:
+    """Questões de um nó da trilha da semana: oficiais, fácil ou média
+    (tri_b <= CORTE_TRI_DIFICIL), com alternativas que viram botão
+    (alternativas_separaveis), ordenadas da mais fácil."""
+    marcadores = ",".join("?" * len(config["materias"]))
+    with _conectar() as conn:
+        linhas = conn.execute(
+            f"""
+            SELECT {_COLUNAS_QUESTAO_GRADE}
+            FROM questoes
+            WHERE origem = 'enem_oficial' AND grande_area = ? AND materia IN ({marcadores})
+              AND tri_b IS NOT NULL AND tri_b <= ?
+              AND enunciado_texto IS NOT NULL AND LENGTH(enunciado_texto) >= 60
+            ORDER BY tri_b
+            """,
+            (config["grande_area"], *config["materias"], CORTE_TRI_DIFICIL),
+        ).fetchall()
+    questoes = [_linha_para_questao_grade(r) for r in linhas]
+    return [q for q in questoes if alternativas_separaveis(q["enunciado_texto"])][:MAX_QUESTOES_NO_SEMANA]
+
+
+def trilha_semana(tamanho_no: int = 5) -> list[dict]:
+    """Mesmo formato de trilha_fixa() (o app usa a mesma tela), com os nós
+    de TRILHA_SEMANA_NOS todos desbloqueados."""
+    resultado = []
+    for config in TRILHA_SEMANA_NOS:
+        questoes = questoes_no_semana(config)
+        ids = [q["id_questao"] for q in questoes]
+        respondidas: set[str] = set()
+        if ids:
+            with _conectar() as conn:
+                respondidas = {
+                    r[0] for r in conn.execute(
+                        f"SELECT DISTINCT id_questao FROM tentativas_usuario WHERE id_questao IN ({','.join('?' * len(ids))})",
+                        ids,
+                    )
+                }
+        blocos = []
+        anterior_concluido = True
+        for i in range(0, len(questoes), tamanho_no):
+            bloco = [dict(q, ja_respondida=q["id_questao"] in respondidas) for q in questoes[i:i + tamanho_no]]
+            concluido = all(q["ja_respondida"] for q in bloco)
+            blocos.append({"indice": i // tamanho_no, "questoes": bloco,
+                           "concluido": concluido, "desbloqueado": anterior_concluido})
+            anterior_concluido = anterior_concluido and concluido
+        resultado.append({
+            "chave": config["chave"], "nome": config["nome"],
+            "concluido": bool(blocos) and all(b["concluido"] for b in blocos),
+            "desbloqueado": True, "blocos": blocos,
+        })
+    return resultado
+
+
+def trilha_ativa() -> list[dict]:
+    """A trilha que o app mostra para o banco atual (ver TRILHA_SEMANA_NOS)."""
+    if obter_configuracao("trilha_ativa") == "semana":
+        return trilha_semana()
+    return trilha_fixa()
+
+
 def listar_banco_pratica() -> list[dict]:
     """Toda questão do banco de prática, mais recente primeiro --
     alimenta a listagem/gerenciamento no Admin (apagar uma questão
