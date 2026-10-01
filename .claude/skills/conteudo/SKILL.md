@@ -7,6 +7,10 @@ description: Transforma um PR mergeado do ENEM GI em roteiro de vídeo curto (Ti
 
 Série "aprendendo a revisar o código do meu próprio app" (ideia dele, 2026-09-26). O que vende é o processo real, com o erro dele à mostra.
 
+## 0. Modelo certo
+
+Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de roteiro e post: se a sessão estiver no modelo errado, avise em uma linha e espere ele trocar com `/model` ou responder "segue". Se estiver certo, não diga nada.
+
 ## 1. Juntar o material (só leitura)
 
 - `gh pr view <n> --json title,body,mergedAt,additions,deletions,files` — confirme que está **mergeado**; se não, pare (só publica o que está no master).
