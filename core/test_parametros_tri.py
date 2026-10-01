@@ -165,5 +165,17 @@ class TestNotaTriRodada(_TestComBancoTemporario):
         self.assertEqual(rodada["nota_tri"], db.nota_tri_rodada(2020, "azul", "ciencias_natureza", 1))
 
 
+
+class TestNotaDeTheta(unittest.TestCase):
+    def test_calibracao_por_area(self):
+        # theta 2,76 ~ quem acerta 40 de 45 em Matemática: oficial ~869 nos microdados 2024
+        self.assertEqual(db.nota_de_theta("matematica", 2.76), round(489 + 134 * 2.76))
+        self.assertEqual(db.nota_de_theta("ciencias_natureza", 0), 489)
+        self.assertEqual(db.nota_de_theta("ciencias_natureza", 1.0), 605)
+
+    def test_area_sem_calibracao_usa_escala_padrao(self):
+        self.assertEqual(db.nota_de_theta("linguagens", 1.0), 600)
+
+
 if __name__ == "__main__":
     unittest.main()
