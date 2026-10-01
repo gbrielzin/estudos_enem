@@ -228,6 +228,33 @@ def registrar_tentativa(corpo: TentativaRequest) -> dict:
 
 
 # ============================================================
+# Cartão-resposta de prova inteira (aba Simulado do celular): a pessoa
+# faz a prova no papel ou na tela e marca as letras; a correção, a nota
+# TRI e as explicações vêm de db.corrigir_prova().
+# ============================================================
+
+@app.get("/provas")
+def provas() -> list[dict]:
+    return db.provas_para_corrigir()
+
+
+class CorrecaoRequest(BaseModel):
+    ano: int
+    caderno: str
+    grande_area: str
+    # {numero_questao: "A".."E" ou null}. Questão que não vier conta como em branco.
+    respostas: dict[int, str | None]
+
+
+@app.post("/provas/corrigir")
+def corrigir(corpo: CorrecaoRequest) -> dict:
+    try:
+        return db.corrigir_prova(corpo.ano, corpo.caderno, corpo.grande_area, corpo.respostas)
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+
+
+# ============================================================
 # FASE 1.5 — Header de status (streak, XP/rank, missões do dia).
 # Expõe sistemas que JÁ EXISTIAM em db.py (calcular_ofensiva,
 # calcular_nivel_jogador -- já usados na versão Streamlit, "Minha

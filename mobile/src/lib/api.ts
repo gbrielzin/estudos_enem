@@ -406,3 +406,58 @@ export function caminhoVariacaoMolde(idMolde: string, opcoes: { seed?: number; o
 export function getVariacaoMolde(idMolde: string, opcoes: { seed?: number; original?: boolean } = {}): Promise<VariacaoMolde> {
   return buscarJson(caminhoVariacaoMolde(idMolde, opcoes));
 }
+
+// ============================================================
+// Cartão-resposta de prova inteira (aba Simulado) -- ver
+// db.provas_para_corrigir() / db.corrigir_prova() em core/db.py.
+// ============================================================
+
+export interface ProvaCorrigivel {
+  ano: number;
+  caderno: string;
+  grande_area: GrandeArea;
+  total_questoes: number;
+  com_tri: number;
+  numeros: number[];
+}
+
+export interface QuestaoErrada {
+  numero_questao: number;
+  id_questao: string;
+  materia: string;
+  marcada: string | null;
+  correta: string;
+  nivel: 'facil' | 'medio' | 'dificil' | null;
+  explicacao: string | null;
+}
+
+export interface ResultadoCorrecao {
+  ano: number;
+  caderno: string;
+  grande_area: GrandeArea;
+  total: number;
+  acertos: number;
+  em_branco: number;
+  nota_tri: number | null;
+  itens_tri: number;
+  erradas: QuestaoErrada[];
+}
+
+export function getProvas(): Promise<ProvaCorrigivel[]> {
+  return buscarJson('/provas');
+}
+
+export async function corrigirProva(
+  prova: Pick<ProvaCorrigivel, 'ano' | 'caderno' | 'grande_area'>,
+  respostas: Record<number, string | null>,
+): Promise<ResultadoCorrecao> {
+  const resposta = await fetch(`${getApiBaseUrl()}/provas/corrigir`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+    body: JSON.stringify({ ...prova, respostas }),
+  });
+  if (!resposta.ok) {
+    throw new ErroApi(`Backend respondeu ${resposta.status} ao corrigir a prova.`);
+  }
+  return resposta.json();
+}
