@@ -3,6 +3,13 @@ import { View } from 'react-native';
 
 import { CustomTabList, ITENS_NAV, TabButton } from '@/components/tab-bar';
 
+// O contêiner de telas do expo-router (TabSlot) vem com flexShrink: 0: ele
+// cresce até a altura do conteúdo, e a ScrollView da tela nunca fica com
+// altura limitada. Na web (body com overflow hidden) isso deixava TODA página
+// sem rolagem no celular. Deixar o slot encolher (minHeight 0) devolve a
+// altura da tela para a ScrollView rolar.
+const ESTILO_SLOT = { flex: 1, flexShrink: 1, minHeight: 0 } as const;
+
 /**
  * Barra de abas nativa (iOS/Android) -- MESMA barra do site (ver
  * components/tab-bar.tsx, extraído daqui pra ser a fonte única dos
@@ -27,7 +34,7 @@ export default function AppTabs() {
   return (
     <Tabs style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <TabSlot />
+        <TabSlot style={ESTILO_SLOT} />
       </View>
       <TabList asChild>
         <CustomTabList>
