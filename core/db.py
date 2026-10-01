@@ -3081,6 +3081,87 @@ def nota_tri_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: 
     return {"nota": round(500 + 100 * theta), "itens": len(linhas)}
 
 
+def provas_para_corrigir() -> list[dict]:
+    """Provas oficiais de Natureza/Matemática que dá pra corrigir pelo
+    cartão-resposta do celular: ano, caderno, área, nº de questões,
+    quantas têm parâmetro TRI (sem TRI suficiente, sai sem nota) e os
+    números das questões (a numeração muda por ano: 46-90, 91-135...)."""
+    with _conectar() as conn:
+        linhas = conn.execute(
+            "SELECT ano, caderno, grande_area, COUNT(*), SUM(tri_b IS NOT NULL), GROUP_CONCAT(numero_questao) "
+            "FROM questoes WHERE origem = 'enem_oficial' AND grande_area IN ('ciencias_natureza', 'matematica') "
+            "GROUP BY ano, caderno, grande_area ORDER BY ano DESC, caderno, grande_area"
+        ).fetchall()
+    return [
+        {"ano": a, "caderno": c, "grande_area": g, "total_questoes": n, "com_tri": t or 0,
+         "numeros": sorted(int(x) for x in numeros.split(","))}
+        for a, c, g, n, t, numeros in linhas
+    ]
+
+
+def corrigir_prova(ano: int, caderno: str, grande_area: str, respostas: dict[int, str | None]) -> dict:
+    """Cartão-resposta de prova inteira (feita no papel ou no celular):
+    registra UMA tentativa por questão da prova -- a que não veio em
+    `respostas` (ou veio None) conta como em branco, igual ao INEP -- e
+    devolve acertos, nota TRI estimada (pelo padrão destas respostas,
+    mesmo modelo de nota_tri_rodada) e as erradas com a explicação, se
+    houver. Cada questão passa por registrar_tentativa(), então entra na
+    revisão espaçada como qualquer outra."""
+    questoes = listar_questoes_da_prova(ano, caderno, grande_area)
+    if not questoes:
+        raise ValueError(f"Prova {ano} {caderno} {grande_area} não existe.")
+    numeros = {q["numero_questao"] for q in questoes}
+    fora = sorted(set(respostas) - numeros)
+    if fora:
+        raise ValueError(f"Questões que não são desta prova: {fora}")
+    # Valida TUDO antes de gravar qualquer coisa: um erro no meio deixaria
+    # metade da prova registrada.
+    invalidas = sorted(n for n, letra in respostas.items() if letra not in (None, "A", "B", "C", "D", "E"))
+    if invalidas:
+        raise ValueError(f"Resposta inválida nas questões {invalidas}: use A-E ou deixe em branco.")
+
+    resultados = [
+        (q, registrar_tentativa(q["id_questao"], respostas.get(q["numero_questao"])))
+        for q in questoes
+    ]
+    with _conectar() as conn:
+        tri = {
+            r[0]: r[1:] for r in conn.execute(
+                "SELECT id_questao, tri_a, tri_b, tri_c FROM questoes WHERE ano = ? AND caderno = ? AND grande_area = ?",
+                (ano, normalizar_texto(caderno), normalizar_texto(grande_area)),
+            )
+        }
+        explicacoes = dict(conn.execute(
+            "SELECT r.id_questao, r.conteudo FROM resolucoes r JOIN questoes q ON q.id_questao = r.id_questao "
+            "WHERE r.tipo = 'texto' AND q.ano = ? AND q.caderno = ? AND q.grande_area = ? ORDER BY r.criado_em",
+            (ano, normalizar_texto(caderno), normalizar_texto(grande_area)),
+        ))
+
+    itens_tri = [
+        (*tri[q["id_questao"]], r["resultado"] == "acertou")
+        for q, r in resultados if tri[q["id_questao"]][1] is not None
+    ]
+    nota = None
+    if len(itens_tri) >= MIN_ITENS_NOTA_TRI:
+        nota = round(500 + 100 * estimar_theta_eap(itens_tri))
+
+    erradas = [
+        {
+            "numero_questao": q["numero_questao"], "id_questao": q["id_questao"], "materia": q["materia"],
+            "marcada": r["resposta_escolhida"], "correta": r["alternativa_correta"],
+            "nivel": nivel_tri(tri[q["id_questao"]][1]),
+            "explicacao": explicacoes.get(q["id_questao"]),
+        }
+        for q, r in resultados if r["resultado"] != "acertou"
+    ]
+    return {
+        "ano": ano, "caderno": normalizar_texto(caderno), "grande_area": normalizar_texto(grande_area),
+        "total": len(resultados), "acertos": len(resultados) - len(erradas),
+        "em_branco": sum(1 for _, r in resultados if r["resposta_escolhida"] is None),
+        "nota_tri": nota, "itens_tri": len(itens_tri), "erradas": erradas,
+    }
+
+
 def simulados_feitos() -> list[dict]:
     """Toda prova (ano, caderno, grande_area) com AO MENOS uma
     tentativa registrada -- alimenta a aba 'Simulados já feitos'.

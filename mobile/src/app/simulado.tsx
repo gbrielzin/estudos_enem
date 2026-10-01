@@ -1,247 +1,328 @@
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Mascote } from '@/components/mascote';
-import { TelaBilhete } from '@/components/tela-bilhete';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
-import { interpolarSombraBotao, useInteracaoBotao } from '@/hooks/use-interacao-botao';
+import {
+  ProvaCorrigivel,
+  QuestaoErrada,
+  ResultadoCorrecao,
+  corrigirProva,
+  getProvas,
+} from '@/lib/api';
 
 /**
- * Tela "Montar simulado" (barra de baixo, ver components/tab-bar.tsx)
- * -- projeto de design atualizado, importado ao vivo via DesignSync
- * (App ENEM.dc.html, "TURNO 5 — SIMULADO NO CELULAR", tela 5a
- * "Escolher a prova", 2026-09-11), seguido de "Seu bilhete" (2a tela
- * do mesmo fluxo 5a, components/tela-bilhete.tsx) ao apertar "Emitir
- * bilhete".
+ * Aba Simulado: cartão-resposta de prova inteira.
  *
- * As duas telas vivem no MESMO componente, alternadas por `fase`
- * (state local) -- MESMO padrão que app/index.tsx já usa pra
- * Apresentação ↔ Trilha ↔ Exercício. Uma 1a tentativa registrou "Seu
- * bilhete" como rota de verdade (app/bilhete.tsx + <TabTrigger>
- * escondido), mas o sistema de Tabs customizado deste app (expo-
- * router/ui) despacha troca de tela via `JUMP_TO` de navegação nativa,
- * e esse JUMP_TO nunca foi reconhecido pelo navigator de verdade
- * ("The action 'JUMP_TO'... was not handled by any navigator", erro
- * visto ao vivo no console mesmo com o TabTrigger registrado igual aos
- * outros 6 -- ver histórico de commits/comentário removido daqui).
- * `fase` local evita brigar com essa API interna pra uma tela que nem
- * precisa de URL própria.
+ * A pessoa faz a prova (no papel ou no PDF) e marca aqui o que
+ * respondeu. A correção vem de db.corrigir_prova() (POST
+ * /provas/corrigir): acertos, nota TRI estimada e as questões erradas,
+ * cada uma com a explicação da armadilha quando existe
+ * (core/explicacoes/explicacoes.jsonl). Cada resposta também vira
+ * tentativa, então as erradas entram na revisão espaçada.
  *
- * TUDO aqui é estado local/decorativo por enquanto, sem API nova: o
- * backend não tem NENHUM endpoint pra "quais provas reais existem" ou
- * "status por ano" pro celular ainda (core/api.py hoje só cobre banco
- * de prática/trilha/missões/perfil -- o equivalente real mora em
- * db.listar_provas()/db.dias_ate_prova() e só é exposto no lado
- * Streamlit). Anos/status abaixo são um exemplo fixo copiado do
- * próprio mockup (2025 nunca feita, 2024 parou no meio, 2023/2022/2021
- * já feitas, 2020 não abriu) -- os toques trocam qual ano fica em
- * destaque (interativo de verdade), mas nenhum dado é real ainda.
- * Conectar isso a um endpoint de verdade é o próximo passo, não algo
- * pra inventar agora.
+ * Substitui a tela "Montar simulado" + "Seu bilhete", que era só o
+ * mockup do design, com anos e status fixos e sem prova nenhuma
+ * (a tela-bilhete.tsx foi removida).
+ *
+ * Três fases no mesmo componente (escolher → cartão → resultado), no
+ * mesmo padrão de state local de app/index.tsx: as abas customizadas
+ * do app não navegam bem para rotas novas (ver comentário em
+ * components/app-tabs.tsx).
  */
-type StatusAno = 'feito' | 'parcial' | 'nunca';
 
-const ANOS: { ano: number; status: StatusAno }[] = [
-  { ano: 2025, status: 'nunca' },
-  { ano: 2024, status: 'parcial' },
-  { ano: 2023, status: 'feito' },
-  { ano: 2022, status: 'feito' },
-  { ano: 2021, status: 'feito' },
-  { ano: 2020, status: 'nunca' },
-];
+const LETRAS = ['A', 'B', 'C', 'D', 'E'] as const;
 
-const COR_STATUS: Record<StatusAno, string> = {
-  feito: Brand.verde,
-  parcial: Brand.ouro,
-  nunca: Brand.bordaForte,
-};
-
-const TEXTO_STATUS: Record<StatusAno, string> = {
-  feito: 'já feita',
-  parcial: 'parou no meio',
-  nunca: 'nunca feita',
-};
-
-type Area = 'natureza' | 'matematica' | 'humanas' | 'linguagens' | 'ambas';
-
-const ROTULO_AREA: Record<Exclude<Area, 'ambas'>, string> = {
-  natureza: 'Natureza',
+const ROTULO_AREA: Record<string, string> = {
+  ciencias_natureza: 'Natureza',
   matematica: 'Matemática',
-  humanas: 'Humanas',
-  linguagens: 'Linguagens',
 };
 
-type Modo = 'cronometro' | 'livre' | 'resolvendo';
-const ROTULO_MODO: Record<Modo, string> = {
-  cronometro: 'Com cronômetro',
-  livre: 'Sem pressa',
-  resolvendo: 'Corrige a cada questão',
-};
+const ROTULO_NIVEL: Record<string, string> = { facil: 'Fácil', medio: 'Médio', dificil: 'Difícil' };
+const ORDEM_NIVEL: Record<string, number> = { facil: 0, medio: 1, dificil: 2 };
+
+// A taxonomia (core/db.py) guarda os nomes sem acento; aqui só para exibir.
+const ACENTOS: Record<string, string> = {
+  fisica: 'física', quimica: 'química', evolucao: 'evolução', genetica: 'genética', optica: 'óptica',
+  eletrodinamica: 'eletrodinâmica', eletrostatica: 'eletrostática', cinematica: 'cinemática', dinamica: 'dinâmica',
+  estatica: 'estática', acustica: 'acústica', hidrostatica: 'hidrostática', gravitacao: 'gravitação',
+  termologia: 'termologia', endocrino: 'endócrino', imunologico: 'imunológico', circulatorio: 'circulatório',
+  botanica: 'botânica', reproducao: 'reprodução', saude: 'saúde', publica: 'pública', separacao: 'separação',
+  reacoes: 'reações', quimicas: 'químicas', organica: 'orgânica', inorganica: 'inorgânica', funcoes: 'funções',
+  organicas: 'orgânicas', ligacoes: 'ligações', solucoes: 'soluções', eletroquimica: 'eletroquímica',
+  cinetica: 'cinética', equilibrio: 'equilíbrio', polimeros: 'polímeros', virus: 'vírus', bacterias: 'bactérias',
+  ciclos: 'ciclos', biogeoquimicos: 'biogeoquímicos', estatistica: 'estatística', matematica: 'matemática',
+  basica: 'básica', razao: 'razão', proporcao: 'proporção', analise: 'análise', combinatoria: 'combinatória',
+  funcao: 'função', equacoes: 'equações', projecao: 'projeção', raciocinio: 'raciocínio', logico: 'lógico',
+  geometria: 'geometria', espacial: 'espacial', plana: 'plana', probabilidade: 'probabilidade',
+}
+
+function nomeMateria(materia: string): string {
+  if (materia === 'sem_video_pendente') return 'Sem matéria';
+  const texto = materia
+    .split('_')
+    .map((p) => ACENTOS[p] ?? p)
+    .join(' ');
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/** Na web a página inteira rola; ao trocar de fase, volta para o topo. */
+function useVoltarAoTopo() {
+  useEffect(() => {
+    if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') window.scrollTo(0, 0);
+  }, []);
+}
+
+function tituloProva(p: Pick<ProvaCorrigivel, 'ano' | 'grande_area'>): string {
+  return `ENEM ${p.ano} · ${ROTULO_AREA[p.grande_area] ?? p.grande_area}`;
+}
 
 export default function SimuladoScreen() {
-  const [anoSel, setAnoSel] = useState(2025);
-  const [areaSel, setAreaSel] = useState<Area>('natureza');
-  const [modoSel, setModoSel] = useState<Modo>('cronometro');
-  const [fase, setFase] = useState<'montar' | 'bilhete'>('montar');
+  const [provas, setProvas] = useState<ProvaCorrigivel[] | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const [prova, setProva] = useState<ProvaCorrigivel | null>(null);
+  const [resultado, setResultado] = useState<ResultadoCorrecao | null>(null);
 
-  const anoAtual = ANOS.find((a) => a.ano === anoSel) ?? ANOS[0];
-  const outrosAnos = ANOS.filter((a) => a.ano !== anoSel);
-  const emitir = useInteracaoBotao();
-  const emitirSombra = interpolarSombraBotao(emitir.deslocamentoY, Brand.ouroEscuro);
+  useEffect(() => {
+    getProvas()
+      .then(setProvas)
+      .catch((e) => setErro(e instanceof Error ? e.message : String(e)));
+  }, []);
 
-  if (fase === 'bilhete') {
-    return (
-      <View style={styles.container}>
-        <SafeAreaView style={styles.safeArea}>
-          <TelaBilhete ano={anoSel} area={areaSel} modo={modoSel} onVoltar={() => setFase('montar')} />
-        </SafeAreaView>
-      </View>
+  let conteudo;
+  if (resultado) {
+    conteudo = (
+      <TelaResultado
+        resultado={resultado}
+        onOutra={() => {
+          setResultado(null);
+          setProva(null);
+        }}
+      />
     );
+  } else if (prova) {
+    conteudo = <TelaCartao prova={prova} onVoltar={() => setProva(null)} onCorrigido={setResultado} />;
+  } else {
+    conteudo = <TelaEscolher provas={provas} erro={erro} onEscolher={setProva} />;
   }
 
   return (
     <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.cabecalho}>
-            <Pressable
-              style={styles.voltarBtn}
-              onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            >
-              <Feather name="chevron-left" size={20} color={Brand.texto} />
+      <SafeAreaView style={styles.safeArea}>{conteudo}</SafeAreaView>
+    </View>
+  );
+}
+
+function TelaEscolher({
+  provas,
+  erro,
+  onEscolher,
+}: {
+  provas: ProvaCorrigivel[] | null;
+  erro: string | null;
+  onEscolher: (p: ProvaCorrigivel) => void;
+}) {
+  const porAno = useMemo(() => {
+    const grupos = new Map<number, ProvaCorrigivel[]>();
+    for (const p of provas ?? []) {
+      grupos.set(p.ano, [...(grupos.get(p.ano) ?? []), p]);
+    }
+    return [...grupos.entries()];
+  }, [provas]);
+
+  return (
+    <ScrollView contentContainerStyle={styles.scroll}>
+      <Text style={styles.titulo}>Corrigir simulado</Text>
+      <Text style={styles.subtitulo}>
+        Fez uma prova do ENEM no papel? Escolha qual foi, marque suas respostas e veja acertos, nota TRI e por que
+        errou cada questão.
+      </Text>
+
+      {erro && <Text style={styles.erro}>{erro}</Text>}
+      {!provas && !erro && <ActivityIndicator color={Brand.verde} style={{ marginTop: 32 }} />}
+
+      {porAno.map(([ano, lista]) => (
+        <View key={ano} style={styles.cardAno}>
+          <Text style={styles.ano}>{ano}</Text>
+          {lista.map((p) => (
+            <Pressable key={`${p.caderno}-${p.grande_area}`} style={styles.botaoProva} onPress={() => onEscolher(p)}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.botaoProvaTitulo}>{ROTULO_AREA[p.grande_area] ?? p.grande_area}</Text>
+                <Text style={styles.botaoProvaDetalhe}>
+                  caderno {p.caderno} · {p.total_questoes} questões
+                  {p.com_tri < 30 ? ' · sem nota TRI' : ''}
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={Brand.textoSuave} />
             </Pressable>
-            <View style={styles.cabecalhoTextos}>
-              <Text style={styles.titulo}>Montar simulado</Text>
-              <Text style={styles.subtitulo}>ano · área · modo</Text>
-            </View>
-          </View>
+          ))}
+        </View>
+      ))}
+    </ScrollView>
+  );
+}
 
-          <View style={styles.secao}>
-            <Text style={styles.rotuloSecao}>ANO DA PROVA</Text>
-            <View style={styles.anoDestaque}>
-              <Text style={styles.anoDestaqueNumero}>{anoSel}</Text>
-              <Text style={styles.anoDestaqueStatus}>
-                {TEXTO_STATUS[anoAtual.status]} · caderno azul completo
-              </Text>
-              <View style={styles.anoDestaqueCheck}>
-                <Feather name="check" size={13} color={Brand.roxo} />
-              </View>
-            </View>
-            <View style={styles.anoRow}>
-              {outrosAnos.map((a) => (
-                <Pressable key={a.ano} style={styles.anoBox} onPress={() => setAnoSel(a.ano)}>
-                  <Text style={styles.anoBoxNumero}>{String(a.ano).slice(2)}</Text>
-                  <View style={[styles.anoBoxDot, { backgroundColor: COR_STATUS[a.status] }]} />
-                </Pressable>
-              ))}
-              <View style={styles.anoBoxMais}>
-                <Feather name="chevron-right" size={16} color={Brand.textoApagado} />
-              </View>
-            </View>
-            <View style={styles.legendaRow}>
-              <View style={styles.legendaItem}>
-                <View style={[styles.legendaDot, { backgroundColor: Brand.verde }]} />
-                <Text style={styles.legendaTexto}>já fez</Text>
-              </View>
-              <View style={styles.legendaItem}>
-                <View style={[styles.legendaDot, { backgroundColor: Brand.ouro }]} />
-                <Text style={styles.legendaTexto}>parou no meio</Text>
-              </View>
-              <View style={styles.legendaItem}>
-                <View style={[styles.legendaDot, { backgroundColor: Brand.bordaForte }]} />
-                <Text style={styles.legendaTexto}>não abriu</Text>
-              </View>
-            </View>
-          </View>
+function TelaCartao({
+  prova,
+  onVoltar,
+  onCorrigido,
+}: {
+  prova: ProvaCorrigivel;
+  onVoltar: () => void;
+  onCorrigido: (r: ResultadoCorrecao) => void;
+}) {
+  useVoltarAoTopo();
+  const [respostas, setRespostas] = useState<Record<number, string>>({});
+  const [confirmarBranco, setConfirmarBranco] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
-          <View style={styles.secao}>
-            <Text style={styles.rotuloSecao}>ÁREA</Text>
-            <View style={styles.areaGrid}>
-              <Pressable
-                style={[styles.areaCard, areaSel === 'natureza' && styles.areaCardSelecionada]}
-                onPress={() => setAreaSel('natureza')}
-              >
-                <Mascote mood="happy" collar={Brand.verde} size={0.33} animado={false} />
-                <View style={styles.areaCardTextos}>
-                  <Text style={styles.areaCardTitulo}>Natureza</Text>
-                  <Text style={[styles.areaCardSub, areaSel === 'natureza' && { color: Brand.roxoTextoEscuro }]}>
-                    45q · 1h30
-                  </Text>
-                </View>
-              </Pressable>
-              <Pressable
-                style={[styles.areaCard, areaSel === 'matematica' && styles.areaCardSelecionada]}
-                onPress={() => setAreaSel('matematica')}
-              >
-                <Mascote mood="sad" color="#3A4152" shadow="#232A38" beak="#8B93A7" size={0.33} animado={false} />
-                <View style={styles.areaCardTextos}>
-                  <Text style={styles.areaCardTitulo}>Matemática</Text>
-                  <Text style={styles.areaCardSubApagado}>ponto fraco</Text>
-                </View>
-              </Pressable>
-              <Pressable
-                style={[styles.areaCard, styles.areaCardSemMascote, areaSel === 'humanas' && styles.areaCardSelecionada]}
-                onPress={() => setAreaSel('humanas')}
-              >
-                <Text style={styles.areaCardTitulo}>Humanas</Text>
-                <Text style={styles.areaCardSubApagado}>45q · 1h30</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.areaCard, styles.areaCardSemMascote, areaSel === 'linguagens' && styles.areaCardSelecionada]}
-                onPress={() => setAreaSel('linguagens')}
-              >
-                <Text style={styles.areaCardTitulo}>Linguagens</Text>
-                <Text style={styles.areaCardSubApagado}>45q + redação</Text>
-              </Pressable>
-            </View>
-            <Pressable
-              style={[styles.juntarAreas, areaSel === 'ambas' && styles.juntarAreasSelecionada]}
-              onPress={() => setAreaSel('ambas')}
-            >
-              <Feather name="plus" size={17} color={Brand.ouro} />
-              <Text style={styles.juntarAreasTexto}>Juntar duas áreas — 90q, 3h, como no dia real</Text>
-            </Pressable>
-          </View>
+  const marcadas = Object.keys(respostas).length;
+  const emBranco = prova.numeros.length - marcadas;
 
-          <View style={styles.secao}>
-            <Text style={styles.rotuloSecao}>MODO</Text>
-            <View style={styles.modoRow}>
-              {(['cronometro', 'livre', 'resolvendo'] as Modo[]).map((m) => (
-                <Pressable
-                  key={m}
-                  style={[styles.modoPill, modoSel === m && styles.modoPillSelecionado]}
-                  onPress={() => setModoSel(m)}
-                >
-                  <Text style={[styles.modoPillTexto, modoSel === m && styles.modoPillTextoSelecionado]}>
-                    {m === 'cronometro' ? 'Cronômetro' : m === 'livre' ? 'Livre' : 'Resolvendo'}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-        </ScrollView>
+  function marcar(numero: number, letra: string) {
+    setConfirmarBranco(false);
+    setRespostas((atual) => {
+      const novo = { ...atual };
+      if (novo[numero] === letra) delete novo[numero];
+      else novo[numero] = letra;
+      return novo;
+    });
+  }
 
-        <View style={styles.rodape}>
-          <View>
-            <Text style={styles.rodapeLabel}>SEU BILHETE</Text>
-            <Text style={styles.rodapeValor}>
-              {anoSel} · {areaSel === 'ambas' ? 'As duas' : ROTULO_AREA[areaSel]}
+  async function corrigir() {
+    if (emBranco > 0 && !confirmarBranco) {
+      setConfirmarBranco(true);
+      return;
+    }
+    setEnviando(true);
+    setErro(null);
+    try {
+      onCorrigido(await corrigirProva(prova, respostas));
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : String(e));
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <View style={{ flex: 1 }}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.cabecalho}>
+          <Pressable style={styles.voltarBtn} onPress={onVoltar}>
+            <Feather name="chevron-left" size={20} color={Brand.texto} />
+          </Pressable>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.tituloMenor}>{tituloProva(prova)}</Text>
+            <Text style={styles.subtitulo}>
+              caderno {prova.caderno} · {marcadas} de {prova.numeros.length} marcadas · o botão Corrigir fica no fim
             </Text>
           </View>
-          <Pressable style={styles.emitirBtnToque} onPress={() => setFase('bilhete')} {...emitir.handlers}>
-            <Animated.View
-              style={[
-                styles.emitirBtn,
-                { boxShadow: emitirSombra, transform: [{ translateY: emitir.deslocamentoY }] },
-              ]}>
-              <Text style={styles.emitirBtnTexto}>Emitir bilhete</Text>
-            </Animated.View>
+        </View>
+
+        {prova.numeros.map((numero) => (
+          <View key={numero} style={styles.linhaCartao}>
+            <Text style={styles.numero}>{numero}</Text>
+            {LETRAS.map((letra) => {
+              const ativa = respostas[numero] === letra;
+              return (
+                <Pressable
+                  key={letra}
+                  onPress={() => marcar(numero, letra)}
+                  style={[styles.bolinha, ativa && styles.bolinhaAtiva]}
+                  accessibilityLabel={`Questão ${numero}, alternativa ${letra}`}
+                >
+                  <Text style={[styles.bolinhaLetra, ativa && styles.bolinhaLetraAtiva]}>{letra}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
+
+        <View style={styles.rodape}>
+          {erro && <Text style={styles.erro}>{erro}</Text>}
+          <Text style={styles.contador}>
+            {marcadas} de {prova.numeros.length} marcadas
+            {confirmarBranco ? ` · ${emBranco} vão contar como em branco (errada)` : ''}
+          </Text>
+          <Pressable style={[styles.botaoPrincipal, enviando && { opacity: 0.6 }]} onPress={corrigir} disabled={enviando}>
+            <Text style={styles.botaoPrincipalTexto}>
+              {enviando ? 'Corrigindo…' : confirmarBranco ? 'Corrigir mesmo assim' : 'Corrigir'}
+            </Text>
           </Pressable>
         </View>
-      </SafeAreaView>
+      </ScrollView>
+    </View>
+  );
+}
+
+function TelaResultado({ resultado, onOutra }: { resultado: ResultadoCorrecao; onOutra: () => void }) {
+  useVoltarAoTopo();
+  // Fáceis primeiro: na TRI, errar questão fácil derruba mais a nota,
+  // então é por elas que vale começar a revisar.
+  const erradas = [...resultado.erradas].sort(
+    (a, b) => (ORDEM_NIVEL[a.nivel ?? ''] ?? 3) - (ORDEM_NIVEL[b.nivel ?? ''] ?? 3) || a.numero_questao - b.numero_questao,
+  );
+
+  return (
+    <ScrollView contentContainerStyle={styles.scroll}>
+      <Text style={styles.tituloMenor}>{tituloProva(resultado)}</Text>
+
+      <View style={styles.cardPlacar}>
+        <View style={styles.placarBloco}>
+          <Text style={styles.placarNumero}>
+            {resultado.acertos}/{resultado.total}
+          </Text>
+          <Text style={styles.placarRotulo}>acertos</Text>
+        </View>
+        <View style={styles.placarBloco}>
+          <Text style={[styles.placarNumero, { color: Brand.ouro }]}>{resultado.nota_tri ?? '—'}</Text>
+          <Text style={styles.placarRotulo}>nota TRI (estimativa)</Text>
+        </View>
+      </View>
+      {resultado.nota_tri === null && (
+        <Text style={styles.aviso}>Esta prova não tem parâmetros TRI suficientes para calcular a nota.</Text>
+      )}
+      {resultado.em_branco > 0 && (
+        <Text style={styles.aviso}>{resultado.em_branco} em branco contaram como erro, igual ao ENEM.</Text>
+      )}
+
+      <Text style={styles.secaoTitulo}>O que você errou ({erradas.length})</Text>
+      <Text style={styles.aviso}>Comece pelas fáceis: na TRI, são elas que mais derrubam a nota.</Text>
+
+      {erradas.map((q) => (
+        <CardErrada key={q.id_questao} questao={q} />
+      ))}
+
+      <Pressable style={[styles.botaoPrincipal, { marginTop: 24 }]} onPress={onOutra}>
+        <Text style={styles.botaoPrincipalTexto}>Corrigir outra prova</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+function CardErrada({ questao }: { questao: QuestaoErrada }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <View style={styles.cardErrada}>
+      <View style={styles.cardErradaTopo}>
+        <Text style={styles.cardErradaNumero}>Questão {questao.numero_questao}</Text>
+        {questao.nivel && <Text style={styles.selo}>{ROTULO_NIVEL[questao.nivel]}</Text>}
+      </View>
+      <Text style={styles.cardErradaMateria}>{nomeMateria(questao.materia)}</Text>
+      <Text style={styles.cardErradaRespostas}>
+        Você: {questao.marcada ?? 'em branco'} · Certa: {questao.correta}
+      </Text>
+      <Pressable onPress={() => setAberto((v) => !v)} style={styles.toggle}>
+        <Feather name={aberto ? 'chevron-up' : 'chevron-down'} size={15} color={Brand.roxoTextoEscuro} />
+        <Text style={styles.toggleTexto}>{aberto ? 'Ocultar' : '💡 Por que errei'}</Text>
+      </Pressable>
+      {aberto && (
+        <Text style={styles.explicacao}>
+          {questao.explicacao ?? 'A explicação desta questão ainda não foi escrita.'}
+        </Text>
+      )}
     </View>
   );
 }
@@ -249,254 +330,101 @@ export default function SimuladoScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Brand.bg },
   safeArea: { flex: 1 },
-  scroll: { padding: 16, paddingBottom: 24, gap: 22 },
-  cabecalho: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  voltarBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 13,
+  scroll: { padding: 16, paddingBottom: 48 },
+  titulo: { fontFamily: Fontes.titulo, fontSize: 26, color: Brand.texto },
+  tituloMenor: { fontFamily: Fontes.titulo, fontSize: 20, color: Brand.texto },
+  subtitulo: { fontFamily: Fontes.corpo, fontSize: 14, color: Brand.textoSuave, marginTop: 4, marginBottom: 16 },
+  erro: { fontFamily: Fontes.corpoNegrito, color: Brand.erro, marginVertical: 8 },
+  cardAno: {
     backgroundColor: Brand.bgCard,
+    borderRadius: RaioCard,
     borderWidth: 1,
     borderColor: Brand.borda,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 14,
+    marginBottom: 12,
   },
-  cabecalhoTextos: { flex: 1, gap: 1 },
-  titulo: {
-    fontFamily: Fontes.titulo,
-    fontSize: 21,
-    lineHeight: 24,
-    color: Brand.texto,
-  },
-  subtitulo: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 12,
-    color: Brand.textoSuave,
-  },
-  secao: { gap: 9 },
-  rotuloSecao: {
-    fontFamily: Fontes.corpoExtraNegrito,
-    fontSize: 11,
-    letterSpacing: 1.2,
-    color: Brand.textoSuave,
-  },
-  anoDestaque: {
-    backgroundColor: Brand.roxo,
-    borderRadius: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+  ano: { fontFamily: Fontes.titulo, fontSize: 22, color: Brand.verde, marginBottom: 6 },
+  botaoProva: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  anoDestaqueNumero: {
-    fontFamily: Fontes.titulo,
-    fontSize: 28,
-    lineHeight: 30,
-    color: '#FFFFFF',
-  },
-  anoDestaqueStatus: {
-    flex: 1,
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 12,
-    lineHeight: 16,
-    color: Brand.roxoClaro,
-  },
-  anoDestaqueCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  anoRow: {
-    flexDirection: 'row',
-    gap: 7,
-  },
-  anoBox: {
-    flex: 1,
-    height: 62,
-    borderRadius: 16,
-    backgroundColor: Brand.bgCard,
-    borderWidth: 1.5,
-    borderColor: Brand.borda,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  anoBoxNumero: {
-    fontFamily: Fontes.titulo,
-    fontSize: 16,
-    // Baloo 2 corta o topo do número sem lineHeight explícito (achado
-    // ao vivo: "2024" saía com o topo do "2" raspado) -- mesmo ajuste
-    // que anoDestaqueNumero já usa, só nunca tinha sido aplicado aqui.
-    lineHeight: 20,
-    color: Brand.brancoEscuro,
-  },
-  anoBoxDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 999,
-  },
-  anoBoxMais: {
-    width: 36,
-    height: 62,
-    borderRadius: 16,
-    backgroundColor: Brand.bgCardEscuro,
-    borderWidth: 1.5,
-    borderColor: Brand.borda,
-    borderStyle: 'dashed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  legendaRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 13,
-  },
-  legendaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  legendaDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 999,
-  },
-  legendaTexto: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 11,
-    color: Brand.textoApagado,
-  },
-  areaGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  areaCard: {
-    width: '48%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    backgroundColor: Brand.bgCard,
-    borderWidth: 2,
-    borderColor: Brand.borda,
-    borderRadius: 16,
-    padding: 11,
-  },
-  areaCardSemMascote: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 1,
-  },
-  areaCardSelecionada: {
-    backgroundColor: Brand.roxoBgEscuro,
-    borderColor: Brand.roxo,
-  },
-  areaCardTextos: { flex: 1, gap: 1 },
-  areaCardTitulo: {
-    fontFamily: Fontes.titulo,
-    fontSize: 14.5,
-    lineHeight: 17,
-    color: Brand.texto,
-  },
-  areaCardSub: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 10.5,
-    color: Brand.textoApagado,
-  },
-  areaCardSubApagado: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 10.5,
-    color: Brand.textoApagado,
-  },
-  juntarAreas: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: Brand.bgCardEscuro,
-    borderWidth: 1,
-    borderColor: Brand.borda,
-    borderStyle: 'dashed',
-    borderRadius: 16,
-    padding: 12,
-  },
-  juntarAreasSelecionada: {
-    borderColor: Brand.ouro,
-    borderStyle: 'solid',
-  },
-  juntarAreasTexto: {
-    flex: 1,
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 11.5,
-    lineHeight: 16,
-    color: Brand.brancoEscuro,
-  },
-  modoRow: {
-    flexDirection: 'row',
-    gap: 7,
-  },
-  modoPill: {
-    flex: 1,
-    backgroundColor: Brand.bgCard,
-    borderWidth: 2,
-    borderColor: Brand.borda,
-    borderRadius: 16,
-    paddingVertical: 11,
-    alignItems: 'center',
-  },
-  modoPillSelecionado: {
-    backgroundColor: '#16241A',
-    borderColor: Brand.verde,
-  },
-  modoPillTexto: {
-    fontFamily: Fontes.titulo,
-    fontSize: 12.5,
-    lineHeight: 15,
-    color: Brand.textoSuave,
-  },
-  modoPillTextoSelecionado: {
-    color: Brand.verdeClaro,
-  },
-  rodape: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: Brand.borda,
   },
-  rodapeLabel: {
-    fontFamily: Fontes.corpoNegrito,
-    fontSize: 10,
-    letterSpacing: 0.8,
-    color: Brand.textoApagado,
-  },
-  rodapeValor: {
-    fontFamily: Fontes.titulo,
-    fontSize: 15,
-    lineHeight: 18,
-    color: Brand.texto,
-  },
-  emitirBtnToque: {
-    flex: 1,
-  },
-  emitirBtn: {
-    backgroundColor: Brand.ouro,
+  botaoProvaTitulo: { fontFamily: Fontes.corpoExtraNegrito, fontSize: 16, color: Brand.texto },
+  botaoProvaDetalhe: { fontFamily: Fontes.corpo, fontSize: 13, color: Brand.textoSuave, marginTop: 2 },
+  cabecalho: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
+  voltarBtn: {
+    width: 36,
+    height: 36,
     borderRadius: 18,
-    paddingVertical: 15,
+    backgroundColor: Brand.bgCard,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  emitirBtnTexto: {
-    fontFamily: Fontes.titulo,
-    fontSize: 16,
-    lineHeight: 19,
-    color: '#3D2C00',
+  linhaCartao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: Brand.borda,
   },
+  numero: { width: 44, fontFamily: Fontes.corpoExtraNegrito, fontSize: 15, color: Brand.textoSuave },
+  bolinha: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: Brand.bordaForte,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  bolinhaAtiva: { backgroundColor: Brand.verde, borderColor: Brand.verde },
+  bolinhaLetra: { fontFamily: Fontes.corpoExtraNegrito, fontSize: 15, color: Brand.textoSuave },
+  bolinhaLetraAtiva: { color: Brand.bg },
+  rodape: { paddingTop: 20 },
+  contador: { fontFamily: Fontes.corpo, fontSize: 13, color: Brand.textoSuave, marginBottom: 8 },
+  botaoPrincipal: { backgroundColor: Brand.verde, borderRadius: 16, paddingVertical: 14, alignItems: 'center' },
+  botaoPrincipalTexto: { fontFamily: Fontes.corpoExtraNegrito, fontSize: 16, color: Brand.bg },
+  cardPlacar: {
+    flexDirection: 'row',
+    backgroundColor: Brand.bgCard,
+    borderRadius: RaioCard,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    paddingVertical: 18,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  placarBloco: { flex: 1, alignItems: 'center' },
+  placarNumero: { fontFamily: Fontes.titulo, fontSize: 32, color: Brand.verde },
+  placarRotulo: { fontFamily: Fontes.corpo, fontSize: 13, color: Brand.textoSuave },
+  aviso: { fontFamily: Fontes.corpo, fontSize: 13, color: Brand.textoSuave, marginBottom: 6 },
+  secaoTitulo: { fontFamily: Fontes.tituloSemibold, fontSize: 18, color: Brand.texto, marginTop: 18, marginBottom: 4 },
+  cardErrada: {
+    backgroundColor: Brand.bgCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Brand.borda,
+    padding: 14,
+    marginTop: 10,
+  },
+  cardErradaTopo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardErradaNumero: { fontFamily: Fontes.corpoExtraNegrito, fontSize: 15, color: Brand.texto },
+  selo: {
+    fontFamily: Fontes.corpoNegrito,
+    fontSize: 12,
+    color: Brand.ouro,
+    backgroundColor: Brand.ouroBg,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  cardErradaMateria: { fontFamily: Fontes.corpo, fontSize: 13, color: Brand.textoSuave, marginTop: 2 },
+  cardErradaRespostas: { fontFamily: Fontes.corpoNegrito, fontSize: 14, color: Brand.texto, marginTop: 6 },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10 },
+  toggleTexto: { fontFamily: Fontes.corpoNegrito, fontSize: 14, color: Brand.roxoTextoEscuro },
+  explicacao: { fontFamily: Fontes.corpo, fontSize: 14, lineHeight: 21, color: Brand.texto, marginTop: 8 },
 });
