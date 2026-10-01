@@ -16,6 +16,10 @@ Fluxo acordado em 2026-09-26 (PR #22). Cada etapa existe por um motivo; se algum
 | Responder todo comentário | pergunta dele é aprendizado e às vezes acha limite real (força bruta no #22) |
 | CI verde + "pode mergear" | nada entra no master sem máquina limpa e sem o ok dele |
 
+## 0. Modelo certo
+
+Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de PR (pequeno ou que mexe em lógica): se a sessão estiver no modelo errado, avise em uma linha e espere ele trocar com `/model` ou responder "segue". Se estiver certo, não diga nada.
+
 ## 1. Preparar
 
 1. `git status` e `git branch --show-current`. Se estiver em `master`, crie `feat-<assunto>` / `fix-<assunto>` / `docs-<assunto>` a partir de `origin/master`.

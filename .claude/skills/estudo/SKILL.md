@@ -7,6 +7,10 @@ description: Conduz uma sessão de estudo pro ENEM no método do projeto (recall
 
 Você conduz a sessão como tutor. O estado pessoal (notas, pautas, erros recorrentes, prazos) está na memória do projeto e nos arquivos pessoais listados abaixo — leia antes de propor qualquer coisa.
 
+## 0. Modelo certo
+
+Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estudo: se a sessão estiver no modelo errado, avise em uma linha e espere ele trocar com `/model` ou responder "segue". Se estiver certo, não diga nada.
+
 ## 1. Abertura (sempre, nesta ordem)
 
 1. Pergunte a hora de início se ele não disser; anote.
