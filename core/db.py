@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 import re
 import sqlite3
 import unicodedata
@@ -3005,6 +3006,58 @@ def detalhe_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: i
     ]
 
 
+# Mesmo modelo de acertos_por_nota.py / valor_por_questao.py: 3PL com
+# D=1,7 e nota = 500 + 100*theta. A escala exata do INEP não é pública,
+# então a nota é estimativa (serve pra tendência, não pra decimal).
+D_TRI = 1.7
+MIN_ITENS_NOTA_TRI = 30
+
+
+def estimar_theta_eap(respostas: list[tuple[float, float, float, bool]]) -> float:
+    """theta por EAP (média da posteriori, priori normal padrão) a partir
+    de (a, b, c, acertou) de cada item. Usa o PADRÃO de respostas, não só
+    o total: acertar difícil e errar fácil dá theta menor que o contrário
+    com o mesmo número de acertos, como na nota do INEP."""
+    grade = [i / 50 for i in range(-200, 201)]
+    soma_peso = soma_theta = 0.0
+    for theta in grade:
+        log_ver = -theta * theta / 2
+        for a, b, c, acertou in respostas:
+            p = c + (1 - c) / (1 + math.exp(-D_TRI * a * (theta - b)))
+            log_ver += math.log(p if acertou else 1 - p)
+        peso = math.exp(log_ver)
+        soma_peso += peso
+        soma_theta += peso * theta
+    return soma_theta / soma_peso
+
+
+def nota_tri_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: int) -> dict | None:
+    """Nota TRI estimada de uma rodada (mesma numeração de
+    resumo_por_tentativa()). Em branco conta como erro, igual ao INEP.
+    Só itens com parâmetro TRI entram (anulado e ano sem ligação ficam
+    de fora); com menos de MIN_ITENS_NOTA_TRI itens devolve None, porque
+    rodada parcial não é comparável com nota de prova inteira."""
+    caderno_norm = normalizar_texto(caderno)
+    grande_area_norm = normalizar_texto(grande_area)
+    with _conectar() as conn:
+        linhas = conn.execute(
+            """
+            SELECT tri_a, tri_b, tri_c, resultado FROM (
+                SELECT q.tri_a, q.tri_b, q.tri_c, t.resultado,
+                       ROW_NUMBER() OVER (PARTITION BY t.id_questao ORDER BY t.data_tentativa) AS numero_tentativa
+                FROM tentativas_usuario t JOIN questoes q ON q.id_questao = t.id_questao
+                WHERE q.ano = ? AND q.caderno = ? AND q.grande_area = ?
+            )
+            WHERE numero_tentativa = ? AND tri_b IS NOT NULL
+            """,
+            (ano, caderno_norm, grande_area_norm, numero_tentativa),
+        ).fetchall()
+    if len(linhas) < MIN_ITENS_NOTA_TRI:
+        return None
+    theta = estimar_theta_eap([(a, b, c, r == "acertou") for a, b, c, r in linhas])
+    return {"nota": round(500 + 100 * theta), "itens": len(linhas)}
+
+
 def simulados_feitos() -> list[dict]:
     """Toda prova (ano, caderno, grande_area) com AO MENOS uma
     tentativa registrada -- alimenta a aba 'Simulados já feitos'.
@@ -3031,6 +3084,7 @@ def simulados_feitos() -> list[dict]:
         nomes = nomes_tentativas(ano, caderno, area)
         for r in rodadas:
             r["nome"] = nomes.get(r["tentativa"], "")
+            r["nota_tri"] = nota_tri_rodada(ano, caderno, area, r["tentativa"])
         resultado.append({
             "ano": ano, "caderno": caderno, "grande_area": area,
             "total_questoes": questoes_totais_da_prova(ano, caderno, area),

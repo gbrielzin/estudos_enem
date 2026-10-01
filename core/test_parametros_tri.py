@@ -1,6 +1,6 @@
 """
 test_parametros_tri.py — testes de db.atualizar_parametros_tri(),
-db.nivel_tri() e da ligação questão -> item INEP de
+db.nivel_tri(), da nota TRI (estimar_theta_eap, nota_tri_rodada) e da ligação questão -> item INEP de
 importar_parametros_tri.py.
 
 O ITENS_PROVA de verdade (core/inep_itens/) é gitignored, então os testes
@@ -121,6 +121,48 @@ class TestMontarParametros(_TestComBancoTemporario):
         a_gravar, relatorio = tri.montar_parametros(self.pasta)
         self.assertEqual(a_gravar, [])
         self.assertIn("pulado", relatorio[0])
+
+
+class TestEstimarThetaEap(unittest.TestCase):
+    ITENS = [(2.0, b / 10, 0.2) for b in range(-10, 30, 2)]  # 20 itens, b de -1,0 a 2,8
+
+    def test_mais_acertos_da_theta_maior(self):
+        tudo_certo = db.estimar_theta_eap([(*i, True) for i in self.ITENS])
+        tudo_errado = db.estimar_theta_eap([(*i, False) for i in self.ITENS])
+        self.assertGreater(tudo_certo, 1.5)
+        self.assertLess(tudo_errado, -0.5)
+
+    def test_padrao_coerente_vale_mais_que_chute_nas_dificeis(self):
+        # mesmos 10 acertos: nas 10 fáceis (coerente) x nas 10 difíceis (cara de chute)
+        coerente = db.estimar_theta_eap([(*i, n < 10) for n, i in enumerate(self.ITENS)])
+        incoerente = db.estimar_theta_eap([(*i, n >= 10) for n, i in enumerate(self.ITENS)])
+        self.assertGreater(coerente, incoerente)
+
+
+class TestNotaTriRodada(_TestComBancoTemporario):
+    def _prova(self, n_itens, acertos):
+        for i in range(n_itens):
+            id_q, _ = db.inserir_questao(
+                ano=2020, caderno="Azul", numero=91 + i, grande_area="ciencias_natureza",
+                materia="Optica", alternativa_correta="A",
+            )
+            db.atualizar_parametros_tri(id_q, 2.0, -1.0 + 4.0 * i / n_itens, 0.2, 1)
+            db.registrar_tentativa(id_q, "A" if i < acertos else None)
+
+    def test_rodada_inteira_tem_nota(self):
+        self._prova(40, 20)
+        nota = db.nota_tri_rodada(2020, "azul", "ciencias_natureza", 1)
+        self.assertEqual(nota["itens"], 40)
+        self.assertTrue(400 < nota["nota"] < 800)
+
+    def test_rodada_parcial_nao_tem_nota(self):
+        self._prova(db.MIN_ITENS_NOTA_TRI - 1, 10)
+        self.assertIsNone(db.nota_tri_rodada(2020, "azul", "ciencias_natureza", 1))
+
+    def test_aparece_em_simulados_feitos(self):
+        self._prova(40, 20)
+        rodada = db.simulados_feitos()[0]["rodadas"][0]
+        self.assertEqual(rodada["nota_tri"], db.nota_tri_rodada(2020, "azul", "ciencias_natureza", 1))
 
 
 if __name__ == "__main__":

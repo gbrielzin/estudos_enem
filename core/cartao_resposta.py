@@ -1271,7 +1271,8 @@ def render_simulados_feitos() -> None:
 
                 col_txt, col_nome = st.columns([3, 2])
                 with col_txt:
-                    st.write(f"**{rotulo}**: {r['acertos']}/{r['total']} ({pct}) — {r['inicio'][:10]}")
+                    nota_tri = f" — nota TRI ≈ {r['nota_tri']['nota']}" if r.get("nota_tri") else ""
+                    st.write(f"**{rotulo}**: {r['acertos']}/{r['total']} ({pct}){nota_tri} — {r['inicio'][:10]}")
                 with col_nome:
                     novo_nome = st.text_input(
                         "Nome", value=r["nome"], placeholder="ex: fiz cansado à noite",
