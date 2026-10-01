@@ -497,8 +497,16 @@ export default function TrilhaScreen() {
                   fixa entre todas elas (ver TRILHA_FIXA_NOS). */}
               <Pressable style={styles.bannerMateria} onPress={() => setMostrarHome(true)}>
                 <View style={styles.bannerMateriaTextos}>
-                  <Text style={styles.bannerMateriaLabel}>TRILHA FIXA</Text>
-                  <Text style={styles.bannerMateriaTexto}>Ciências da Natureza</Text>
+                  {/* Trilha da semana (db.TRILHA_SEMANA_NOS, bancos dos amigos) mistura
+                      Matemática e Natureza; a trilha fixa de sempre é só Natureza. */}
+                  <Text style={styles.bannerMateriaLabel}>
+                    {trilhaFixa.some((no) => no.chave.startsWith('semana_')) ? 'TRILHA DA SEMANA' : 'TRILHA FIXA'}
+                  </Text>
+                  <Text style={styles.bannerMateriaTexto}>
+                    {trilhaFixa.some((no) => no.chave.startsWith('semana_'))
+                      ? 'Matemática e Natureza'
+                      : 'Ciências da Natureza'}
+                  </Text>
                 </View>
                 <View style={styles.bannerMateriaBotao}>
                   <Feather name="sliders" size={20} color={Brand.roxoClaro} />

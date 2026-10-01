@@ -31,6 +31,10 @@ def preparar() -> list[str]:
         with db.usar_banco(caminho):
             db.inicializar_banco()
             explicacoes.sincronizar()
+            # Bancos de quem usa pelo site seguem a trilha da semana (db.TRILHA_SEMANA_NOS),
+            # a não ser que alguém já tenha escolhido outra para aquele banco.
+            if db.obter_configuracao("trilha_ativa") is None:
+                db.definir_configuracao("trilha_ativa", "semana")
     return criados
 
 

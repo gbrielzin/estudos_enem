@@ -407,6 +407,7 @@ class TestPrepararServidor(_TestComBancoTemporario):
         for nome in ("ana", "bia"):  # explicação chega em banco novo E em banco antigo
             with db.usar_banco(pasta / f"{nome}.db"):
                 self.assertEqual([r["conteudo"] for r in db.resolucoes_da_questao(id_q)], ["porque sim"])
+                self.assertEqual(db.obter_configuracao("trilha_ativa"), "semana")
         with closing(sqlite3.connect(pasta / "ana.db")) as conn:
             self.assertEqual(conn.execute("SELECT COUNT(*) FROM tentativas_usuario").fetchone()[0], 1)
 
