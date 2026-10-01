@@ -39,6 +39,10 @@ CREATE TABLE IF NOT EXISTS questoes (
     origem                  TEXT NOT NULL DEFAULT 'enem_oficial'
                             CHECK(origem IN ('enem_oficial','banco_pratica')),
     fonte                   TEXT,
+    tri_a                   REAL,
+    tri_b                   REAL,
+    tri_c                   REAL,
+    habilidade              INTEGER,
     criado_em               TEXT NOT NULL DEFAULT (datetime('now','localtime'))
     -- Sem FOREIGN KEY pra topicos_validos de propósito: uma questão
     -- com matéria fora da taxonomia precisa ser GRAVADA (com
@@ -68,6 +72,11 @@ CREATE TABLE IF NOT EXISTS questoes (
     -- fonte é texto livre, só relevante quando origem='banco_pratica'
     -- (ex: 'gemini', 'chatgpt', 'autoral') -- filtro auxiliar dentro
     -- do banco de prática, não faz parte da identidade da questão.
+    --
+    -- tri_a/tri_b/tri_c (discriminação, dificuldade, acerto ao acaso)
+    -- e habilidade (H1-H30 da Matriz) vêm do ITENS_PROVA oficial do
+    -- INEP, gravados por importar_parametros_tri.py. NULL = sem item
+    -- INEP ligado (banco_pratica, item anulado, ano sem ligação).
 );
 
 CREATE INDEX IF NOT EXISTS idx_questoes_materia ON questoes(materia);

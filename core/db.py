@@ -380,6 +380,9 @@ def inicializar_banco() -> None:
                 )
             if "fonte" not in colunas_questoes:
                 conn.execute("ALTER TABLE questoes ADD COLUMN fonte TEXT")
+            for coluna, tipo in (("tri_a", "REAL"), ("tri_b", "REAL"), ("tri_c", "REAL"), ("habilidade", "INTEGER")):
+                if coluna not in colunas_questoes:
+                    conn.execute(f"ALTER TABLE questoes ADD COLUMN {coluna} {tipo}")
 
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
         conn.executemany(
@@ -2026,6 +2029,45 @@ def atualizar_topico(id_questao: str, topico: str | None) -> None:
             "UPDATE questoes SET topico = ? WHERE id_questao = ?",
             (topico.strip() if topico else None, id_questao),
         )
+
+
+def atualizar_parametros_tri(
+    id_questao: str, a: float | None, b: float | None, c: float | None, habilidade: int | None
+) -> None:
+    """Grava os parâmetros TRI oficiais do INEP (e a habilidade H1-H30)
+    de uma questão que já existe. Mesma lógica de atualizar_topico():
+    não mexe em matéria/gabarito/status. Quem chama é
+    importar_parametros_tri.py, que faz a ligação questão -> item."""
+    with _conectar() as conn:
+        existe = conn.execute("SELECT 1 FROM questoes WHERE id_questao = ?", (id_questao,)).fetchone()
+        if not existe:
+            raise ValueError(f"Questão '{id_questao}' não existe.")
+        conn.execute(
+            "UPDATE questoes SET tri_a = ?, tri_b = ?, tri_c = ?, habilidade = ? WHERE id_questao = ?",
+            (a, b, c, habilidade, id_questao),
+        )
+
+
+# Cortes de dificuldade em tri_b, lidos na escala aproximada do ENEM
+# (nota ~ 500 + 100*b): fácil abaixo de ~600, difícil acima de ~700 (a
+# meta de Natureza). No banco (2010-2025, 1138 questões) isso dá 25%
+# fácil, 48% médio, 28% difícil -- Matemática pesa mais pro difícil
+# (44%) que Natureza (19%). É aproximação: no modelo 3PL, b é onde a
+# chance de acerto fica no meio do caminho entre o chute (c) e 100%.
+CORTE_TRI_FACIL = 1.0
+CORTE_TRI_DIFICIL = 2.0
+
+
+def nivel_tri(b: float | None) -> str | None:
+    """'facil' / 'medio' / 'dificil' pela dificuldade oficial do item;
+    None quando a questão não tem parâmetro TRI."""
+    if b is None:
+        return None
+    if b < CORTE_TRI_FACIL:
+        return "facil"
+    if b <= CORTE_TRI_DIFICIL:
+        return "medio"
+    return "dificil"
 
 
 def prioridade_de_estudo(grande_area: str, peso_recorrencia: float = 0.5) -> dict:
