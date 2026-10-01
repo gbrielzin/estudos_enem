@@ -98,3 +98,39 @@ só liguei itens em que o gabarito da questão concorda individualmente e o ano/
 1. Usar `itens_ligados_ao_corpus.csv` (join por ano+indice) para calcular dificuldade média por tópico do corpus.
 2. Ligar 2016/2017 testando outros cadernos ou por conteúdo; resolver empates 2021/2022.
 3. Se quiser nota real do ENEM por acerto por item, os microdados de participantes teriam que ser lidos (arquivos grandes, GB).
+
+## Calibração da nota (θ → escala do ENEM), 2026-10-01
+
+A escala oficial não é pública. Antes, o app usava `nota = 500 + 100·θ` e
+**subestimava**: em Matemática errava ~28 pontos em média, e quem acerta
+40 de 45 aparecia com ~775 quando a nota oficial é ~869.
+
+**Como foi medido:** script local `core/inep_itens/acertos_x_nota_microdados.py`
+(lê em fluxo, via `rz.py`, o CSV de **participantes** do ZIP do INEP;
+`..._RESULTADOS_...csv` em 2024 e `DADOS/MICRODADOS_ENEM_<ano>.csv` antes).
+Para cada candidato presente: acertos (`TX_RESPOSTAS_*` × `TX_GABARITO_*`),
+nota oficial (`NU_NOTA_*`) e prova (`CO_PROVA_*`). Foram lidos 400 mil
+candidatos de 2024 e 150 mil de 2023. Em 1 200–1 500 candidatos por caderno,
+θ foi estimado como no app (`db.estimar_theta_eap`) e ajustada uma reta
+θ → nota oficial.
+
+| Área | Reta 2024 | Reta 2023 | Usada no app (`db.CALIBRACAO_NOTA`) | Erro médio antes → depois |
+|---|---|---|---|---|
+| Matemática | 488 + 134·θ | 489 + 134·θ | **489 + 134·θ** | 28–30 → 12–16 |
+| Natureza | 484 + 120·θ | 493–495 + 110–116·θ | **489 + 116·θ** (ajuste conjunto) | 15–21 → 12–14 |
+
+Matemática deu a mesma reta nos dois anos. Natureza varia mais entre os
+anos, por isso a reta é o ajuste conjunto (melhorou os 4 cadernos testados).
+
+**Acertos × nota oficial, ENEM 2024 caderno azul** (mediana, entre parênteses
+o intervalo de 10% a 90% dos candidatos):
+
+| Acertos | Matemática | Natureza |
+|---|---|---|
+| 30 | — | 674 (657–687) |
+| 33 | — | 700 (684–714) |
+| 35 | 808 (794–823) | 720 (705–732) |
+| 38 | 841 (827–857) | — |
+| 40 | 869 (850–884) | 780 (766–797) |
+| 42 | 897 (878–914) | — |
+| 44 | 945 (905–949) | — |

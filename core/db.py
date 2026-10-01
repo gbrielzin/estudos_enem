@@ -3145,10 +3145,23 @@ def detalhe_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: i
 
 
 # Mesmo modelo de acertos_por_nota.py / valor_por_questao.py: 3PL com
-# D=1,7 e nota = 500 + 100*theta. A escala exata do INEP não é pública,
-# então a nota é estimativa (serve pra tendência, não pra decimal).
+# D=1,7. A escala exata do INEP não é pública, então theta vira nota por
+# uma reta calibrada contra a NOTA OFICIAL de candidatos reais (microdados
+# 2023 e 2024, ver docs/inep_parametros_itens.md, seção "Calibração"):
+# com "500 + 100*theta" o app errava ~28 pontos em Matemática (e ~95 a
+# menos para quem acerta 40 de 45); calibrado, o erro médio fica em
+# ~12-16. Matemática deu a mesma reta nos dois anos; Natureza usa o ajuste
+# conjunto dos dois. Continua estimativa (o INEP pondera de jeitos que não
+# replicamos), mas no nível da nota oficial.
 D_TRI = 1.7
 MIN_ITENS_NOTA_TRI = 30
+CALIBRACAO_NOTA = {"matematica": (489.0, 134.0), "ciencias_natureza": (489.0, 116.0)}
+
+
+def nota_de_theta(grande_area: str, theta: float) -> int:
+    """Nota na escala do ENEM a partir do theta (ver CALIBRACAO_NOTA)."""
+    alfa, beta = CALIBRACAO_NOTA.get(normalizar_texto(grande_area), (500.0, 100.0))
+    return round(alfa + beta * theta)
 
 
 def estimar_theta_eap(respostas: list[tuple[float, float, float, bool]]) -> float:
@@ -3193,7 +3206,7 @@ def nota_tri_rodada(ano: int, caderno: str, grande_area: str, numero_tentativa: 
     if len(linhas) < MIN_ITENS_NOTA_TRI:
         return None
     theta = estimar_theta_eap([(a, b, c, r == "acertou") for a, b, c, r in linhas])
-    return {"nota": round(500 + 100 * theta), "itens": len(linhas)}
+    return {"nota": nota_de_theta(grande_area, theta), "itens": len(linhas)}
 
 
 def provas_para_corrigir() -> list[dict]:
@@ -3258,7 +3271,7 @@ def corrigir_prova(ano: int, caderno: str, grande_area: str, respostas: dict[int
     ]
     nota = None
     if len(itens_tri) >= MIN_ITENS_NOTA_TRI:
-        nota = round(500 + 100 * estimar_theta_eap(itens_tri))
+        nota = nota_de_theta(grande_area, estimar_theta_eap(itens_tri))
 
     erradas = [
         {
