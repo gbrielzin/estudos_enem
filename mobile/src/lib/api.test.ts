@@ -1,4 +1,4 @@
-import { cabecalhosAutenticacao, caminhoVariacaoMolde } from './api';
+import { cabecalhosAutenticacao, caminhoVariacaoMolde, urlImagemEnunciado } from './api';
 
 describe('cabecalhosAutenticacao', () => {
   const originalEnv = process.env.EXPO_PUBLIC_API_AUTH_TOKEN;
@@ -29,5 +29,17 @@ describe('caminhoVariacaoMolde', () => {
 
   it('sem opcoes nao manda query', () => {
     expect(caminhoVariacaoMolde('carro_eletrico')).toBe('/moldes/carro_eletrico/variacao');
+  });
+});
+
+describe('urlImagemEnunciado', () => {
+  it('usa so o nome do arquivo, mesmo com caminho absoluto do Windows', () => {
+    expect(urlImagemEnunciado('C:\\Users\\x\\core\\enunciados\\2019_azul_91.png')).toBe(
+      'http://localhost:8000/enunciados/2019_azul_91.png',
+    );
+  });
+
+  it('sem caminho devolve null', () => {
+    expect(urlImagemEnunciado(null)).toBeNull();
   });
 });

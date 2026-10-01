@@ -92,3 +92,36 @@ GitHub, sem precisar desconectar de novo:
 
 Se quiser, eu te acompanho passo a passo enquanto você faz o login —
 só não consigo fazer o login por você.
+
+## App no celular de outras pessoas: Railway (2026-10)
+
+Para amigos testarem pelo celular, cada um com o próprio histórico (ver
+`adr/0010`). Uma imagem só (`Dockerfile` na raiz) roda a API e serve o
+app web (`mobile/dist`) e as figuras das questões. A pessoa abre um link,
+toca em "Adicionar à tela inicial" e usa como um app. Custo: ~US$5/mês.
+
+**O que só você faz (login em conta):**
+
+1. Entrar em https://railway.com com o GitHub e assinar o plano Hobby.
+2. *New Project* → *Deploy from GitHub repo* → `estudos_enem`, branch `master`.
+   A Railway acha o `Dockerfile` sozinha.
+3. No serviço: *Settings → Volumes → Add volume*, montado em **`/data`**.
+   Sem o volume, o histórico de todo mundo some a cada deploy.
+4. *Variables*:
+   - `API_USUARIOS` = `nome:codigo,nome2:codigo2`. Gere cada código com
+     `python -c "import secrets; print(secrets.token_urlsafe(24))"`.
+   - `API_CORS_ORIGENS` = o domínio que a Railway der (ex.: `https://enem-gi.up.railway.app`).
+5. *Settings → Networking → Generate domain*.
+
+**O link de cada pessoa:** `https://<domínio>/?codigo=<código dela>`.
+Ela abre uma vez, e o app guarda o código no celular. Quem não tem código
+vê o app, mas a API recusa (401).
+
+**O que acontece sozinho:** a cada deploy, `core/preparar_servidor.py`
+cria o banco de quem ainda não tem, copiando `core/banco_semente.db`
+(questões sem nenhum dado pessoal). Banco que já existe nunca é tocado.
+
+**Atualizar as questões da semente** (questão nova, gabarito corrigido):
+`cd core && python criar_banco_usuario.py banco_semente --pasta . --sobrescrever`
+e commit. Isso só vale para pessoa **nova**: quem já tem banco continua
+com as questões antigas (limite anotado no adr/0010).
