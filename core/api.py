@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import hmac
 import os
+import re
+from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -40,25 +42,62 @@ import moldes
 load_dotenv()
 
 
-def _verificar_autenticacao(authorization: str | None = Header(default=None)) -> None:
-    """Trava simples por chave compartilhada (Bearer token) -- NÃO é
-    autenticação de usuário de verdade, só barra quem não tem o
-    segredo (ver adr/0009 pro raciocínio completo e por que um sistema
-    de conta/login de verdade ainda não tem onde pendurar dado: não
-    existe tabela de usuário nenhuma hoje).
+PASTA_BANCOS_PADRAO = Path(__file__).parent / "bancos"
+_NOME_USUARIO = re.compile(r"[a-z0-9_]{1,40}")
 
-    Lê `API_AUTH_TOKEN` do ambiente a CADA chamada (não cacheia em
-    import) -- de propósito, pra dar pra testar com
-    `unittest.mock.patch.dict(os.environ, ...)` sem precisar recarregar
-    o módulo, mesmo espírito de `db.DB_PATH` ser reatribuível de fora
-    pros testes de banco.
 
-    Fechada por padrão (atualização de 2026-09-26 no adr/0009): sem
-    `API_AUTH_TOKEN` configurado, recusa tudo com 503, em vez de rodar
-    aberta. Só roda aberta com `API_PERMITIR_SEM_TOKEN=1`, que é pra
-    desenvolvimento local e pra suíte de testes -- esquecer de configurar
-    o token não pode mais virar "API aberta pra rede" sem ninguém notar.
-    A comparação do token usa `hmac.compare_digest` (tempo constante)."""
+def usuarios_configurados() -> dict[str, str]:
+    """{codigo: nome} a partir de `API_USUARIOS` ("nome:codigo,nome2:codigo2").
+
+    Cada nome tem o próprio banco em `API_PASTA_BANCOS/<nome>.db` (criado
+    com criar_banco_usuario.py). Sem a variável, a API continua no modo de
+    uma pessoa só (API_AUTH_TOKEN + enem.db), como antes (ver adr/0010).
+    Lido a cada chamada, mesmo motivo do API_AUTH_TOKEN: dá pra testar com
+    patch.dict(os.environ) sem recarregar o módulo."""
+    usuarios = {}
+    for par in os.environ.get("API_USUARIOS", "").split(","):
+        if not par.strip():
+            continue
+        nome, _, codigo = par.strip().partition(":")
+        if not _NOME_USUARIO.fullmatch(nome) or len(codigo) < 16:
+            raise RuntimeError(
+                f"API_USUARIOS mal formado em '{nome}': nome só com a-z, 0-9 e _, código com 16+ caracteres."
+            )
+        usuarios[codigo] = nome
+    return usuarios
+
+
+def caminho_banco_usuario(nome: str) -> Path:
+    return Path(os.environ.get("API_PASTA_BANCOS", PASTA_BANCOS_PADRAO)) / f"{nome}.db"
+
+
+async def _verificar_autenticacao(authorization: str | None = Header(default=None)) -> None:
+    """Trava por chave (Bearer token). Dois modos:
+
+    - **Várias pessoas** (`API_USUARIOS` configurado, ver adr/0010): o
+      código de acesso diz QUEM é, e a requisição inteira passa a usar o
+      banco daquela pessoa (db.usar_banco). Não é login de verdade: o
+      código é a credencial, como um link secreto.
+    - **Uma pessoa** (sem `API_USUARIOS`): a trava de chave compartilhada
+      do adr/0009, sem mudança — fechada por padrão (503 sem
+      `API_AUTH_TOKEN`), aberta só com `API_PERMITIR_SEM_TOKEN=1`.
+
+    É `async` de propósito: dependency síncrona roda numa thread com uma
+    CÓPIA do contexto, então o banco escolhido aqui não chegaria até o
+    endpoint. Async roda no contexto da própria requisição, que o
+    endpoint herda. A comparação usa `hmac.compare_digest`."""
+    recebido = (authorization or "").encode("utf-8")
+    usuarios = usuarios_configurados()
+    if usuarios:
+        for codigo, nome in usuarios.items():
+            if hmac.compare_digest(recebido, f"Bearer {codigo}".encode("utf-8")):
+                caminho = caminho_banco_usuario(nome)
+                if not caminho.exists():
+                    raise HTTPException(status_code=503, detail=f"Banco de '{nome}' ainda não foi criado.")
+                db._BANCO_DA_REQUISICAO.set(caminho)
+                return
+        raise HTTPException(status_code=401, detail="Código de acesso ausente ou inválido.")
+
     token_esperado = os.environ.get("API_AUTH_TOKEN")
     if not token_esperado:
         if os.environ.get("API_PERMITIR_SEM_TOKEN") == "1":
@@ -68,7 +107,6 @@ def _verificar_autenticacao(authorization: str | None = Header(default=None)) ->
             detail="API sem API_AUTH_TOKEN configurado. Configure no .env "
             "(ou API_PERMITIR_SEM_TOKEN=1 só pra desenvolvimento local).",
         )
-    recebido = (authorization or "").encode("utf-8")
     if not hmac.compare_digest(recebido, f"Bearer {token_esperado}".encode("utf-8")):
         raise HTTPException(status_code=401, detail="Token de autenticação ausente ou inválido.")
 
@@ -96,7 +134,18 @@ app.add_middleware(
 
 @app.on_event("startup")
 def _inicializar() -> None:
-    db.inicializar_banco()
+    usuarios = usuarios_configurados()
+    if not usuarios:
+        db.inicializar_banco()
+        return
+    # Aplica as migrações em cada banco que já existe. Banco que falta
+    # NÃO é criado aqui (sairia vazio, sem questão): quem cria é
+    # criar_banco_usuario.py, e até lá aquela pessoa recebe 503.
+    for nome in usuarios.values():
+        caminho = caminho_banco_usuario(nome)
+        if caminho.exists():
+            with db.usar_banco(caminho):
+                db.inicializar_banco()
 
 
 @app.get("/health")

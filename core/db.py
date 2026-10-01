@@ -24,6 +24,7 @@ import re
 import sqlite3
 import unicodedata
 from contextlib import contextmanager
+from contextvars import ContextVar
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -345,9 +346,31 @@ def normalizar_nivel(bruto: str) -> str | None:
 # CONEXÃO
 # ============================================================
 
+# Banco da requisição atual quando a API atende mais de uma pessoa (cada
+# código de acesso tem o próprio arquivo, ver api.py e adr/0010). Fora da
+# API (Streamlit, scripts, testes) fica None e tudo usa DB_PATH, como antes.
+# ContextVar e não variável global: a API atende requisições de pessoas
+# diferentes ao mesmo tempo, em threads diferentes.
+_BANCO_DA_REQUISICAO: ContextVar[Path | None] = ContextVar("banco_da_requisicao", default=None)
+
+
+def caminho_banco() -> Path:
+    return _BANCO_DA_REQUISICAO.get() or DB_PATH
+
+
+@contextmanager
+def usar_banco(caminho: Path):
+    """Faz todo acesso a banco dentro do bloco ir para `caminho`."""
+    marca = _BANCO_DA_REQUISICAO.set(caminho)
+    try:
+        yield
+    finally:
+        _BANCO_DA_REQUISICAO.reset(marca)
+
+
 @contextmanager
 def _conectar():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(caminho_banco())
     conn.execute("PRAGMA foreign_keys = ON")
     try:
         yield conn
