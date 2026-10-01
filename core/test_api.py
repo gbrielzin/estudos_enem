@@ -20,6 +20,7 @@ Rodar (de dentro de core/):
     python -m unittest test_api
     python -m unittest test_api -v
 """
+import json
 import os
 import shutil
 import sqlite3
@@ -389,14 +390,25 @@ class TestArquivosSemTrava(_TestComBancoTemporario):
 class TestPrepararServidor(_TestComBancoTemporario):
     def test_cria_so_o_banco_que_falta(self):
         import preparar_servidor
+        import criar_banco_usuario
+        id_q, _ = db.inserir_questao(
+            ano=2022, caderno="Azul", numero=91, grande_area="ciencias_natureza",
+            materia="Optica", alternativa_correta="A",
+        )
         pasta = Path(self._pasta_temp) / "bancos"
-        pasta.mkdir()
-        (pasta / "ana.db").write_bytes(b"historico da ana")
+        criar_banco_usuario.criar_banco("ana", pasta, origem=db.DB_PATH)
+        with db.usar_banco(pasta / "ana.db"):
+            db.registrar_tentativa(id_q, "B")  # histórico da ana, que não pode sumir
+        arquivo = Path(self._pasta_temp) / "explicacoes.jsonl"
+        arquivo.write_text(json.dumps({"id_questao": id_q, "texto": "porque sim"}) + "\n", encoding="utf-8")
         env = {"API_USUARIOS": "ana:codigo-da-ana-123456,bia:codigo-da-bia-654321", "API_PASTA_BANCOS": str(pasta)}
-        with patch.dict(os.environ, env), patch.object(preparar_servidor, "SEMENTE", db.DB_PATH):
+        with patch.dict(os.environ, env), patch.object(preparar_servidor, "SEMENTE", db.DB_PATH), patch.object(preparar_servidor.explicacoes, "ARQUIVO", arquivo):
             self.assertEqual(preparar_servidor.preparar(), ["bia"])
-        self.assertEqual((pasta / "ana.db").read_bytes(), b"historico da ana")
-        self.assertTrue((pasta / "bia.db").exists())
+        for nome in ("ana", "bia"):  # explicação chega em banco novo E em banco antigo
+            with db.usar_banco(pasta / f"{nome}.db"):
+                self.assertEqual([r["conteudo"] for r in db.resolucoes_da_questao(id_q)], ["porque sim"])
+        with closing(sqlite3.connect(pasta / "ana.db")) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM tentativas_usuario").fetchone()[0], 1)
 
 
 class TestMoldes(_TestComBancoTemporario):

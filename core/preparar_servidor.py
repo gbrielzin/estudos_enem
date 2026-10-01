@@ -6,11 +6,17 @@ API_PASTA_BANCOS (o volume persistente), cria o banco a partir de
 banco_semente.db: as questões, sem nenhum dado pessoal (gerado com
 `python criar_banco_usuario.py banco_semente --pasta .`). Banco que já
 existe nunca é tocado: é o histórico da pessoa.
+
+Depois, em TODOS os bancos (novos e antigos), aplica as migrações e
+sincroniza as explicações de core/explicacoes/explicacoes.jsonl (ver
+explicacoes.py) -- é assim que explicação nova chega a quem já usa.
 """
 from pathlib import Path
 
 import api
 import criar_banco_usuario
+import db
+import explicacoes
 
 SEMENTE = Path(__file__).parent / "banco_semente.db"
 
@@ -22,6 +28,9 @@ def preparar() -> list[str]:
         if not caminho.exists():
             criar_banco_usuario.criar_banco(nome, caminho.parent, origem=SEMENTE)
             criados.append(nome)
+        with db.usar_banco(caminho):
+            db.inicializar_banco()
+            explicacoes.sincronizar()
     return criados
 
 
