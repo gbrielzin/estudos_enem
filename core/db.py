@@ -1363,11 +1363,10 @@ def alternativas_separaveis(texto: str | None) -> bool:
     sem_letra_solta = [linha for linha in linhas if not re.fullmatch(r"[A-E]", linha.strip())]
     for indice, padrao in enumerate(_PADROES_ALT):
         candidatas = (linhas if indice == 0 else sem_letra_solta)[-5:]
-        if len(candidatas) == 5 and all(
-            (m := re.match(padrao, linha.strip())) and m.group(1) == _LETRAS_ALT[k]
-            for k, linha in enumerate(candidatas)
-        ):
-            return True
+        casamentos = [re.match(padrao, linha.strip()) for linha in candidatas]
+        if len(candidatas) == 5 and all(m and m.group(1) == _LETRAS_ALT[k] for k, m in enumerate(casamentos)):
+            # "(ver imagem)": a alternativa é um desenho que o banco não tem.
+            return not any("ver imagem" in m.group(2).lower() for m in casamentos)
     return False
 
 

@@ -35,9 +35,11 @@ class TestTrilhaSemana(_TestComBancoTemporario):
     def test_questao_com_alternativa_em_desenho_fica_de_fora(self):
         com_texto = self._questao(91, 0.2)
         desenho = self._questao(92, 0.1, texto="Qual figura representa a planta do telhado? A D B E C")
+        ver_imagem = self._questao(93, 0.15, texto="A sombra projetada é\n" + "\n".join(f"{l} (ver imagem)" for l in "ABCDE"))
         ids = [q["id_questao"] for b in self._no("semana_ecologia")["blocos"] for q in b["questoes"]]
         self.assertEqual(ids, [com_texto])
         self.assertNotIn(desenho, ids)
+        self.assertNotIn(ver_imagem, ids)
 
     def test_nos_abertos_e_blocos_em_sequencia(self):
         for i in range(7):
