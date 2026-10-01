@@ -29,6 +29,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel
 
 import db
@@ -320,3 +322,38 @@ def variacao_molde(id_molde: str, seed: int | None = None, original: bool = Fals
         return moldes.gerar_variacao(id_molde, seed=seed, original=original)
     except ValueError as erro:
         raise HTTPException(status_code=404, detail=str(erro))
+
+
+# ============================================================
+# Arquivos sem trava (adr/0010): figuras das questões e o app web.
+# São `mount`, não rota, então a trava de _verificar_autenticacao (que
+# vale para as rotas da API) não se aplica -- de propósito: <img> e a
+# página inicial não conseguem mandar o header Authorization. Nada aqui
+# é dado pessoal: figuras de prova pública do INEP e o JS do app.
+# Montados por ÚLTIMO, para nenhuma rota da API ficar escondida pelo "/".
+# ============================================================
+
+PASTA_ENUNCIADOS = Path(__file__).parent / "enunciados"
+app.mount("/enunciados", StaticFiles(directory=PASTA_ENUNCIADOS, check_dir=False), name="enunciados")
+
+
+class _AppWeb(StaticFiles):
+    """Export do Expo (web.output "static"): cada tela vira <rota>.html.
+    Abrir /simulado direto (atualizar a página, atalho na tela inicial)
+    procura simulado.html; o que não existir cai no index.html."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as erro:
+            if erro.status_code != 404:
+                raise
+        try:
+            return await super().get_response(f"{path}.html", scope)
+        except StarletteHTTPException:
+            return await super().get_response("index.html", scope)
+
+
+PASTA_WEB = Path(os.environ.get("API_PASTA_WEB", Path(__file__).parent.parent / "mobile" / "dist"))
+if PASTA_WEB.is_dir():
+    app.mount("/", _AppWeb(directory=PASTA_WEB, html=True), name="web")

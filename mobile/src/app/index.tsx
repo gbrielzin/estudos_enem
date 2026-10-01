@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { FiguraEnunciado } from '@/components/figura-enunciado';
 import { Mascote } from '@/components/mascote';
 import { MissoesCard } from '@/components/missoes-card';
 import { Seletor } from '@/components/seletor';
@@ -1365,6 +1366,7 @@ function QuestaoAtual({
       <View style={styles.cardEnunciado}>
         {questao.fonte && <Text style={styles.fonteTexto}>🧠 Banco de prática · fonte: {questao.fonte}</Text>}
         <Text style={styles.enunciadoTexto}>{corpo || questao.enunciado_texto}</Text>
+        <FiguraEnunciado caminho={questao.enunciado_imagem_path} />
       </View>
 
       {!resultado ? (

@@ -1,0 +1,5 @@
+# Só o que a API precisa para rodar na hospedagem (o requirements.txt da
+# raiz também traz Streamlit, pandas e PyMuPDF, que o servidor não usa).
+fastapi
+uvicorn
+python-dotenv

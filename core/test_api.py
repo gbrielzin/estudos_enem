@@ -362,6 +362,43 @@ class TestVariasPessoas(_TestComBancoTemporario):
             criar_banco_usuario.criar_banco("ana", self.pasta, origem=db.DB_PATH)
 
 
+class TestArquivosSemTrava(_TestComBancoTemporario):
+    """Figuras e app web (adr/0010) são `mount`: abertos mesmo com a trava
+    ligada, porque <img> e a página inicial não mandam Authorization."""
+
+    def test_figura_abre_sem_token_mas_api_continua_travada(self):
+        figura = next(api.PASTA_ENUNCIADOS.glob("*.png"))
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            self.assertEqual(self.client.get(f"/enunciados/{figura.name}").status_code, 200)
+            self.assertEqual(self.client.get("/health").status_code, 401)
+
+    def test_app_web_serve_tela_e_cai_no_index(self):
+        from fastapi import FastAPI
+        pasta = Path(self._pasta_temp) / "dist"
+        pasta.mkdir()
+        (pasta / "index.html").write_text("inicio", encoding="utf-8")
+        (pasta / "simulado.html").write_text("tela simulado", encoding="utf-8")
+        app_web = FastAPI()
+        app_web.mount("/", api._AppWeb(directory=pasta, html=True))
+        cliente = TestClient(app_web)
+        self.assertEqual(cliente.get("/").text, "inicio")
+        self.assertEqual(cliente.get("/simulado").text, "tela simulado")
+        self.assertEqual(cliente.get("/rota/que/nao/existe").text, "inicio")
+
+
+class TestPrepararServidor(_TestComBancoTemporario):
+    def test_cria_so_o_banco_que_falta(self):
+        import preparar_servidor
+        pasta = Path(self._pasta_temp) / "bancos"
+        pasta.mkdir()
+        (pasta / "ana.db").write_bytes(b"historico da ana")
+        env = {"API_USUARIOS": "ana:codigo-da-ana-123456,bia:codigo-da-bia-654321", "API_PASTA_BANCOS": str(pasta)}
+        with patch.dict(os.environ, env), patch.object(preparar_servidor, "SEMENTE", db.DB_PATH):
+            self.assertEqual(preparar_servidor.preparar(), ["bia"])
+        self.assertEqual((pasta / "ana.db").read_bytes(), b"historico da ana")
+        self.assertTrue((pasta / "bia.db").exists())
+
+
 class TestMoldes(_TestComBancoTemporario):
     """Só a camada HTTP: rota, parâmetros e 404. A lógica do gerador é
     testada em test_moldes.py."""

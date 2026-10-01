@@ -25,7 +25,39 @@ export function getApiBaseUrl(): string {
     const host = hostUri.split(':')[0];
     return `http://${host}:${API_PORT}`;
   }
+  // Página servida pela própria API (publicada, ver Dockerfile): a API está
+  // na mesma origem. Só o servidor de dev do Expo web (porta 8081) aponta
+  // para a API separada na 8000. `window` existe no React Native nativo,
+  // mas sem `location`: só o navegador tem.
+  const local = typeof window !== 'undefined' ? window.location : undefined;
+  if (local?.origin && local.port !== '8081') {
+    return local.origin;
+  }
   return `http://localhost:${API_PORT}`;
+}
+
+const CHAVE_CODIGO = 'enem_codigo_acesso';
+
+/**
+ * Código de acesso de quem usa o app publicado (ver adr/0010): chega uma
+ * vez pelo link (`https://.../?codigo=XYZ`) e fica guardado no navegador,
+ * para o atalho da tela inicial continuar funcionando sem o `?codigo=`.
+ * Fora do navegador (Expo Go, testes) devolve null.
+ */
+export function codigoDeAcesso(): string | null {
+  if (typeof window === 'undefined' || !window.location) {
+    return null;
+  }
+  try {
+    const daUrl = new URLSearchParams(window.location.search).get('codigo');
+    if (daUrl) {
+      window.localStorage.setItem(CHAVE_CODIGO, daUrl);
+      return daUrl;
+    }
+    return window.localStorage.getItem(CHAVE_CODIGO);
+  } catch {
+    return null; // navegador sem localStorage (aba anônima bloqueada etc.)
+  }
 }
 
 /**
@@ -42,8 +74,17 @@ export function getApiBaseUrl(): string {
  * mesmo comportamento de hoje (backend aberto).
  */
 export function cabecalhosAutenticacao(): HeadersInit {
-  const token = process.env.EXPO_PUBLIC_API_AUTH_TOKEN;
+  const token = codigoDeAcesso() ?? process.env.EXPO_PUBLIC_API_AUTH_TOKEN;
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** URL pública da figura de uma questão (`core/enunciados/`, servida sem trava pela API). */
+export function urlImagemEnunciado(caminho: string | null): string | null {
+  if (!caminho) {
+    return null;
+  }
+  const arquivo = caminho.replace(/\\/g, '/').split('/').pop();
+  return arquivo ? `${getApiBaseUrl()}/enunciados/${encodeURIComponent(arquivo)}` : null;
 }
 
 // ============================================================
