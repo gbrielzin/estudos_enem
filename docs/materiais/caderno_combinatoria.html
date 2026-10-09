@@ -1,0 +1,686 @@
+<meta charset="utf-8">
+<title>Caderno de Combinatória</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: mesmo caderno quadriculado do de Orgânica (série de cadernos), acento laranja pra separar a matéria; cada etapa é uma folha na ordem real de estudo */
+:root{
+  --bg:#F6F5F1; --paper:#FFFFFF; --grid:#ECE7DE; --ink:#1F1A14; --muted:#6B6153;
+  --line:#DCD3C4; --accent:#C2410C; --accent-ink:#FFFFFF;
+  --pick:#FDE7D6; --pair:#F59E0B; --pair-soft:#FDEFC8; --dup:#B91C1C; --off:#EFEAE1;
+  --note-bg:#FFF6D6; --note-ink:#5C4500;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17130F; --paper:#211B15; --grid:#2A231B; --ink:#F1EAE0; --muted:#B3A795; --line:#3B3127;
+  --accent:#FB923C; --accent-ink:#1F1A14; --pick:#4A2A15; --pair:#F59E0B; --pair-soft:#4A3A12; --dup:#F87171; --off:#2B241C;
+  --note-bg:#3A3112; --note-ink:#F5E3A8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17130F; --paper:#211B15; --grid:#2A231B; --ink:#F1EAE0; --muted:#B3A795; --line:#3B3127;
+  --accent:#FB923C; --accent-ink:#1F1A14; --pick:#4A2A15; --pair:#F59E0B; --pair-soft:#4A3A12; --dup:#F87171; --off:#2B241C;
+  --note-bg:#3A3112; --note-ink:#F5E3A8; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,2.8rem);line-height:1.05;margin:0;text-wrap:balance}
+header p{margin:.4rem 0 0;color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.folha{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.folha h2{font-family:var(--display);font-weight:800;font-size:1.45rem;margin:0;line-height:1.15;text-wrap:balance}
+.folha h3{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:.3rem 0 0}
+p{margin:0}
+.regra{border-left:4px solid var(--accent);padding:4px 0 4px 14px;font-size:1.05rem}
+.regra b{color:var(--accent)}
+.nota{background:var(--note-bg);color:var(--note-ink);border-radius:10px;padding:12px 14px;font-size:.95rem}
+button{font:inherit;font-size:.92rem;border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:6px 14px;cursor:pointer;min-height:40px}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+
+/* pessoas */
+.pessoas{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.pessoa{width:76px;height:76px;border-radius:50%;border:2px solid var(--line);background:var(--paper);color:var(--ink);
+  font-family:var(--display);font-weight:600;font-size:1.05rem;padding:0;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.pessoa:hover{border-color:var(--accent)}
+.pessoa[aria-pressed="true"]{background:var(--pick);border-color:var(--accent);transform:scale(1.06)}
+.status{text-align:center;min-height:1.6em;font-size:.98rem}
+.status.dup{color:var(--dup);font-weight:700}
+.acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* placar + lista */
+.placar{display:flex;align-items:baseline;justify-content:center;gap:10px}
+.placar .n{font-family:var(--display);font-weight:800;font-size:2.6rem;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.lista{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:34px}
+.chip{font-family:var(--mono);font-size:.82rem;background:var(--pair-soft);border:1px solid var(--pair);border-radius:999px;padding:4px 10px}
+
+/* tabela 6x6 */
+.tbl{overflow-x:auto;display:flex;justify-content:center}
+table.cruz{border-collapse:separate;border-spacing:3px;font-family:var(--mono);font-size:.8rem}
+.cruz th{color:var(--muted);font-weight:500;padding:2px 4px;text-align:center}
+.cruz td{width:40px;height:40px;border-radius:6px;background:var(--paper);border:1px solid var(--line);text-align:center;vertical-align:middle;transition:background .2s}
+.cruz td.diag{background:var(--off);color:var(--muted);border-style:dashed}
+.cruz td.on{background:var(--pair);border-color:var(--pair);color:#1F1A14;font-weight:700}
+.cruz td.flash{animation:fl .6s}
+@keyframes fl{from{box-shadow:0 0 0 4px var(--accent)}to{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.pessoa,.cruz td{transition:none}.cruz td.flash{animation:none}}
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.passo{border:1px dashed var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.passo .eyebrow{color:var(--muted)}
+.big{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--accent);font-variant-numeric:tabular-nums}
+table.comp{border-collapse:collapse;width:100%;font-size:.95rem}
+.comp td,.comp th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+.comp th{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.ordens{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ordem{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;gap:6px;justify-content:center;align-items:center;font-family:var(--mono);font-size:.85rem;animation:entra .3s both}
+.ordem .cad{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ordem .cad small{color:var(--muted);font-size:.68rem}
+.ordem .cad span{background:var(--pair-soft);border:1px solid var(--pair);border-radius:999px;padding:2px 8px}
+@keyframes entra{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.ordem{animation:none}}
+details.dobra{padding:12px 22px}
+details.dobra summary{cursor:pointer;list-style:none;color:var(--muted)}
+details.dobra summary::-webkit-details-marker{display:none}
+details.dobra[open]{padding:22px}
+details.dobra[open] summary{margin-bottom:10px}
+.resumo{border:2px solid var(--accent)}
+.resumo ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.resumo a{color:var(--accent)}
+.prox{color:var(--muted);font-size:.95rem}
+.receita{border:2px solid var(--accent)}
+.atalho .f{font-family:var(--mono);font-size:.95rem}
+.niveis{display:flex;gap:8px;flex-wrap:wrap}
+.niveis button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tr-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.tr-topo{display:flex;justify-content:space-between;gap:8px}
+.cena{font-size:1.1rem;min-height:3.2em;text-align:center;text-wrap:balance}
+.tr-opcoes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tr-opcoes button.ok,.tr-opcoes input.ok{background:#15803D;border-color:#15803D;color:#fff}
+.tr-opcoes button.nao,.tr-opcoes input.nao{background:var(--dup);border-color:var(--dup);color:#fff}
+.tr-opcoes input{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:140px;font-variant-numeric:tabular-nums}
+.tr-feedback{min-height:1.5em;text-align:center}
+#cProx{align-self:center}
+.pensa{border:1px dashed var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.pensa i{font-style:normal}
+.letras{display:flex;flex-direction:column;justify-content:space-around;height:300px;font-family:var(--display);font-weight:800;color:#1F1A14}
+.f{font-family:var(--mono)}
+details.dobra details.dobra,details.dobra .folha{border:none;padding:8px 0}
+.degrau{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.degrau[data-estado="fechado"]{opacity:.45;pointer-events:none}
+.degrau[data-estado="fechado"] .corpo{display:none}
+.degrau[data-estado="feito"]{border-color:#15803D}
+.degrau h3{margin:0;display:flex;gap:8px;align-items:center}
+.degrau .num{font-family:var(--mono);font-size:.8rem;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px}
+.degrau[data-estado="feito"] .num{background:#15803D;color:#fff}
+.fileira{display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:center}
+.fileira .rot{font-family:var(--mono);font-size:.78rem;color:var(--muted);min-width:64px;text-align:right;margin-right:4px}
+.ficha{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;background:var(--pair-soft);border:1px solid var(--pair);transition:opacity .3s,transform .3s}
+.ficha.vezes{width:auto;border:none;background:none;color:var(--muted);font-weight:500}
+.ficha.cortada{opacity:.25;text-decoration:line-through;transform:scale(.9)}
+.ficha.fica{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ficha.bag{background:var(--pick);border-color:var(--accent)}
+.risco{height:2px;background:var(--ink);max-width:420px;width:100%;margin:2px auto}
+.desafio{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.desafio .q{flex-basis:100%;text-align:center}
+.desafio input{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:110px;font-variant-numeric:tabular-nums}
+.desafio .fb{flex-basis:100%;text-align:center;min-height:1.4em;font-size:.95rem}
+.desafio.ok input,.desafio button.ok{background:#15803D;border-color:#15803D;color:#fff}
+.desafio button.nao{background:var(--dup);border-color:var(--dup);color:#fff}
+.gente{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.gente span{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;border:2px solid var(--line)}
+.gente span.entra{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.gente span.sobra{background:var(--off)}
+.trancada .mol,.trancada .nota{filter:blur(5px);pointer-events:none;user-select:none}
+.trancada.aberta .mol,.trancada.aberta .nota{filter:none;pointer-events:auto;user-select:auto}
+.cadeado{color:var(--muted)}
+.arvore{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.arvore .op{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+.arvore span{font-family:var(--mono);font-size:.82rem;border-radius:999px;padding:3px 9px;border:1px solid var(--line)}
+.arvore .sim{background:var(--pair-soft);border-color:var(--pair)}
+.arvore .nao{background:var(--off);color:var(--muted)}
+.arvore small{flex-basis:100%;text-align:center;color:var(--accent);font-weight:700}
+.grade{display:grid;gap:4px;justify-content:center}
+.grade span{font-family:var(--mono);font-size:.75rem;border:1px solid var(--pair);background:var(--pair-soft);border-radius:6px;padding:4px 6px;text-align:center}
+.grade .cab{background:none;border:none;color:var(--muted)}
+.mult{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;font-family:var(--mono)}
+.mult b{font-family:var(--display);font-size:1.2rem;color:var(--accent)}
+.legenda{color:var(--muted);font-size:.9rem;text-align:center}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Matemática · Análise combinatória · 06/10</div>
+  <h1>Caderno de Combinatória</h1>
+  <p>Do zero, mexendo com as mãos. Cada etapa nova entra aqui embaixo. Copie as regras e os apelidos no seu caderno.</p>
+</header>
+
+
+<section class="folha receita" id="receita">
+  <div class="eyebrow">A receita · decore assim</div>
+  <h2>Escolher algumas pessoas de um grupo</h2>
+  <p>Exemplo do começo ao fim: <b>escolher 3 pessoas de 10</b>.</p>
+  <div class="passos">
+    <div class="passo"><div class="eyebrow">Passo 1 · cadeiras</div><p>Uma cadeira pra cada escolhida. Na 1ª cabem 10, na 2ª sobram 9, na 3ª sobram 8.</p><p class="big">10 × 9 × 8</p></div>
+    <div class="passo"><div class="eyebrow">Passo 2 · teste da troca</div><p>Trocar as escolhidas de lugar <b>muda</b> alguma coisa? Se muda, <b>acabou</b>: a resposta é a conta das cadeiras.</p></div>
+    <div class="passo"><div class="eyebrow">Passo 3 · bagunça</div><p>Se <b>não muda</b>, divida pela bagunça das escolhidas: 3 pessoas → 3 × 2 × 1.</p><p class="big">÷ 6</p></div>
+  </div>
+  <p class="nota"><b>Bagunças pra decorar:</b> 2 pessoas → 2 · 3 → 6 · 4 → 24 · 5 → 120.</p>
+
+  <h3>Pensando alto: como resolver</h3>
+  <div class="pensa">
+    <p><b>Enunciado:</b> “De 8 alunos, a professora vai escolher 3 para uma comissão. Quantas comissões?”</p>
+    <p>🡒 <i>Quantas vou escolher? 3. De quantos? 8. Então são 3 cadeiras: 8 × 7 × 6.</i></p>
+    <p>🡒 <i>Se eu trocar a Ana com a Bia dentro da comissão, muda alguma coisa? Não, comissão não tem cargo. Então a ordem não importa: vou dividir.</i></p>
+    <p>🡒 <i>Divido por quanto? Pela bagunça de 3 pessoas: 3 × 2 × 1 = 6.</i></p>
+    <p>🡒 <i>Corto antes: 6 ÷ 6 = 1. Sobra 8 × 7 = <b>56</b>.</i></p>
+    <p>🡒 <i>E se fosse “presidente, vice e secretário”? Trocar muda o cargo, então não divide: 8 × 7 × 6 = <b>336</b>.</i></p>
+  </div>
+</section>
+
+
+
+
+
+
+<section class="folha atalho" id="atalho">
+  <div class="eyebrow">Atalho de conta · corte antes de multiplicar</div>
+  <h2>Nunca faça 720 ÷ 6</h2>
+  <p>Quando divide pela bagunça, <b>corte primeiro</b> e multiplique depois. Os números ficam pequenos e cabem na cabeça.</p>
+  <div class="passos">
+    <div class="passo"><div class="eyebrow">3 de 10, sem ordem</div><p class="f">10 × 9 × 8 ÷ (3 × 2)</p><p>9 ÷ 3 = <b>3</b> · 8 ÷ 2 = <b>4</b></p><p class="big">10 × 3 × 4 = 120</p></div>
+    <div class="passo"><div class="eyebrow">2 de 12, sem ordem</div><p class="f">12 × 11 ÷ 2</p><p>12 ÷ 2 = <b>6</b></p><p class="big">6 × 11 = 66</p></div>
+    <div class="passo"><div class="eyebrow">3 de 7, sem ordem</div><p class="f">7 × 6 × 5 ÷ (3 × 2)</p><p>6 ÷ (3 × 2) = <b>1</b></p><p class="big">7 × 5 = 35</p></div>
+  </div>
+  <p class="regra"><b>Regra:</b> o par sempre cai pelo 2; entre 3 números seguidos, um sempre é múltiplo de 3. Então o ÷ 6 do trio <b>sempre corta</b>.</p>
+  <p class="nota"><b>Multiplicar por 11:</b> × 10 e soma o número (11 × 6 = 60 + 6 = 66). <b>Por 9:</b> × 10 e tira o número (9 × 7 = 70 − 7 = 63).</p>
+</section>
+
+<section class="folha" id="treino">
+  <div class="eyebrow">Treino · repetição rápida</div>
+  <h2>Divide ou não? Quanto dá?</h2>
+  <p><b>Nível 1</b>: só decida se divide. <b>Nível 2</b>: digite o número. Pra subir, 80%. O que você erra volta logo.</p>
+  <div class="niveis" role="group" aria-label="nível">
+    <button type="button" data-nivel="1" aria-pressed="true">Nível 1 · divide ou não</button>
+    <button type="button" data-nivel="2" aria-pressed="false">Nível 2 · digitar a conta</button>
+  </div>
+  <div class="tr-card">
+    <div class="tr-topo"><span id="cRodada" class="eyebrow">Rodada 1 de 15</span><span id="cPlacar" class="eyebrow">0 certas</span></div>
+    <p id="cCena" class="cena" aria-live="polite"></p>
+    <div id="cResp" class="tr-opcoes"></div>
+    <p id="cFeed" class="tr-feedback" aria-live="polite"></p>
+    <button type="button" id="cProx" hidden>Próxima</button>
+  </div>
+  <p id="cHist" class="prox"></p>
+</section>
+
+<section class="folha" id="escada">
+  <div class="eyebrow">Etapa 6 · escada do fatorial</div>
+  <h2>Do “!” até a fantasia, um degrau por vez</h2>
+  <p>Cada degrau tem um desenho e 2 desafios. Acertou os dois, o próximo abre.</p>
+  <div id="degraus"></div>
+</section>
+
+<section class="folha trancada" id="fantasia">
+  <div class="eyebrow">Etapa 6 · questão real · ENEM 2021</div>
+  <h2>A fantasia</h2>
+  <p class="cadeado" id="cadeado">🔒 Abre quando você subir os 5 degraus da escada.</p>
+  <p>Uma pessoa produzirá uma fantasia utilizando como materiais: <b>2 tipos de tecidos</b> diferentes e <b>5 tipos distintos de pedras</b> ornamentais. Essa pessoa tem à sua disposição <b>6 tecidos</b> diferentes e <b>15 pedras</b> ornamentais distintas.</p>
+  <p>A quantidade de fantasias com materiais diferentes que podem ser produzidas é representada pela expressão</p>
+  <div class="mol" style="background:#fff;border-radius:10px;padding:10px;display:flex;gap:14px;align-items:center;justify-content:center">
+    <div class="letras" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span></div>
+    <img src="data:image/png;base64,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" alt="alternativas A a E com fatoriais" style="height:300px;width:auto;max-width:none">
+  </div>
+  <div class="nota"><b>Sua vez, no chat, em 3 respostas curtas:</b><br>
+    1. Os tecidos: escolher quantos de quantos? Ordem importa? Escreva como fração de fatorial.<br>
+    2. As pedras: o mesmo.<br>
+    3. A fantasia precisa de tecidos <b>E</b> pedras: soma ou multiplica? Qual alternativa?</div>
+</section>
+
+
+<section class="folha" id="fantasia-res">
+  <div class="eyebrow">Etapa 6 · fantasia · resultado</div>
+  <p>A conta certa saiu: <b>6! ÷ (4! · 2!)</b> <b>vezes</b> <b>15! ÷ (10! · 5!)</b>. Mas a letra dita foi <b>B</b>, que tem <b>+</b>. A resposta é a <b>A</b>, a que tem o <b>ponto de multiplicar</b>.</p>
+  <p class="regra"><b>Armadilha da alternativa:</b> A e B têm as mesmas frações; só muda <b>·</b> (vezes) e <b>+</b> (mais). Depois de montar a conta, confira o <b>sinal do meio</b>.<br>Tecidos <b>E</b> pedras na mesma fantasia → multiplica.</p>
+  <p class="nota"><b>A pegadinha que você pegou:</b> “2 tecidos e 5 pedras” não é “2 de 5”. Cada material tem o seu total: tecidos 2 de <b>6</b>, pedras 5 de <b>15</b>. E a ordem não importa: trocar a ordem dos tecidos não muda a fantasia.</p>
+</section>
+
+<section class="folha" id="variacao-fantasia">
+  <div class="eyebrow">Etapa 6 · variação · sozinho</div>
+  <h2>O sanduíche</h2>
+  <p>Uma lanchonete monta sanduíches com <b>3 recheios</b> diferentes e <b>2 molhos</b> diferentes. Ela tem <b>8 recheios</b> e <b>5 molhos</b> à disposição.</p>
+  <p>Qual expressão dá a quantidade de sanduíches diferentes?</p>
+  <div class="tbl"><table class="comp">
+    <tr><td><b>A</b></td><td class="f">8! ÷ (5! · 3!) + 5! ÷ (3! · 2!)</td></tr>
+    <tr><td><b>B</b></td><td class="f">8! ÷ 3! · 5! ÷ 2!</td></tr>
+    <tr><td><b>C</b></td><td class="f">8! ÷ (5! · 3!) · 5! ÷ (3! · 2!)</td></tr>
+    <tr><td><b>D</b></td><td class="f">13! ÷ (8! · 5!)</td></tr>
+    <tr><td><b>E</b></td><td class="f">8! ÷ (6! · 2!) · 5! ÷ (2! · 3!)</td></tr>
+  </table></div>
+  <p class="nota">Responda no chat: a letra <b>e</b> o número de sanduíches (corte antes de multiplicar).</p>
+</section>
+
+
+<section class="folha" id="escada2">
+  <div class="eyebrow">Etapa 7 · escada do “E” e do “pode ou não”</div>
+  <h2>Como o ENEM monta questão de “quantas combinações”</h2>
+  <p><b>Por que essa escada:</b> o ENEM adora contar a história de um produto (carro, lanche, fantasia) com várias escolhas e perguntar quantas versões existem. São sempre as mesmas 4 peças. Cada degrau ensina uma, com desenho e 2 desafios. A questão real abre no fim.</p>
+  <div id="degraus2"></div>
+</section>
+
+<section class="folha trancada" id="carros">
+  <div class="eyebrow">Etapa 7 · questão real · ENEM 2022</div>
+  <h2>Os carros</h2>
+  <p class="cadeado" id="cadeado2">🔒 Abre quando você subir os 4 degraus.</p>
+  <div class="nota" style="background:none;color:inherit;padding:0">
+  <p>Uma montadora de automóveis divulgou que oferta a seus clientes <b>mais de 1 000 configurações</b> diferentes de carro, variando o modelo, a motorização, os opcionais e a cor do veículo. Atualmente, ela oferece <b>7 modelos</b> de carros com <b>2 tipos de motores</b>: 1.0 e 1.6. Já em relação aos opcionais, existem <b>3 escolhas possíveis</b>: central multimídia, rodas de liga leve e bancos de couro, podendo o cliente optar por incluir <b>um, dois, três ou nenhum</b> dos opcionais disponíveis.</p>
+  <p>Para ser fiel à divulgação feita, a <b>quantidade mínima de cores</b> que a montadora deverá disponibilizar a seus clientes é</p>
+  <p class="f">A 8 · B 9 · C 11 · D 18 · E 24</p>
+  </div>
+  <div class="nota"><b>No chat, em 3 passos:</b><br>
+    1. Os opcionais: quantos jeitos? (degrau 2 e 3)<br>
+    2. Modelos <b>E</b> motores <b>E</b> opcionais: quantas configurações sem contar a cor? (degrau 1)<br>
+    3. Qual o <b>menor</b> número de cores que passa de 1 000? (degrau 4)</div>
+</section>
+
+
+<details class="folha dobra" id="carros-res"><summary class="eyebrow">Etapa 7 · carros · resultado · abrir</summary>
+  <p><b>B (9) ✓ sozinho, em menos de 1 minuto</b> (na prova tinha travado). 7 × 2 = 14 · opcionais 2 × 2 × 2 = 8 (com o nenhum; “pelo menos um” daria 7) · 14 × 8 = 112 · 112 × 8 = 896 não passa, 112 × 9 = 1 008 passa.</p>
+  <p class="nota"><b>Método dele:</b> estimou que × 10 passaria com folga, testou a 9 direto e descartou a 8 por ser menor. Testar alternativa de trás pra frente quando a pergunta é “mínimo”.</p>
+</details>
+
+<details class="folha dobra" id="arquivo"><summary class="eyebrow">Como chegamos aqui · aula de 06/10 (duplas, presidente e vice, trios) · abrir</summary>
+<section class="folha" id="e1">
+  <div class="eyebrow">Etapa 1 · monte no braço</div>
+  <h2>Quantas duplas cabem em 6 pessoas?</h2>
+  <p>Clique em <b>duas pessoas</b> pra formar uma dupla. Monte <b>todas</b> as duplas diferentes que conseguir. Se tentar uma que já existe em outra ordem, a página avisa.</p>
+
+  <div class="jogo" data-modo="dupla">
+  <div class="pessoas" role="group" aria-label="pessoas"></div>
+  <p class="status" aria-live="polite">Escolha a primeira pessoa.</p>
+  <div class="placar"><span class="n">0</span><span>duplas montadas</span></div>
+  <div class="lista" aria-live="polite"></div>
+  <div class="acoes">
+    <button type="button" class="desfazer" disabled>Desfazer a última</button>
+    <button type="button" class="limpar" disabled>Recomeçar</button>
+  </div>
+  <h3>A tabela de todos com todos</h3>
+  <p>Cada dupla que você monta pinta casinhas nesta tabela (linha = uma pessoa, coluna = a outra). Observe <b>quantas casinhas</b> cada dupla pinta.</p>
+  <div class="tbl"><table class="cruz" aria-label="tabela pessoa por pessoa"></table></div>
+  <p class="legenda">casinha tracejada = a pessoa com ela mesma (não vale)</p>
+  </div>
+
+  <div class="nota"><b>Sua vez, responda no chat:</b><br>
+    1. Quantas duplas deu, no total?<br>
+    2. Com quantas pessoas a <b>Ana</b> conseguiu fazer dupla?<br>
+    3. Cada dupla pinta quantas casinhas na tabela? Por quê?</div>
+</section>
+
+<details class="folha dobra"><summary class="eyebrow">Etapa 1 · resultado · abrir</summary>
+  
+  <p><b>15 duplas</b> ✓ · Ana fez dupla com <b>5</b> ✓ · cada dupla pinta <b>2 casinhas</b> ✓</p>
+  <p>As duas casinhas da dupla Ana-Bia: <b>linha Ana × coluna Bia</b> e <b>linha Bia × coluna Ana</b>. Uma é o espelho da outra, dos dois lados da diagonal tracejada.</p>
+</details>
+
+<section class="folha" id="e2">
+  <div class="eyebrow">Etapa 2 · a conta por trás</div>
+  <h2>Por que 15: cadeiras ÷ ordem</h2>
+  <p>Ninguém monta 15 duplas na mão na prova. A tabela mostra a conta:</p>
+  <div class="passos">
+    <div class="passo"><div class="eyebrow">1 · todas as casinhas</div><p class="big">6 × 6 = 36</p><p>cada pessoa (linha) com cada pessoa (coluna)</p></div>
+    <div class="passo"><div class="eyebrow">2 · tira a diagonal</div><p class="big">36 − 6 = 30</p><p>ninguém faz dupla consigo mesmo</p></div>
+    <div class="passo"><div class="eyebrow">3 · tira o espelho</div><p class="big">30 ÷ 2 = 15</p><p>cada dupla pintou 2 casinhas</p></div>
+  </div>
+  <h3>O atalho: as cadeiras</h3>
+  <p>Pense em <b>2 cadeiras</b>. Na 1ª cabem <b>6</b> pessoas; sentou uma, sobram <b>5</b> pra 2ª.</p>
+  <p class="regra"><b>6 × 5 = 30</b> jeitos de sentar. Mas <b>Ana-Bia</b> e <b>Bia-Ana</b> são a <b>mesma dupla</b>: cada dupla foi contada <b>2 vezes</b>.<br>Duplas = <b>6 × 5 ÷ 2 = 15</b>.</p>
+  <div class="tbl"><table class="comp">
+    <tr><th>A ordem importa?</th><th>Exemplo</th><th>Conta</th></tr>
+    <tr><td><b>sim</b>: cada cadeira é um cargo diferente</td><td>presidente e vice</td><td>6 × 5 = 30<br>(Ana pres. + Bia vice ≠ Bia pres. + Ana vice)</td></tr>
+    <tr><td><b>não</b>: as cadeiras são iguais</td><td>dupla, comissão, aperto de mão</td><td>6 × 5 ÷ 2 = 15</td></tr>
+  </table></div>
+  <p class="nota"><b>Apelido:</b> “dupla não tem chefe: divide por 2”. Gatilho no enunciado: <b>dupla, grupo, comissão, equipe, cumprimento</b> → a ordem não importa.</p>
+  <div class="nota"><b>Sua vez, de cabeça, responda no chat:</b><br>
+    a) Entre as 6 pessoas, de quantos jeitos dá pra escolher um <b>presidente e um vice</b>?<br>
+    b) Numa sala com <b>8 pessoas</b>, cada uma <b>aperta a mão</b> de todas as outras uma vez. Quantos apertos de mão?</div>
+</section>
+
+<details class="folha dobra"><summary class="eyebrow">Etapa 2 · resultado · abrir</summary>
+  
+  <p>b) <b>28 ✓ sozinho</b> (8 × 7 = 56, ÷ 2). a) disse 15 ✗: a resposta é <b>30</b>. Veja por quê na etapa 3.</p>
+</details>
+
+<section class="folha" id="e3">
+  <div class="eyebrow">Etapa 3 · quando NÃO divide</div>
+  <h2>Presidente e vice: cada cadeira tem um cargo</h2>
+  <p>Mesmo jogo, mas agora o <b>1º clique é o presidente</b> e o <b>2º é o vice</b>. Monte <b>Ana presidente + Bia vice</b>. Depois monte <b>Bia presidente + Ana vice</b>.</p>
+  <div class="jogo" data-modo="cargo">
+  <div class="pessoas" role="group" aria-label="pessoas"></div>
+  <p class="status" aria-live="polite">Escolha a primeira pessoa.</p>
+  <div class="placar"><span class="n">0</span><span>chapas montadas</span></div>
+  <div class="lista" aria-live="polite"></div>
+  <div class="acoes">
+    <button type="button" class="desfazer" disabled>Desfazer a última</button>
+    <button type="button" class="limpar" disabled>Recomeçar</button>
+  </div>
+  <h3>A tabela de todos com todos</h3>
+  <p>Agora a <b>linha é o presidente</b> e a <b>coluna é o vice</b>. Observe quantas casinhas cada escolha pinta.</p>
+  <div class="tbl"><table class="cruz" aria-label="tabela pessoa por pessoa"></table></div>
+  <p class="legenda">casinha tracejada = a pessoa com ela mesma (não vale)</p>
+  </div>
+  <div class="nota"><b>Sua vez, responda no chat:</b><br>
+    1. “Ana pres. + Bia vice” e “Bia pres. + Ana vice” são a mesma chapa? A página deixou montar as duas?<br>
+    2. Cada chapa pinta quantas casinhas?<br>
+    3. Então, entre 6 pessoas, quantas chapas de presidente e vice? Precisa dividir por 2?</div>
+</section>
+
+<details class="folha dobra"><summary class="eyebrow">Etapa 3 · resultado · abrir</summary>
+  
+  <p><b>30 ✓</b> com o jogo: Ana pres. + Bia vice ≠ Bia pres. + Ana vice. Cada chapa pinta <b>1 casinha</b>, então não tem espelho pra tirar.</p>
+  <p class="regra"><b>A pergunta que decide tudo:</b> se eu <b>trocar as duas pessoas de lugar</b>, muda alguma coisa?<br><b>Muda</b> (cargo, posição, 1º/2º lugar) → <b>não divide</b>: 6 × 5 = 30.<br><b>Não muda</b> (dupla, comissão, jogo entre dois) → <b>divide por 2</b>: 6 × 5 ÷ 2 = 15.</p>
+  <p class="nota"><b>Apelido:</b> “trocou e mudou? Não divide. Trocou e deu na mesma? Divide.”</p>
+</details>
+
+<section class="folha" id="e4">
+  <div class="eyebrow">Etapa 4 · variação · sozinho</div>
+  <h2>Divide ou não divide?</h2>
+  <p>Pra cada uma: faça o teste da troca, diga se divide e dê o número.</p>
+  <ol>
+    <li>Uma corrida tem <b>10 corredores</b>. Quantos resultados diferentes para <b>1º e 2º lugar</b>?</li>
+    <li>Desses mesmos <b>10</b>, a escola vai escolher <b>2 para representá-la</b> numa feira. Quantas escolhas?</li>
+    <li>Um campeonato tem <b>7 times</b> e cada time joga <b>uma vez</b> contra cada um dos outros. Quantos jogos?</li>
+  </ol>
+</section>
+
+<details class="folha dobra"><summary class="eyebrow">Etapa 4 · resultado · abrir</summary>
+  
+  <p><b>3/3 sozinho</b> com o teste da troca: pódio 10 × 9 = <b>90</b> · representantes 10 × 9 ÷ 2 = <b>45</b> · jogos 7 × 6 ÷ 2 = <b>21</b>.</p>
+</details>
+
+<section class="folha" id="e5">
+  <div class="eyebrow">Etapa 5 · trios</div>
+  <h2>Com 3 pessoas, o espelho vira 6</h2>
+  <p>Com <b>3 cadeiras</b>: na 1ª cabem 6, na 2ª sobram 5, na 3ª sobram 4 → <b>6 × 5 × 4 = 120</b> jeitos de sentar.</p>
+  <p>Mas num <b>trio</b> (grupo, comissão) a ordem não importa. Quantas vezes cada trio foi contado? Escolha 3 pessoas e veja todos os jeitos de sentá-las:</p>
+  <div class="jogo-trio">
+    <div class="pessoas" id="trioPessoas" role="group" aria-label="pessoas do trio"></div>
+    <p class="status" id="trioStatus" aria-live="polite">Escolha 3 pessoas.</p>
+    <div class="ordens" id="trioOrdens" aria-live="polite"></div>
+    <div class="acoes"><button type="button" id="trioLimpar" disabled>Escolher outro trio</button></div>
+  </div>
+  <div class="nota"><b>Sua vez, responda no chat:</b><br>
+    1. Cada trio aparece de quantos jeitos (ordens) diferentes?<br>
+    2. Então, entre 6 pessoas, quantos <b>trios</b> diferentes? (use os 120)<br>
+    3. Desafio: se fossem <b>4</b> pessoas, de quantos jeitos dá pra sentá-las em 4 cadeiras?</div>
+</section>
+
+<details class="folha dobra"><summary class="eyebrow">Etapa 5 · ponte (pergunta 2) · abrir</summary>
+  
+  <p>1) <b>6 jeitos ✓</b> · 3) <b>4 × 3 × 2 × 1 ✓</b> (falta fazer a conta).</p>
+  <p>Na pergunta 2, compare com o que você já fez sozinho nas duplas:</p>
+  <div class="tbl"><table class="comp">
+    <tr><th></th><th>Jeitos de sentar</th><th>Cada grupo foi contado</th><th>Grupos de verdade</th></tr>
+    <tr><td><b>duplas</b></td><td>6 × 5 = 30</td><td>2 vezes (Ana-Bia, Bia-Ana)</td><td>30 ÷ 2 = 15 ✓</td></tr>
+    <tr><td><b>trios</b></td><td>6 × 5 × 4 = 120</td><td>6 vezes (o jogo mostrou)</td><td>120 ÷ <b>?</b> = <b>?</b></td></tr>
+  </table></div>
+  <p class="regra">Mesma ideia, número maior: <b>jeitos de sentar ÷ quantas vezes cada grupo repetiu</b>.</p>
+</details>
+
+<section class="folha" id="e5b">
+  <div class="eyebrow">Etapa 5 · a pegadinha da dupla</div>
+  <h2>Divide pelas repetições, não pelo tamanho do grupo</h2>
+  <p>Você dividiu o trio por <b>3</b> (o número de pessoas). Mas o jogo mostrou que cada trio aparece <b>6</b> vezes. Por que na dupla funcionou dividir por 2?</p>
+  <div class="tbl"><table class="comp">
+    <tr><th>Grupo de</th><th>Repete quantas vezes (jeitos de sentar o grupo)</th><th>Igual ao tamanho?</th></tr>
+    <tr><td><b>2</b></td><td>2 × 1 = <b>2</b></td><td>sim, <b>coincidência</b></td></tr>
+    <tr><td><b>3</b></td><td>3 × 2 × 1 = <b>6</b></td><td>não</td></tr>
+    <tr><td><b>4</b></td><td>4 × 3 × 2 × 1 = <b>24</b></td><td>não</td></tr>
+  </table></div>
+  <p class="regra">Na dupla, 2 pessoas repetem 2 vezes: os números batem <b>por acaso</b>. Do trio pra cima não batem mais.<br>A conta das repetições é <b>a mesma das cadeiras</b>, só que com as pessoas do próprio grupo: 3 pessoas em 3 cadeiras = 3 × 2 × 1 = 6.</p>
+  <p class="nota"><b>Apelido:</b> “divide pela <b>bagunça</b> do grupo, não pelo tamanho”. Bagunça = quantos jeitos de embaralhar quem está dentro.</p>
+  <p>A pergunta 3 era só a bagunça de 4 pessoas: <b>24</b>, sem dividir. Esse 24 é quanto cada <b>grupo de 4</b> repete.</p>
+  <div class="nota"><b>Refaça no chat:</b> trios de 6 pessoas = 120 ÷ <b>6</b> = ?</div>
+</section>
+
+
+
+
+
+
+
+</details>
+</div>
+
+<script>
+(function(){
+  const NOMES=["Ana","Bia","Caio","Davi","Edu","Fê"];
+  function criar(root){
+    const cargo=root.dataset.modo==="cargo";
+    const q=c=>root.querySelector(c);
+    let primeiro=null, itens=[];
+    const igual=(x,y,a,b)=> cargo ? (x===a&&y===b) : ((x===a&&y===b)||(x===b&&y===a));
+    const rotulo=(a,b)=> cargo ? `${NOMES[a]} pres. + ${NOMES[b]} vice` : `${NOMES[Math.min(a,b)]}-${NOMES[Math.max(a,b)]}`;
+    q(".pessoas").innerHTML=NOMES.map((n,i)=>`<button type="button" class="pessoa" data-i="${i}" aria-pressed="false">${n}</button>`).join("");
+    let t="<tr><th></th>"+NOMES.map(n=>`<th scope="col">${n}</th>`).join("")+"</tr>";
+    NOMES.forEach((n,r)=>{ t+=`<tr><th scope="row">${n}</th>`+NOMES.map((_,c)=>`<td data-rc="${r}${c}" class="${r===c?"diag":""}">${r===c?"—":""}</td>`).join("")+"</tr>"; });
+    q(".cruz").innerHTML=t;
+    const cel=(r,c)=>q(`td[data-rc="${r}${c}"]`);
+    const casas=(a,b)=> cargo ? [[a,b]] : [[a,b],[b,a]];
+    function pintar(){
+      root.querySelectorAll(".cruz td:not(.diag)").forEach(td=>{td.className="";td.textContent="";});
+      itens.forEach(([a,b],k)=>casas(a,b).forEach(([r,c])=>{ const td=cel(r,c); td.className="on"; td.textContent=k+1; }));
+      q(".placar .n").textContent=itens.length;
+      q(".lista").innerHTML=itens.map(([a,b])=>`<span class="chip">${rotulo(a,b)}</span>`).join("");
+      q(".desfazer").disabled=q(".limpar").disabled=!itens.length;
+    }
+    function piscar(a,b){ casas(a,b).forEach(([r,c])=>{ const td=cel(r,c); td.classList.remove("flash"); void td.offsetWidth; td.classList.add("flash"); }); }
+    function soltar(){ root.querySelectorAll(".pessoa").forEach(b=>b.setAttribute("aria-pressed","false")); primeiro=null; }
+    const st=q(".status");
+    q(".pessoas").addEventListener("click",e=>{
+      const b=e.target.closest(".pessoa"); if(!b) return;
+      const i=+b.dataset.i; st.classList.remove("dup");
+      if(primeiro===null){ primeiro=i; b.setAttribute("aria-pressed","true"); st.textContent= cargo ? `${NOMES[i]} é o presidente. Agora escolha o vice.` : `${NOMES[i]} escolhida. Agora a parceira ou o parceiro.`; return; }
+      if(primeiro===i){ soltar(); st.textContent= cargo ? "A mesma pessoa não ocupa os dois cargos. Escolha de novo." : "Ninguém faz dupla consigo mesmo. Escolha de novo."; return; }
+      const a=primeiro; soltar();
+      const rep=itens.find(([x,y])=>igual(x,y,a,i));
+      if(rep){ st.classList.add("dup"); st.textContent= cargo ? `${rotulo(a,i)} já foi montada.` : `${NOMES[a]}-${NOMES[i]} já existe: é a mesma dupla que ${rotulo(a,i)}.`; piscar(a,i); return; }
+      itens.push([a,i]); pintar(); piscar(a,i);
+      const inv = cargo && itens.some(([x,y])=>x===i&&y===a);
+      st.textContent = `${cargo?"Chapa":"Dupla"} ${rotulo(a,i)} montada.` + (inv ? ` É diferente de ${rotulo(i,a)}: os cargos trocaram.` : " Escolha a próxima.");
+    });
+    q(".desfazer").onclick=()=>{ itens.pop(); soltar(); pintar(); st.textContent="Desfeita. Escolha a primeira pessoa."; };
+    q(".limpar").onclick=()=>{ itens=[]; soltar(); pintar(); st.textContent="Tudo limpo. Escolha a primeira pessoa."; };
+    pintar();
+  }
+  document.querySelectorAll(".jogo").forEach(criar);
+})();
+</script>
+
+<script>
+(function(){
+  const NOMES=["Ana","Bia","Caio","Davi","Edu","Fê"];
+  const $=id=>document.getElementById(id);
+  let sel=[];
+  $("trioPessoas").innerHTML=NOMES.map((n,i)=>`<button type="button" class="pessoa" data-i="${i}" aria-pressed="false">${n}</button>`).join("");
+  const perm=a=>a.length<=1?[a]:a.flatMap((x,i)=>perm([...a.slice(0,i),...a.slice(i+1)]).map(r=>[x,...r]));
+  function mostrar(){
+    const ps=perm(sel);
+    $("trioOrdens").innerHTML=ps.map((o,k)=>`<div class="ordem" style="animation-delay:${k*120}ms">${o.map((i,c)=>`<div class="cad"><small>${c+1}ª cadeira</small><span>${NOMES[i]}</span></div>`).join("")}</div>`).join("");
+    $("trioStatus").textContent=`Trio ${sel.map(i=>NOMES[i]).join(", ")}: veja todos os jeitos de sentar. Na conta das cadeiras, cada um destes foi contado separado.`;
+    $("trioLimpar").disabled=false;
+  }
+  $("trioPessoas").addEventListener("click",e=>{
+    const b=e.target.closest(".pessoa"); if(!b||sel.length===3) return;
+    const i=+b.dataset.i; if(sel.includes(i)) return;
+    sel.push(i); b.setAttribute("aria-pressed","true");
+    if(sel.length<3) $("trioStatus").textContent=`Faltam ${3-sel.length}.`; else mostrar();
+  });
+  $("trioLimpar").onclick=()=>{ sel=[]; document.querySelectorAll("#trioPessoas .pessoa").forEach(b=>b.setAttribute("aria-pressed","false")); $("trioOrdens").innerHTML=""; $("trioStatus").textContent="Escolha 3 pessoas."; $("trioLimpar").disabled=true; };
+})();
+</script>
+
+<script>
+(function(){
+  const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  const fat=k=>k<=1?1:k*fat(k-1);
+  const desce=(n,k)=>{let r=1;for(let i=0;i<k;i++)r*=n-i;return r;};
+  const CENAS=[
+    {muda:true,  k:[2,3], f:(n,k)=>k===2?`${n} candidatos disputam <b>presidente e vice</b>. Quantas chapas?`:`${n} candidatos disputam <b>presidente, vice e tesoureiro</b>. Quantas chapas?`},
+    {muda:true,  k:[2,3], f:(n,k)=>`Uma corrida tem ${n} atletas. Quantos resultados para os <b>${k===2?"dois":"três"} primeiros lugares</b>?`},
+    {muda:true,  k:[2,3], f:(n,k)=>`Com ${n} cores, quantas bandeiras de <b>${k} faixas</b> (cores diferentes, ordem de cima pra baixo)?`},
+    {muda:false, k:[2,3], f:(n,k)=>`De ${n} alunos, quantas <b>comissões de ${k}</b> pessoas?`},
+    {muda:false, k:[2],   f:(n,k)=>`${n} pessoas numa sala. Cada uma <b>aperta a mão</b> de todas as outras uma vez. Quantos apertos?`},
+    {muda:false, k:[2,3], f:(n,k)=>`Com ${n} frutas diferentes, quantas <b>saladas de ${k} frutas</b>?`},
+    {muda:false, k:[2],   f:(n,k)=>`${n} times jogam <b>turno único</b> (cada par se enfrenta uma vez). Quantos jogos?`}
+  ];
+  const TOTAL=15; let nivel=1, rodada=0, certas=0, fila=[], atual=null;
+  const $=id=>document.getElementById(id);
+  function ler(){ try{ return JSON.parse(localStorage.getItem("treinoComb")||"[]"); }catch(e){ return []; } }
+  function salvar(r){ try{ const h=ler(); h.push(r); localStorage.setItem("treinoComb",JSON.stringify(h.slice(-20))); }catch(e){} }
+  function hist(){ const h=ler(); $("cHist").textContent=h.length?"Últimos treinos: "+h.slice(-5).map(x=>`nível ${x.nivel} ${x.certas}/${TOTAL}`).join(" · "):""; }
+  function sortear(){
+    const v=fila.findIndex(x=>x.em<=rodada); if(v>=0) return fila.splice(v,1)[0].c;
+    const c=CENAS[R(0,CENAS.length-1)], k=c.k[R(0,c.k.length-1)], n=k===2?R(4,12):R(5,10);
+    return {c,k,n};
+  }
+  function conta(x){ const t=desce(x.n,x.k); return x.c.muda?t:t/fat(x.k); }
+  function explica(x){
+    const fs=[...Array(x.k)].map((_,i)=>x.n-i).join(" × "), t=desce(x.n,x.k);
+    return x.c.muda ? `Trocar muda: não divide. ${fs} = <b>${t}</b>.` : `Trocar dá na mesma: divide pela bagunça. ${fs} = ${t}; ÷ ${fat(x.k)} = <b>${t/fat(x.k)}</b>.`;
+  }
+  function proxima(){
+    rodada++; if(rodada>TOTAL) return fim();
+    atual=sortear();
+    $("cRodada").textContent=`Rodada ${rodada} de ${TOTAL}`; $("cPlacar").textContent=`${certas} certas`;
+    $("cCena").innerHTML=atual.c.f(atual.n,atual.k); $("cFeed").textContent=""; $("cProx").hidden=true;
+    if(nivel===1) $("cResp").innerHTML=`<button type="button" data-r="nao">Não divide (ordem importa)</button><button type="button" data-r="sim">Divide (ordem não importa)</button>`;
+    else {
+      $("cResp").innerHTML=`<form id="cForm" class="tr-opcoes" autocomplete="off"><input id="cIn" inputmode="numeric" aria-label="resultado"><button type="submit">Conferir</button></form>`;
+      $("cForm").onsubmit=e=>{ e.preventDefault(); const v=$("cIn").value.replace(/\D/g,""); if(!v||$("cIn").disabled) return; responder(+v===conta(atual)); };
+      $("cIn").focus();
+    }
+  }
+  function responder(ok,botao){
+    if(nivel===1){ $("cResp").querySelectorAll("button").forEach(b=>{ b.disabled=true; const certo=(b.dataset.r==="sim")!==atual.c.muda; if(certo) b.classList.add("ok"); else if(b===botao) b.classList.add("nao"); }); }
+    else { $("cIn").disabled=true; $("cIn").classList.add(ok?"ok":"nao"); $("cForm").querySelector("button").disabled=true; }
+    if(ok) certas++; else fila.push({c:atual,em:rodada+R(2,3)});
+    $("cFeed").innerHTML=(ok?"<b>Certo.</b> ":"<b>Não.</b> ")+explica(atual);
+    $("cPlacar").textContent=`${certas} certas`; $("cProx").hidden=false; $("cProx").focus();
+  }
+  function fim(){
+    salvar({nivel,certas}); const sobe=nivel===1&&certas>=Math.ceil(TOTAL*.8);
+    $("cCena").innerHTML=`<b style="font-size:1.4rem">${certas}/${TOTAL}</b>`;
+    $("cResp").innerHTML=`<button type="button" id="cDeNovo">Treinar de novo</button>`+(sobe?`<button type="button" id="cSobe">Subir pro nível 2</button>`:"");
+    $("cFeed").textContent=sobe?"Bateu 80%. Pode subir.":(nivel===1?`Meta: ${Math.ceil(TOTAL*.8)} de ${TOTAL}.`:"Repita amanhã antes de abrir o caderno.");
+    $("cProx").hidden=true; hist(); $("cDeNovo").onclick=iniciar; if(sobe) $("cSobe").onclick=()=>trocar(2);
+  }
+  function iniciar(){ rodada=0; certas=0; fila=[]; proxima(); }
+  function trocar(nv){ nivel=nv; document.querySelectorAll("#treino .niveis button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.nivel===nv)); iniciar(); }
+  $("cResp").addEventListener("click",e=>{ const b=e.target.closest("button[data-r]"); if(!b||b.disabled) return; responder((b.dataset.r==="sim")!==atual.c.muda,b); });
+  $("cProx").addEventListener("click",proxima);
+  document.querySelectorAll("#treino .niveis button").forEach(b=>b.addEventListener("click",()=>trocar(+b.dataset.nivel)));
+  hist(); iniciar();
+})();
+</script>
+
+<script>
+(function(){
+  const fat=n=>n<=1?1:n*fat(n-1);
+  const fichas=(nums,cls)=>nums.map((n,i)=>`<span class="ficha ${cls||""}" data-v="${n}">${n}</span>`+(i<nums.length-1?`<span class="ficha vezes">×</span>`:"")).join("");
+  const desce=n=>[...Array(n)].map((_,i)=>n-i);
+  const frac=(cima,baixo)=>`<div class="fileira"><span class="rot">${cima}!</span>${fichas(desce(cima))}</div><div class="risco"></div>`+baixo.map(b=>`<div class="fileira"><span class="rot">${b}!</span>${fichas(desce(b),"baixo")}</div>`).join("");
+  const DEG=[
+    {t:"O que é o “!”", ex:`<p><b>4!</b> = começa no 4 e multiplica descendo até o 1.</p><div class="fileira"><span class="rot">4!</span>${fichas([4,3,2,1])}<span class="ficha vezes">=</span><span class="ficha fica" style="width:auto;padding:0 10px">24</span></div><p class="prox">É a bagunça de 4 pessoas que você já conhece.</p>`,
+      d:[{q:"Quanto é 3! ?",r:6},{q:"Quanto é 5! ? (dica: 5 × 4! )",r:120}]},
+    {t:"Fatorial dividido por fatorial: corta", ex:`<p><b>6! ÷ 4!</b>: em cima e embaixo tem 4 × 3 × 2 × 1. Aperte o botão.</p><div class="vis" data-cima="6" data-baixo="4">${frac(6,[4])}</div><button type="button" class="cortar">Cortar o que repete</button><p class="prox res" hidden>Sobrou <b>6 × 5 = 30</b>: são as 2 cadeiras.</p>`,
+      d:[{q:"Quanto é 7! ÷ 5! ?",r:42},{q:"Quanto é 10! ÷ 8! ?",r:90}]},
+    {t:"Mais um embaixo: a bagunça", ex:`<p><b>6! ÷ (4! · 2!)</b>: o 4! corta, e o 2! que sobrou embaixo é a bagunça da dupla.</p><div class="vis" data-cima="6" data-baixo="4,2">${frac(6,[4,2])}</div><button type="button" class="cortar">Cortar o que repete</button><p class="prox res" hidden>Sobrou <b>6 × 5 ÷ 2 = 15</b>. São as duplas de 6 do jogo do começo!</p>`,
+      d:[{q:"Quanto é 5! ÷ (3! · 2!) ?",r:10},{q:"Quanto é 7! ÷ (4! · 3!) ? (corte antes: 7 × 6 × 5 ÷ 6)",r:35}]},
+    {t:"Traduzir a conta que você já sabe pro jeito do ENEM", ex:`<p><b>Por que isso?</b> Você já sabe fazer “2 de 6 sem ordem” = <b>6 × 5 ÷ 2</b>. Só que o ENEM <b>não escreve assim</b>: nas alternativas vem com “!”. Este degrau é só aprender a <b>reconhecer a sua conta</b> escrita do jeito deles.</p>
+<div class="tbl"><table class="comp"><tr><th>Sua conta</th><th>Pedaço</th><th>Jeito do ENEM</th></tr>
+<tr><td><b>6 × 5</b> (cadeiras)</td><td>degrau 2: começa no 6 e corta o resto</td><td><b>6! ÷ 4!</b></td></tr>
+<tr><td><b>÷ 2</b> (bagunça)</td><td>degrau 1: 2 = 2!</td><td><b>÷ 2!</b></td></tr>
+<tr><td><b>6 × 5 ÷ 2</b></td><td>junta os dois embaixo</td><td><b>6! ÷ (4! · 2!)</b></td></tr></table></div>
+<p class="regra"><b>Receita pra escrever:</b> em cima o <b>total</b>. Embaixo, dois números: <b>quantos escolhi</b> e <b>quantos sobraram</b> (total − escolhidos).<br>2 de 6 → escolhi <b>2</b>, sobraram 6 − 2 = <b>4</b> → 6! ÷ (4! · 2!)</p>
+<div class="gente"><span class="entra">✓</span><span class="entra">✓</span><span class="sobra"></span><span class="sobra"></span><span class="sobra"></span><span class="sobra"></span></div><p class="prox" style="text-align:center">laranja = escolhi (2) · cinza = sobraram (4)</p>`,
+      d:[{q:"Escolher <b>3 de 7</b>, sem ordem. Qual fração?",o:["7! ÷ (4! · 3!)","7! ÷ 3!","7! ÷ 4!","7! ÷ (3! · 3!)"],r:0},
+         {q:"Escolher <b>4 de 9</b>, sem ordem. Qual fração?",o:["9! ÷ 4!","9! ÷ (5! · 4!)","9! ÷ (4! · 4!)","9! ÷ 5!"],r:1}]},
+    {t:"Duas escolhas juntas: “E” multiplica", ex:`<p>Um combo tem <b>2 sucos</b> (de 5) <b>E</b> <b>1 lanche</b> (de 4). Pra cada jeito de escolher os sucos, dá pra pôr qualquer lanche.</p><div class="fileira"><span class="ficha fica" style="width:auto;padding:0 10px">sucos: 10</span><span class="ficha vezes">×</span><span class="ficha fica" style="width:auto;padding:0 10px">lanches: 4</span><span class="ficha vezes">=</span><span class="ficha bag" style="width:auto;padding:0 10px">40 combos</span></div><p class="prox" style="text-align:center">“E” = as duas coisas na mesma fantasia/combo → multiplica. “OU” = uma coisa ou outra → soma.</p>`,
+      d:[{q:"Um time precisa de 2 atacantes (de 5) <b>E</b> 1 goleiro (de 3). Soma ou multiplica?",o:["soma","multiplica"],r:1},
+         {q:"Quantos times? (sem ordem nos atacantes)",r:30}]}
+  ];
+  const box=document.getElementById("degraus");
+  box.innerHTML=DEG.map((g,i)=>`<div class="degrau" data-i="${i}" data-estado="${i===0?"aberto":"fechado"}"><h3><span class="num">${i+1}</span>${g.t}</h3><div class="corpo">${g.ex}${g.d.map((d,j)=>`<div class="desafio" data-j="${j}"><p class="q">${d.q}</p>${d.o?d.o.map((o,k)=>`<button type="button" data-k="${k}">${o}</button>`).join(""):`<input inputmode="numeric" aria-label="resposta"><button type="button" class="conf">Conferir</button>`}<p class="fb" aria-live="polite"></p></div>`).join("")}</div></div>`).join("");
+  const ok=new Set();
+  function marca(i,j){
+    ok.add(i+"-"+j);
+    if(DEG[i].d.every((_,k)=>ok.has(i+"-"+k))){
+      box.querySelector(`.degrau[data-i="${i}"]`).dataset.estado="feito";
+      const prox=box.querySelector(`.degrau[data-i="${i+1}"]`);
+      if(prox){ prox.dataset.estado="aberto"; prox.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"}); }
+      else { const f=document.getElementById("fantasia"); f.classList.add("aberta"); document.getElementById("cadeado").textContent="Aberta. Agora é com você."; f.scrollIntoView({block:"start"}); }
+    }
+  }
+  box.addEventListener("click",e=>{
+    const c=e.target.closest(".cortar");
+    if(c){ const v=c.previousElementSibling, cima=+v.dataset.cima, baixos=v.dataset.baixo.split(",").map(Number), maior=Math.max(...baixos);
+      const top=[...v.querySelectorAll(".fileira")[0].querySelectorAll(".ficha:not(.vezes)")];
+      top.forEach(f=>{ +f.dataset.v<=maior ? f.classList.add("cortada") : f.classList.add("fica"); });
+      const rows=[...v.querySelectorAll(".fileira")].slice(1);
+      rows.forEach((r,ri)=>r.querySelectorAll(".ficha:not(.vezes)").forEach(f=>f.classList.add(baixos[ri]===maior?"cortada":"bag")));
+      c.disabled=true; c.nextElementSibling.hidden=false; return; }
+    const d=e.target.closest(".desafio"); if(!d) return;
+    const i=+d.closest(".degrau").dataset.i, j=+d.dataset.j, dz=DEG[i].d[j], fb=d.querySelector(".fb");
+    if(dz.o){ const b=e.target.closest("button[data-k]"); if(!b||ok.has(i+"-"+j)) return;
+      if(+b.dataset.k===dz.r){ b.classList.add("ok"); d.querySelectorAll("button").forEach(x=>x.disabled=true); fb.textContent="Certo."; marca(i,j); }
+      else { b.classList.add("nao"); b.disabled=true; fb.textContent= i===3 ? "Não. Em cima todo mundo; embaixo quem sobrou e quem entrou (somam o de cima)." : "Não. Releia: as duas coisas vão juntas?"; }
+      return; }
+    if(e.target.closest(".conf")){ const inp=d.querySelector("input"), v=+inp.value.replace(/\D/g,""); if(!inp.value) return;
+      if(v===dz.r){ d.classList.add("ok"); inp.disabled=true; e.target.disabled=true; fb.textContent="Certo."; marca(i,j); }
+      else fb.textContent="Ainda não. Use o desenho de cima: multiplique descendo e corte o que repete."; }
+  });
+  box.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches(".desafio input")){ e.preventDefault(); e.target.nextElementSibling.click(); } });
+})();
+</script>
+
+<script>
+(function(){
+  const arv=(itens)=>{ const n=itens.length, linhas=[]; for(let m=0;m<(1<<n);m++){ linhas.push(`<div class="op">${itens.map((t,i)=>(m>>(n-1-i))&1?`<span class="nao">${t} ✗</span>`:`<span class="sim">${t} ✓</span>`).join("")}${m===(1<<n)-1?'<small>nenhum também conta!</small>':''}</div>`);} return `<div class="arvore">${linhas.join("")}</div>`; };
+  const looks=()=>{ const cam=["azul","preta","branca"], ber=["jeans","moletom"]; let h='<div class="grade" style="grid-template-columns:auto repeat(2,auto)"><span class="cab"></span>'+ber.map(b=>`<span class="cab">${b}</span>`).join(""); cam.forEach(c=>{ h+=`<span class="cab">${c}</span>`+ber.map(b=>`<span>${c}+${b}</span>`).join(""); }); return h+'</div>'; };
+  const DEG=[
+    {t:"“E” multiplica: escolhas que vão juntas", ex:`<p><b>Por quê:</b> se você escolhe uma camiseta <b>E</b> uma bermuda, cada camiseta combina com <b>todas</b> as bermudas. A tabela abaixo mostra: 3 camisetas × 2 bermudas.</p>${looks()}<div class="mult">3 camisetas <span>×</span> 2 bermudas <span>=</span> <b>6 looks</b></div><p class="prox">No ENEM: “variando o modelo, a cor, o tamanho…” = cada item é uma escolha que vai junto → multiplica tudo.</p>`,
+      d:[{q:"Um combo: 4 sucos <b>E</b> 3 lanches. Quantos combos?",r:12,h:"Cada suco combina com os 3 lanches: 4 × 3."},
+         {q:"Uma pizza: 5 sabores <b>E</b> 2 tamanhos <b>E</b> 3 bordas. Quantas pizzas?",r:30,h:"Multiplique as três escolhas: 5 × 2 × 3."}]},
+    {t:"Item que pode entrar ou não: vale 2", ex:`<p><b>Por quê:</b> um opcional (ex.: ar-condicionado) não tem “qual escolher”, tem <b>com ou sem</b>. São <b>2 jeitos</b>. Cada opcional novo dobra tudo:</p>${arv(["ar","som"])}<div class="mult">ar (2) <span>×</span> som (2) <span>=</span> <b>4</b></div><p class="prox">1 opcional → 2 · 2 → 4 · 3 → ? · 4 → ?</p>`,
+      d:[{q:"Com <b>3</b> opcionais (cada um com ou sem), quantos jeitos?",r:8,h:"2 × 2 × 2: cada opcional dobra."},
+         {q:"Com <b>4</b> opcionais, quantos jeitos?",r:16,h:"Mais um opcional: dobra o 8."}]},
+    {t:"A pegadinha do “nenhum”", ex:`<p><b>Por quê:</b> o desenho do degrau 2 já conta o “nenhum” (sem ar, sem som). O ENEM avisa qual é o caso pela frase:</p><div class="tbl"><table class="comp"><tr><th>Frase no enunciado</th><th>O que fazer</th></tr><tr><td>“pode incluir <b>um, dois… ou nenhum</b>”</td><td>conta todos: 2 × 2 × …</td></tr><tr><td>“<b>pelo menos um</b>” opcional</td><td>tira o “nenhum”: 2 × 2 × … <b>− 1</b></td></tr></table></div><p class="nota">Erro clássico: somar 1 + 1 + 1 (só os sozinhos) ou esquecer o “nenhum” quando ele vale.</p>`,
+      d:[{q:"Pizza com 4 coberturas extras, o cliente pode pôr qualquer quantidade, <b>inclusive nenhuma</b>. Quantos jeitos?",r:16,h:"Cada cobertura: com ou sem. 2 × 2 × 2 × 2, e o nenhum já está dentro."},
+         {q:"A mesma pizza, mas com <b>pelo menos uma</b> cobertura. Quantos jeitos?",r:15,h:"Tira o caso “nenhuma” do 16."}]},
+    {t:"“Mais de” e “no mínimo”: arredonda pra cima", ex:`<p><b>Por quê:</b> às vezes o ENEM dá o total e pergunta quantas opções de uma escolha precisam existir. Você multiplica até <b>passar</b> do alvo. Exemplo: cada camiseta gera 30 looks e a loja quer <b>mais de 200</b>.</p><div class="tbl"><table class="comp"><tr><th>Camisetas</th><th>Looks</th><th></th></tr><tr><td>6</td><td>30 × 6 = 180</td><td>não passa</td></tr><tr><td><b>7</b></td><td>30 × 7 = 210</td><td><b>passa: é o mínimo</b></td></tr></table></div><p class="prox">Atalho: divida (200 ÷ 30 ≈ 6,7) e suba pro próximo inteiro.</p>`,
+      d:[{q:"Cada cor gera 45 versões. Quantas cores, no mínimo, pra ter <b>mais de 500</b> versões?",r:12,h:"45 × 11 = 495 (não passa). Tente 12."},
+         {q:"Cada sabor gera 24 copos. Quantos sabores, no mínimo, pra <b>mais de 100</b> copos?",r:5,h:"24 × 4 = 96 (não passa). Tente o próximo."}]}
+  ];
+  const box=document.getElementById("degraus2");
+  box.innerHTML=DEG.map((g,i)=>`<div class="degrau" data-i="${i}" data-estado="${i===0?"aberto":"fechado"}"><h3><span class="num">${i+1}</span>${g.t}</h3><div class="corpo">${g.ex}${g.d.map((d,j)=>`<div class="desafio" data-j="${j}"><p class="q">${d.q}</p><input inputmode="numeric" aria-label="resposta"><button type="button" class="conf">Conferir</button><p class="fb" aria-live="polite"></p></div>`).join("")}</div></div>`).join("");
+  const ok=new Set();
+  function marca(i,j){
+    ok.add(i+"-"+j);
+    if(DEG[i].d.every((_,k)=>ok.has(i+"-"+k))){
+      box.querySelector(`.degrau[data-i="${i}"]`).dataset.estado="feito";
+      const prox=box.querySelector(`.degrau[data-i="${i+1}"]`);
+      if(prox){ prox.dataset.estado="aberto"; prox.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"}); }
+      else { const f=document.getElementById("carros"); f.classList.add("aberta"); document.getElementById("cadeado2").textContent="Aberta. Agora é com você."; f.scrollIntoView({block:"start"}); }
+    }
+  }
+  box.addEventListener("click",e=>{
+    if(!e.target.closest(".conf")) return;
+    const d=e.target.closest(".desafio"), i=+d.closest(".degrau").dataset.i, j=+d.dataset.j, dz=DEG[i].d[j], fb=d.querySelector(".fb"), inp=d.querySelector("input");
+    if(!inp.value) return; const v=+inp.value.replace(/\D/g,"");
+    if(v===dz.r){ d.classList.add("ok"); inp.disabled=true; e.target.disabled=true; fb.textContent="Certo."; marca(i,j); }
+    else fb.textContent="Ainda não. Dica: "+dz.h;
+  });
+  box.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches(".desafio input")){ e.preventDefault(); e.target.nextElementSibling.click(); } });
+})();
+</script>
