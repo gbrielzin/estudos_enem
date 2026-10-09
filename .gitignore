@@ -46,9 +46,14 @@ core/inep_ppl/
 
 # Plano pessoal de faculdade (renda, cota, prazos)
 docs/plano_faculdade*.md
+docs/diario_aprendizados.md
+docs/entrevista.md
 
 # Cartilhas do INEP baixadas e textos extraídos (material de terceiros, só consulta local)
 docs/redacao_pesquisa/cartilhas/
 
 # Banco de redações nota 1000 (texto de terceiros, só análise local)
 docs/redacao_pesquisa/banco_1000/
+
+# Logs e extensões que o MCP do Playwright salva na raiz
+.playwright-mcp/
