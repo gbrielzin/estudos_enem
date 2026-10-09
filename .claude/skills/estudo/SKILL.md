@@ -16,13 +16,14 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estu
 1. Pergunte a hora de início se ele não disser; anote.
 2. Leia a **pauta de amanhã** no fim de `docs/sessao_estudo_chat.md` e a última linha de `docs/registro_estudo.csv`.
 3. Veja as revisões vencidas do app (`estado_revisao` em `core/enem.db`, `proxima_revisao <= hoje`), priorizando as que vieram das sessões guiadas.
-4. Proponha o plano do dia em blocos, com horário. Prioridade pelos pesos do curso-alvo (ver memória `objetivo_faculdade_noturno_estagio`): **Matemática primeiro**, Natureza mantendo o mínimo, redação semanal.
+4. Proponha o plano do dia em blocos, com horário. Prioridade pelos pesos do curso-alvo (ver memória `objetivo_faculdade_noturno_estagio`): **Matemática primeiro**, Natureza mantendo o mínimo, redação semanal. **Conteúdo novo é o eixo do dia** (pedido dele em 01/10). As revisões vencidas entram intercaladas e curtas, não como bloco de abertura. Escolha o conteúdo novo por incidência no corpus (`docs/padroes_de_prova_corpus.md`) entre os que nunca foram vistos.
 5. Abra com **recall de 1-2 min** (sem consultar): quadrados, apelidos de fórmula, nomes que escaparam na sessão anterior.
 
 ## 2. Método dentro do bloco
 
 - **Diagnóstico antes do resumo**: questão real primeiro; "não sei" é resposta válida.
 - **Kit** quando faltar base: poucas fórmulas + gatilho (de preferência a unidade que aparece no enunciado) + apelido ("Você Ri", "PiVI", "É Pt", "Que macete", "Vovô Ateu", Torricelli; teimosia/estrada/calor estica/evaporar rouba calor).
+- **Roteiro da questão** (quando ele errou ou resolveu com ajuda, depois de fechar a questão passo a passo com ele): entregar num bloco só, nesta ordem: **gatilho** (o que no enunciado avisa o tipo), **regra** (1 linha), **passos numerados** com a conta real e a **dica de conta** de cada um (por partes, pares que fecham redondo, 15 × 1,99 = 30 − 0,15), **estimativa + conferência de volta** no passo final, **armadilhas** (as alternativas erradas e de onde saem) e **apelido** ("média não se mexe, soma se mexe"). Em seguida vem a variação sozinho. Aprovado por ele em 01/10 ("foi perfeitinho"). Seguir o roteiro numa variação conta como **sozinho com método**, não como ajuda.
 - **Molde**: a mesma questão com números trocados (`core/moldes.py` tem moldes prontos). **Calcule a resposta antes de mandar** e confira que ela está nas alternativas.
 - **Regra dele**: resolveu com ajuda → faz outra variação **sozinho** antes de seguir. Errou → refazer **com ele**, não só mostrar a resposta.
 - **"consolida"**: parar conteúdo novo e contrastar os conceitos vizinhos que ele confundiu.
@@ -36,6 +37,7 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estu
 - Uma correção/check que **entrega a resposta** de uma questão que vem depois (conferir antes).
 - Dar questão que depende de conceito ou vocabulário **não ensinado** (conferir as alternativas antes).
 - Mandar alternativas sem a resposta certa.
+- Passo a passo longo com o enunciado lá em cima: no passo em que ele vai marcar, **repetir as alternativas** (e os números que ele já achou) na mesma mensagem. Ele disse que não acompanha quando precisa rolar a conversa (01/10).
 - Insistir em parar: ele decide o volume. Sugira parar só com dado (queda brusca de acerto, erro repetido em coisa já dominada) e aceite se ele discordar, com escopo pequeno.
 - Usar nota antiga quando o app tem dado mais novo.
 
