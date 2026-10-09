@@ -1,0 +1,458 @@
+<meta charset="utf-8">
+<title>Caderno de Probabilidade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: mesmo caderno quadriculado da série; acento azul-petróleo pra probabilidade; receita no topo, escada com o porquê, questões reais trancadas no fim */
+:root{
+  --bg:#F6F5F1; --paper:#FFFFFF; --grid:#ECE7DE; --ink:#1F1A14; --muted:#6B6153;
+  --line:#DCD3C4; --accent:#0F766E; --accent-ink:#FFFFFF;
+  --pick:#D5F2EE; --pair:#F59E0B; --pair-soft:#FDEFC8; --dup:#B91C1C; --off:#EFEAE1;
+  --note-bg:#FFF6D6; --note-ink:#5C4500;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#17130F; --paper:#211B15; --grid:#2A231B; --ink:#F1EAE0; --muted:#B3A795; --line:#3B3127;
+  --accent:#2DD4BF; --accent-ink:#1F1A14; --pick:#123B37; --pair:#F59E0B; --pair-soft:#4A3A12; --dup:#F87171; --off:#2B241C;
+  --note-bg:#3A3112; --note-ink:#F5E3A8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17130F; --paper:#211B15; --grid:#2A231B; --ink:#F1EAE0; --muted:#B3A795; --line:#3B3127;
+  --accent:#2DD4BF; --accent-ink:#1F1A14; --pick:#123B37; --pair:#F59E0B; --pair-soft:#4A3A12; --dup:#F87171; --off:#2B241C;
+  --note-bg:#3A3112; --note-ink:#F5E3A8; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;padding-inline:16px;padding-block:28px 64px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(2rem,6vw,2.8rem);line-height:1.05;margin:0;text-wrap:balance}
+header p{margin:.4rem 0 0;color:var(--muted)}
+.eyebrow{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.folha{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.folha h2{font-family:var(--display);font-weight:800;font-size:1.45rem;margin:0;line-height:1.15;text-wrap:balance}
+.folha h3{font-family:var(--display);font-weight:600;font-size:1.1rem;margin:.3rem 0 0}
+p{margin:0}
+.regra{border-left:4px solid var(--accent);padding:4px 0 4px 14px;font-size:1.05rem}
+.regra b{color:var(--accent)}
+.nota{background:var(--note-bg);color:var(--note-ink);border-radius:10px;padding:12px 14px;font-size:.95rem}
+button{font:inherit;font-size:.92rem;border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:999px;padding:6px 14px;cursor:pointer;min-height:40px}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+
+/* pessoas */
+.pessoas{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.pessoa{width:76px;height:76px;border-radius:50%;border:2px solid var(--line);background:var(--paper);color:var(--ink);
+  font-family:var(--display);font-weight:600;font-size:1.05rem;padding:0;display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.pessoa:hover{border-color:var(--accent)}
+.pessoa[aria-pressed="true"]{background:var(--pick);border-color:var(--accent);transform:scale(1.06)}
+.status{text-align:center;min-height:1.6em;font-size:.98rem}
+.status.dup{color:var(--dup);font-weight:700}
+.acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+
+/* placar + lista */
+.placar{display:flex;align-items:baseline;justify-content:center;gap:10px}
+.placar .n{font-family:var(--display);font-weight:800;font-size:2.6rem;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.lista{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:34px}
+.chip{font-family:var(--mono);font-size:.82rem;background:var(--pair-soft);border:1px solid var(--pair);border-radius:999px;padding:4px 10px}
+
+/* tabela 6x6 */
+.tbl{overflow-x:auto;display:flex;justify-content:center}
+table.cruz{border-collapse:separate;border-spacing:3px;font-family:var(--mono);font-size:.8rem}
+.cruz th{color:var(--muted);font-weight:500;padding:2px 4px;text-align:center}
+.cruz td{width:40px;height:40px;border-radius:6px;background:var(--paper);border:1px solid var(--line);text-align:center;vertical-align:middle;transition:background .2s}
+.cruz td.diag{background:var(--off);color:var(--muted);border-style:dashed}
+.cruz td.on{background:var(--pair);border-color:var(--pair);color:#1F1A14;font-weight:700}
+.cruz td.flash{animation:fl .6s}
+@keyframes fl{from{box-shadow:0 0 0 4px var(--accent)}to{box-shadow:0 0 0 0 transparent}}
+@media (prefers-reduced-motion: reduce){.pessoa,.cruz td{transition:none}.cruz td.flash{animation:none}}
+.passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.passo{border:1px dashed var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.passo .eyebrow{color:var(--muted)}
+.big{font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--accent);font-variant-numeric:tabular-nums}
+table.comp{border-collapse:collapse;width:100%;font-size:.95rem}
+.comp td,.comp th{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top}
+.comp th{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.ordens{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.ordem{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;gap:6px;justify-content:center;align-items:center;font-family:var(--mono);font-size:.85rem;animation:entra .3s both}
+.ordem .cad{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ordem .cad small{color:var(--muted);font-size:.68rem}
+.ordem .cad span{background:var(--pair-soft);border:1px solid var(--pair);border-radius:999px;padding:2px 8px}
+@keyframes entra{from{opacity:.2;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.ordem{animation:none}}
+details.dobra{padding:12px 22px}
+details.dobra summary{cursor:pointer;list-style:none;color:var(--muted)}
+details.dobra summary::-webkit-details-marker{display:none}
+details.dobra[open]{padding:22px}
+details.dobra[open] summary{margin-bottom:10px}
+.resumo{border:2px solid var(--accent)}
+.resumo ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.resumo a{color:var(--accent)}
+.prox{color:var(--muted);font-size:.95rem}
+.receita{border:2px solid var(--accent)}
+.atalho .f{font-family:var(--mono);font-size:.95rem}
+.niveis{display:flex;gap:8px;flex-wrap:wrap}
+.niveis button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tr-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.tr-topo{display:flex;justify-content:space-between;gap:8px}
+.cena{font-size:1.1rem;min-height:3.2em;text-align:center;text-wrap:balance}
+.tr-opcoes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tr-opcoes button.ok,.tr-opcoes input.ok{background:#15803D;border-color:#15803D;color:#fff}
+.tr-opcoes button.nao,.tr-opcoes input.nao{background:var(--dup);border-color:var(--dup);color:#fff}
+.tr-opcoes input{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:140px;font-variant-numeric:tabular-nums}
+.tr-feedback{min-height:1.5em;text-align:center}
+#cProx{align-self:center}
+.pensa{border:1px dashed var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.pensa i{font-style:normal}
+.letras{display:flex;flex-direction:column;justify-content:space-around;height:300px;font-family:var(--display);font-weight:800;color:#1F1A14}
+.f{font-family:var(--mono)}
+details.dobra details.dobra,details.dobra .folha{border:none;padding:8px 0}
+.degrau{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.degrau[data-estado="fechado"]{opacity:.45;pointer-events:none}
+.degrau[data-estado="fechado"] .corpo{display:none}
+.degrau[data-estado="feito"]{border-color:#15803D}
+.degrau h3{margin:0;display:flex;gap:8px;align-items:center}
+.degrau .num{font-family:var(--mono);font-size:.8rem;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:2px 9px}
+.degrau[data-estado="feito"] .num{background:#15803D;color:#fff}
+.fileira{display:flex;flex-wrap:wrap;gap:5px;align-items:center;justify-content:center}
+.fileira .rot{font-family:var(--mono);font-size:.78rem;color:var(--muted);min-width:64px;text-align:right;margin-right:4px}
+.ficha{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;background:var(--pair-soft);border:1px solid var(--pair);transition:opacity .3s,transform .3s}
+.ficha.vezes{width:auto;border:none;background:none;color:var(--muted);font-weight:500}
+.ficha.cortada{opacity:.25;text-decoration:line-through;transform:scale(.9)}
+.ficha.fica{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ficha.bag{background:var(--pick);border-color:var(--accent)}
+.risco{height:2px;background:var(--ink);max-width:420px;width:100%;margin:2px auto}
+.desafio{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.desafio .q{flex-basis:100%;text-align:center}
+.desafio input{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:110px;font-variant-numeric:tabular-nums}
+.desafio .fb{flex-basis:100%;text-align:center;min-height:1.4em;font-size:.95rem}
+.desafio.ok input,.desafio button.ok{background:#15803D;border-color:#15803D;color:#fff}
+.desafio button.nao{background:var(--dup);border-color:var(--dup);color:#fff}
+.gente{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.gente span{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;border:2px solid var(--line)}
+.gente span.entra{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.gente span.sobra{background:var(--off)}
+.trancada .mol,.trancada .nota{filter:blur(5px);pointer-events:none;user-select:none}
+.trancada.aberta .mol,.trancada.aberta .nota{filter:none;pointer-events:auto;user-select:auto}
+.cadeado{color:var(--muted)}
+.arvore{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.arvore .op{border:1px solid var(--line);border-radius:10px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center}
+.arvore span{font-family:var(--mono);font-size:.82rem;border-radius:999px;padding:3px 9px;border:1px solid var(--line)}
+.arvore .sim{background:var(--pair-soft);border-color:var(--pair)}
+.arvore .nao{background:var(--off);color:var(--muted)}
+.arvore small{flex-basis:100%;text-align:center;color:var(--accent);font-weight:700}
+.grade{display:grid;gap:4px;justify-content:center}
+.grade span{font-family:var(--mono);font-size:.75rem;border:1px solid var(--pair);background:var(--pair-soft);border-radius:6px;padding:4px 6px;text-align:center}
+.grade .cab{background:none;border:none;color:var(--muted)}
+.mult{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-items:center;font-family:var(--mono)}
+.mult b{font-family:var(--display);font-size:1.2rem;color:var(--accent)}
+.legenda{color:var(--muted);font-size:.9rem;text-align:center}
+</style>
+<style>
+.urna{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:420px;margin:0 auto}
+.urna i{width:22px;height:22px;border-radius:50%;display:inline-block;border:1px solid var(--line);background:var(--off)}
+.urna i.q{background:var(--accent);border-color:var(--accent)}
+.cartoes{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.cartoes span{font-family:var(--mono);font-size:.72rem;border-radius:4px;padding:3px 5px;border:1px solid var(--line)}
+.cartoes .a1{background:var(--off)} .cartoes .a2{background:var(--pair-soft);border-color:var(--pair)} .cartoes .a3{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.placas{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.placa{border:2px solid var(--line);border-radius:8px;padding:8px 10px;text-align:center;font-family:var(--mono);font-size:.8rem;min-width:84px}
+.placa b{display:block;font-family:var(--display);font-size:1.2rem;color:var(--accent)}
+.passos3{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
+.fatias{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
+.fatias div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fatias span{width:84px;height:84px;border-radius:50%;border:1px solid var(--line);background:conic-gradient(var(--accent) 0 calc(360deg / var(--n)), var(--off) 0)}
+.fatias small{color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Matemática · Probabilidade · 06/10</div>
+  <h1>Caderno de Probabilidade</h1>
+  <p>Receita no topo, escada com o porquê, questões reais no fim. Responda frações como <b>3/8</b> (também vale 0,375 ou 37,5%).</p>
+</header>
+
+<section class="folha receita" id="receita">
+  <div class="eyebrow">A receita · decore assim</div>
+  <h2>Quero sobre Tudo</h2>
+  <p class="regra"><b>Probabilidade = o que eu quero ÷ tudo que pode acontecer.</b><br>Antes de dividir, pergunte: <b>estou contando o quê?</b> (pessoas? cartões? bolas?) O “quero” e o “tudo” têm que contar a <b>mesma coisa</b>.</p>
+  <div class="tbl"><table class="comp">
+    <tr><th>Frase no enunciado</th><th>O que fazer</th></tr>
+    <tr><td>“a <b>e</b> b acontecerem” (independentes)</td><td><b>multiplica</b> as probabilidades</td></tr>
+    <tr><td>“<b>pelo menos um</b>”</td><td><b>1 − nenhum</b></td></tr>
+    <tr><td>“superior a / no mínimo”</td><td>aumente até <b>passar</b> do alvo</td></tr>
+  </table></div>
+</section>
+
+
+
+<section class="folha" id="logica-pm">
+  <div class="eyebrow">A lógica por trás · leia antes do treino</div>
+  <h2>Cada dardo novo corta pela metade a chance de errar todos</h2>
+  <p><b>1. Por que olhar pro “errar todos”?</b> “Acertar pelo menos um” tem muitos jeitos (só o 1º, só o 2º, os dois…). “Errar todos” tem <b>um jeito só</b>. É mais fácil calcular o de um jeito só e tirar do total.</p>
+  <p><b>2. Errar todos, dardo a dardo.</b> Cada dardo erra com chance 1/2. Pra errar todos, tem que errar o 1º <b>E</b> o 2º <b>E</b>… então multiplica: <b>cada dardo a mais corta pela metade</b>.</p>
+  <div class="tbl"><table class="comp">
+    <tr><th>Dardos</th><th>Errar todos</th><th>Acertar pelo menos 1</th></tr>
+    <tr><td>1</td><td>1/2</td><td>1/2</td></tr>
+    <tr><td>2</td><td>1/4</td><td>3/4</td></tr>
+    <tr><td>3</td><td>1/8</td><td>7/8</td></tr>
+    <tr><td>4</td><td>1/16</td><td>15/16</td></tr>
+    <tr><td>…</td><td>…</td><td>…</td></tr>
+    <tr><td>10</td><td>1/1024</td><td>1023/1024</td></tr>
+  </table></div>
+  <p><b>3. O alvo vira um limite pro “errar todos”.</b> Quer acertar pelo menos um com mais de 999/1000? Então errar todos tem que ser <b>menos de 1/1000</b> (o que sobra até 1).</p>
+  <p class="regra"><b>Na prática:</b> o número de baixo do “errar todos” (2, 4, 8, 16…) tem que <b>passar</b> do número de baixo do que sobra (1000). Vá dobrando e conte quantas vezes dobrou: 2, 4, 8, 16, 32, 64, 128, 256, 512 (não passa), <b>1024</b> ✓ → <b>10 dobras = 10 dardos</b>.</p>
+  <p class="nota"><b>Atalho de cabeça:</b> 2¹⁰ = 1024 ≈ 1000. Então “999/1000” → <b>10</b>. “99/100” → 2⁷ = 128 → <b>7</b>. “9/10” → 2⁴ = 16 → <b>4</b>.</p>
+</section>
+
+<section class="folha" id="treino-pm">
+  <div class="eyebrow">Treino · “pelo menos um” e “no mínimo”</div>
+  <h2>Mesma ideia, números trocados</h2>
+  <p>Cada tentativa (placa, dardo, alarme) funciona com chance <b>1/2</b>. <b>Nível 1</b>: nenhum e pelo menos um. <b>Nível 2</b>: quantas no mínimo. <b>Nível 3</b>: mínimo com as que já existem (só as novas). Pra subir, 80%. Errou, volta logo, com a conta explicada.</p>
+  <p class="nota">Lembrete dos 3 passos: <b>(1)</b> vira pro “nenhum”: falta = 1 − alvo. <b>(2)</b> nenhum com n = 1 / (2 × 2 × …). <b>(3)</b> dobre 2, 4, 8, 16… até o de baixo <b>passar</b> do que falta.</p>
+  <div class="niveis" role="group" aria-label="nível">
+    <button type="button" data-n="1" aria-pressed="true">Nível 1 · nenhum / pelo menos um</button>
+    <button type="button" data-n="2" aria-pressed="false">Nível 2 · quantas no mínimo</button>
+    <button type="button" data-n="3" aria-pressed="false">Nível 3 · só as novas</button>
+  </div>
+  <div class="tr-card">
+    <div class="tr-topo"><span id="pmRod" class="eyebrow">Rodada 1 de 12</span><span id="pmPl" class="eyebrow">0 certas</span></div>
+    <p id="pmCena" class="cena" aria-live="polite"></p>
+    <form id="pmForm" class="tr-opcoes" autocomplete="off"><input id="pmIn" aria-label="resposta" placeholder="ex.: 1/8 ou 5"><button type="submit">Conferir</button></form>
+    <p id="pmFb" class="tr-feedback" aria-live="polite"></p>
+    <button type="button" id="pmProx" hidden>Próxima</button>
+  </div>
+  <p id="pmHist" class="prox"></p>
+</section>
+<style>
+.niveis{display:flex;gap:8px;flex-wrap:wrap}
+.niveis button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.tr-card{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.tr-topo{display:flex;justify-content:space-between;gap:8px}
+.cena{font-size:1.08rem;min-height:3.2em;text-align:center;text-wrap:balance}
+.tr-opcoes{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.tr-opcoes input{font:inherit;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);width:150px}
+.tr-opcoes input.ok{background:#15803D;border-color:#15803D;color:#fff}
+.tr-opcoes input.nao{background:var(--dup);border-color:var(--dup);color:#fff}
+.tr-feedback{min-height:1.5em;text-align:center}
+#pmProx{align-self:center}
+</style>
+<script>
+(function(){
+  const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+  const COISAS=[["placas","um motorista ver","ver"],["dardos","o jogador acertar","acertar"],["alarmes","um alarme disparar","disparar"],["lâmpadas","uma lâmpada acender","acender"]];
+  const ALVOS=[[2,3],[3,4],[4,5],[9,10],[19,20],[95,100],[99,100],[999,1000]];
+  const pot=n=>Math.pow(2,n);
+  const minimo=(a,b)=>{ const falta=b-a; let n=1; while(pot(n)*falta<=b) n++; return n; }; // nenhum = 1/2^n < falta/b
+  const lerNum=t=>{ t=t.trim().replace(/\s/g,"").replace(",","."); if(!t) return NaN; if(t.endsWith("%")) return parseFloat(t)/100; if(t.includes("/")){ const [a,b]=t.split("/"); return parseFloat(a)/parseFloat(b);} return parseFloat(t); };
+  const TOTAL=12; let nivel=1, rod=0, certas=0, fila=[], atual=null, ultimoTipo=null;
+  const $=id=>document.getElementById(id);
+  function gera(){
+    const c=COISAS[R(0,COISAS.length-1)];
+    if(nivel===1){
+      const n=R(2,6), tipo=Math.random()<.5?"nenhum":"pelo";
+      const r= tipo==="nenhum" ? 1/pot(n) : 1-1/pot(n);
+      const q= tipo==="nenhum" ? `Com <b>${n} ${c[0]}</b> (cada uma com chance 1/2 de ${c[2]}), qual a probabilidade de <b>nenhuma</b> ${c[2]}?` : `Com <b>${n} ${c[0]}</b> (cada uma com chance 1/2 de ${c[2]}), qual a probabilidade de <b>pelo menos uma</b> ${c[2]}?`;
+      const ex= tipo==="nenhum" ? `Nenhuma = 1/2 multiplicado ${n} vezes = 1/${pot(n)}.` : `Nenhuma = 1/${pot(n)}. Pelo menos uma = 1 − 1/${pot(n)} = ${pot(n)-1}/${pot(n)}.`;
+      return {q,r,ex,tipo};
+    }
+    const [a,b]=ALVOS[R(0,ALVOS.length-1)], n=minimo(a,b), falta=`${b-a}/${b}`;
+    if(nivel===2 || Math.random()<.4){
+      return {q:`Quantas ${c[0]}, <b>no mínimo</b>, pra probabilidade de ${c[1]} pelo menos uma ser <b>superior a ${a}/${b}</b>?`, r:n, tipo:"min",
+        ex:`Falta 1 − ${a}/${b} = ${falta}. Nenhuma tem que ficar abaixo disso: dobre até o de baixo passar de ${(b/(b-a)).toLocaleString("pt-BR",{maximumFractionDigits:1})} → 2^${n} = ${pot(n)} ✓ (2^${n-1} = ${pot(n-1)} não passa). Total: ${n}.`};
+    }
+    const k=R(1,Math.max(1,n-1));
+    return {q:`Já existem <b>${k}</b> ${c[0]}. Quantas <b>novas</b>, no mínimo, pra probabilidade de ${c[1]} pelo menos uma ser <b>superior a ${a}/${b}</b>?`, r:n-k, tipo:"novas",
+      ex:`Total mínimo: 2^${n} = ${pot(n)} passa (falta ${falta}). ${n} no total − ${k} que já existem = ${n-k} novas.`};
+  }
+  function sortear(){
+    const v=fila.findIndex(x=>x.em<=rod); if(v>=0) return fila.splice(v,1)[0].x;
+    let x,t=0; do{ x=gera(); t++; }while(x.tipo===ultimoTipo && t<4 && nivel!==2); ultimoTipo=x.tipo; return x;
+  }
+  function hist(){ try{ const h=JSON.parse(localStorage.getItem("treinoPM")||"[]"); $("pmHist").textContent=h.length?"Últimos: "+h.slice(-5).map(x=>`nível ${x.n} ${x.c}/${TOTAL}`).join(" · "):""; }catch(e){} }
+  function salvar(r){ try{ const h=JSON.parse(localStorage.getItem("treinoPM")||"[]"); h.push(r); localStorage.setItem("treinoPM",JSON.stringify(h.slice(-20))); }catch(e){} }
+  function prox(){
+    rod++; if(rod>TOTAL) return fim();
+    atual=sortear(); $("pmRod").textContent=`Rodada ${rod} de ${TOTAL}`; $("pmPl").textContent=`${certas} certas`;
+    $("pmCena").innerHTML=atual.q; $("pmFb").textContent=""; $("pmProx").hidden=true;
+    const i=$("pmIn"); i.value=""; i.disabled=false; i.className=""; $("pmForm").hidden=false; $("pmForm").querySelector("button").disabled=false; i.focus();
+  }
+  function fim(){
+    salvar({n:nivel,c:certas}); const sobe=nivel<3 && certas>=Math.ceil(TOTAL*.8);
+    $("pmCena").innerHTML=`<b style="font-size:1.4rem">${certas}/${TOTAL}</b>`; $("pmForm").hidden=true;
+    $("pmFb").innerHTML= sobe ? `Bateu 80%. <button type="button" id="pmSobe">Subir pro nível ${nivel+1}</button>` : `<button type="button" id="pmDeNovo">Treinar de novo</button>`;
+    $("pmProx").hidden=true; hist();
+    if(sobe) $("pmSobe").onclick=()=>trocar(nivel+1); else $("pmDeNovo").onclick=iniciar;
+  }
+  function iniciar(){ rod=0; certas=0; fila=[]; ultimoTipo=null; prox(); }
+  function trocar(n){ nivel=n; document.querySelectorAll("#treino-pm .niveis button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.n===n)); iniciar(); }
+  $("pmForm").addEventListener("submit",e=>{
+    e.preventDefault(); const i=$("pmIn"); if(i.disabled) return; const v=lerNum(i.value); if(isNaN(v)){ $("pmFb").textContent="Escreva um número ou fração."; return; }
+    const ok=Math.abs(v-atual.r)<1e-6; i.disabled=true; i.className=ok?"ok":"nao"; $("pmForm").querySelector("button").disabled=true;
+    if(ok) certas++; else fila.push({x:atual,em:rod+R(2,3)});
+    $("pmFb").innerHTML=(ok?"<b>Certo.</b> ":"<b>Não.</b> ")+atual.ex; $("pmPl").textContent=`${certas} certas`; $("pmProx").hidden=false; $("pmProx").focus();
+  });
+  $("pmProx").addEventListener("click",prox);
+  document.querySelectorAll("#treino-pm .niveis button").forEach(b=>b.addEventListener("click",()=>trocar(+b.dataset.n)));
+  hist(); iniciar();
+})();
+</script>
+
+<section class="folha" id="escada">
+  <div class="eyebrow">Escada · um degrau por vez</div>
+  <h2>Do sorteio simples até as placas</h2>
+  <p>Cada degrau tem o porquê, um desenho e 2 desafios. Acertou os dois, o próximo abre. As questões reais abrem no fim.</p>
+  <div id="degraus"></div>
+</section>
+
+<section class="folha trancada" id="cartoes">
+  <div class="eyebrow">Questão real · ENEM 2023</div>
+  <h2>O sorteio do quarto</h2>
+  <p class="cadeado" id="cad1">🔒 Abre no fim da escada.</p>
+  <div class="nota" style="background:none;color:inherit;padding:0">
+  <p>No alojamento de uma universidade, há alguns quartos com o padrão superior ao dos demais. Um desses quartos ficou disponível, e muitos estudantes se candidataram para morar no local. Para escolher quem ficará com o quarto, um sorteio será realizado. Para esse sorteio, cartões individuais com os nomes de todos os estudantes inscritos serão depositados em uma urna, sendo que, para cada estudante de <b>primeiro ano</b>, será depositado <b>um único cartão</b> com seu nome; para cada estudante de <b>segundo ano, dois cartões</b> com seu nome; e, para cada estudante de <b>terceiro ano, três cartões</b> com seu nome. Foram inscritos <b>200</b> estudantes de primeiro ano, <b>150</b> de segundo ano e <b>100</b> de terceiro ano. Todos os cartões têm a mesma probabilidade de serem sorteados.</p>
+  <p>Qual a probabilidade de o vencedor do sorteio ser um estudante de terceiro ano?</p>
+  <p class="f">A 1/2 · B 1/3 · C 1/8 · D 2/9 · E 3/8</p>
+  </div>
+  <div class="nota"><b>No chat:</b> quantos cartões no total? Quantos do 3º ano? Qual letra?</div>
+</section>
+
+<section class="folha trancada" id="placas">
+  <div class="eyebrow">Questão real · ENEM 2019</div>
+  <h2>As placas do restaurante</h2>
+  <p class="cadeado" id="cad2">🔒 Abre no fim da escada.</p>
+  <div class="nota" style="background:none;color:inherit;padding:0">
+  <p>O dono de um restaurante situado às margens de uma rodovia percebeu que, ao colocar uma placa de propaganda de seu restaurante ao longo da rodovia, as vendas aumentaram. Pesquisou junto aos seus clientes e concluiu que a probabilidade de um motorista perceber uma placa de anúncio é <b>1/2</b>.</p>
+  <p>Com isso, após autorização do órgão competente, decidiu instalar <b>novas placas</b> com anúncios de seu restaurante ao longo dessa rodovia, de maneira que a probabilidade de um motorista perceber <b>pelo menos uma</b> das placas instaladas fosse <b>superior a 99/100</b>.</p>
+  <p>A quantidade mínima de novas placas de propaganda a serem instaladas é</p>
+  <p class="f">A 99 · B 51 · C 50 · D 6 · E 1</p>
+  </div>
+  <div class="nota"><b>No chat:</b> (1) “pelo menos uma” vira o quê? (2) quantas placas no total pra passar de 99/100? (3) a pergunta quer o total ou só as <b>novas</b>?</div>
+</section>
+
+<details class="folha dobra" id="reais-res"><summary class="eyebrow">Questões reais · resultado · abrir</summary>
+  <p><b>Cartões: E (3/8) ✓ sozinho</b>: contou cartões, não pessoas (800 no total, 300 do 3º ano).</p>
+  <p><b>Placas: D (6) com ajuda leve</b>: nenhuma &lt; 1/100 ✓ e “já tinha uma” ✓ sozinho. Escorregou no 2⁶ = 64: 64 pedaços é <b>menos</b> que 100, a fatia 1/64 ainda é maior que 1/100. Precisa de 2⁷ = 128 → 7 no total − 1 que existia = <b>6 novas</b>.</p>
+</details>
+
+<section class="folha" id="var-placas">
+  <div class="eyebrow">Variação · sozinho</div>
+  <h2>Os alarmes da loja</h2>
+  <p>Uma loja já tem <b>2 alarmes</b> instalados. Cada alarme, sozinho, dispara num assalto com probabilidade <b>1/2</b>, e um não depende do outro. O dono quer instalar <b>novos alarmes</b> iguais para que a probabilidade de <b>pelo menos um</b> disparar seja <b>superior a 999/1000</b>.</p>
+  <p>A quantidade mínima de <b>novos</b> alarmes é</p>
+  <p class="f">A 2 · B 8 · C 9 · D 10 · E 998</p>
+  <div class="nota"><b>No chat, nos 3 passos:</b> (1) nenhum dispara tem que ser menor que quanto? (2) dobre até passar: quantos alarmes no total? (3) quantos <b>novos</b>?</div>
+  <details><summary class="prox">Resposta (ele preferiu seguir: “entendi o raciocínio”)</summary><p>nenhum &lt; 1/1000 → 2¹⁰ = 1024 passa de 1000 → 10 no total − 2 que já existem = <b>8 novos (B)</b>. Pegadinhas: D = total (esqueceu os que já existem); C = 2⁹ = 512 não passa.</p></details>
+</section>
+
+<section class="folha" id="escada2">
+  <div class="eyebrow">Parte 2 · escada das urnas</div>
+  <h2>Quando o ENEM manda mexer na urna</h2>
+  <p><b>Por que essa escada:</b> um padrão que volta muito é “o gerente quer que a chance fique menor que X: quantas bolinhas ele tem que pôr?”. Junta o Quero sobre Tudo, o “E” multiplica e o “no mínimo”. Três degraus, depois a questão real.</p>
+  <div id="degraus2"></div>
+</section>
+
+<section class="folha trancada" id="voucher">
+  <div class="eyebrow">Questão real · ENEM 2023</div>
+  <h2>O voucher das duas urnas</h2>
+  <p class="cadeado" id="cad3">🔒 Abre no fim da escada das urnas.</p>
+  <div class="nota" style="background:none;color:inherit;padding:0">
+  <p>Visando atrair mais clientes, o gerente de uma loja anunciou uma promoção em que cada cliente que realizar uma compra pode ganhar um voucher para ser usado em sua próxima compra. Para ganhar seu voucher, o cliente precisa retirar, ao acaso, uma bolinha de dentro de cada uma das duas urnas A e B disponibilizadas pelo gerente, nas quais há apenas bolinhas pretas e brancas. Atualmente, a probabilidade de se escolher, ao acaso, uma bolinha preta na urna A é igual a <b>20%</b> e a probabilidade de se escolher uma bolinha preta na urna B é <b>25%</b>. Ganha o voucher o cliente que retirar <b>duas bolinhas pretas</b>, uma de cada urna.</p>
+  <p>Com o passar dos dias, o gerente percebeu que, para a promoção ser viável aos negócios, era preciso alterar a probabilidade de acerto do cliente sem alterar a regra da promoção. Para isso, resolveu alterar a quantidade de bolinhas brancas na urna B de forma que a probabilidade de um cliente ganhar o voucher passasse a ser <b>menor ou igual a 1%</b>. Sabe-se que a urna B tem <b>4 bolinhas pretas</b> e que, em ambas as urnas, todas as bolinhas têm a mesma probabilidade de serem retiradas.</p>
+  <p>Qual é o número mínimo de bolinhas brancas que o gerente deve <b>adicionar</b> à urna B?</p>
+  <p class="f">A 20 · B 60 · C 64 · D 68 · E 80</p>
+  </div>
+  <div class="nota"><b>No chat, em 4 passos:</b> (1) quantas bolinhas a urna B tem hoje? (2) a chance da urna B tem que cair pra quanto? (3) quantas bolinhas no total ela precisa ter? (4) quantas brancas <b>adicionar</b>?</div>
+</section>
+</div>
+
+<script>
+(function(){
+  const urna=(q,t)=>`<div class="urna">${[...Array(t)].map((_,i)=>`<i class="${i<q?"q":""}"></i>`).join("")}</div>`;
+  const cart=(a1,a2,a3)=>`<div class="cartoes">${[...Array(a1)].map((_,i)=>`<span class="a1">1º ${String.fromCharCode(65+i)}</span>`).join("")}${[...Array(a2)].map((_,i)=>`<span class="a2">2º ${String.fromCharCode(80+i)}</span><span class="a2">2º ${String.fromCharCode(80+i)}</span>`).join("")}${[...Array(a3)].map((_,i)=>`<span class="a3">3º ${String.fromCharCode(88+i)}</span>`.repeat(3)).join("")}</div>`;
+  const placas=n=>`<div class="placas">${[...Array(n)].map((_,i)=>`<div class="placa">placa ${i+1}<b>1/2</b>não vê</div>`).join('<span style="align-self:center">×</span>')}</div>`;
+  const DEG=[
+    {t:"Quero sobre Tudo", ex:`<p><b>Por quê:</b> sorteio justo = cada bola tem a mesma chance. A chance de sair o que você quer é a fatia que ele ocupa no todo.</p>${urna(3,10)}<p style="text-align:center">3 bolas que eu quero (coloridas) de 10 → <b>3/10</b></p>`,
+      d:[{q:"Uma urna tem 5 bolas azuis e 15 brancas. Probabilidade de sair azul?",r:1/4,h:"Quero = 5. Tudo = 5 + 15 = 20. 5/20 simplifica."},
+         {q:"Um dado comum. Probabilidade de sair número maior que 4?",r:1/3,h:"Quero = 5 e 6 (2 números). Tudo = 6."}]},
+    {t:"Quando cada um tem peso diferente: conte o que é sorteado", ex:`<p><b>Por quê:</b> se alguns colocam mais cartões na urna, o sorteio é <b>de cartões</b>, não de pessoas. Então “quero” e “tudo” contam <b>cartões</b>.</p>${cart(4,3,2)}<p style="text-align:center">4 alunos do 1º (1 cartão) · 3 do 2º (2 cartões) · 2 do 3º (3 cartões)<br>Tudo = 4 + 6 + 6 = <b>16 cartões</b></p>`,
+      d:[{q:"No desenho acima, probabilidade de sair alguém do <b>3º ano</b>?",r:6/16,h:"Cartões do 3º: 2 alunos × 3 = 6. Tudo = 16 cartões."},
+         {q:"10 alunos do 1º ano (1 cartão cada) e 5 do 2º ano (2 cartões cada). Probabilidade de sair do 2º ano?",r:1/2,h:"Cartões do 2º: 5 × 2 = 10. Tudo = 10 + 10 = 20."}]},
+    {t:"“E” multiplica (de novo!)", ex:`<p><b>Por quê:</b> igual na combinatória. Duas coisas que precisam acontecer <b>juntas</b> e não dependem uma da outra: multiplica. Um motorista <b>não vê</b> cada placa com chance 1/2:</p>${placas(2)}<p style="text-align:center">não vê a 1ª <b>E</b> não vê a 2ª = 1/2 × 1/2 = <b>1/4</b></p>`,
+      d:[{q:"3 moedas. Probabilidade de dar cara nas 3?",r:1/8,h:"1/2 × 1/2 × 1/2."},
+         {q:"4 placas (cada uma com 1/2 de não ser vista). Probabilidade de o motorista <b>não ver nenhuma</b>?",r:1/16,h:"Não vê a 1ª E a 2ª E a 3ª E a 4ª: 1/2 quatro vezes."}]},
+    {t:"“Pelo menos um” = 1 − nenhum", ex:`<p><b>Por quê:</b> “pelo menos uma” tem muitos casos (só a 1ª, só a 2ª, as duas…). O contrário tem <b>um caso só</b>: nenhuma. Calcule o fácil e tire do todo.</p>${placas(2)}<p style="text-align:center">nenhuma = 1/4 → pelo menos uma = 1 − 1/4 = <b>3/4</b></p><p class="prox" style="text-align:center">Mesmo truque do “pelo menos um opcional” dos carros: tudo − nenhum.</p>`,
+      d:[{q:"3 moedas. Probabilidade de sair <b>pelo menos uma</b> cara?",r:7/8,h:"Nenhuma cara = 1/8. Tire de 1."},
+         {q:"4 placas. Probabilidade de ver <b>pelo menos uma</b>?",r:15/16,h:"Nenhuma = 1/16 (degrau 3). 1 − 1/16."}]},
+    {t:"“Superior a” e “mínimo”: aumente até passar", ex:`<p><b>Por quê:</b> cada placa a mais divide o “nenhuma” por 2. Pra “pelo menos uma” passar de um alvo, o “nenhuma” tem que ficar <b>abaixo</b> do que falta.</p><div class="tbl"><table class="comp"><tr><th>Placas</th><th>Nenhuma</th><th>Pelo menos uma</th><th>Passa de 9/10?</th></tr><tr><td>3</td><td>1/8</td><td>7/8 = 0,875</td><td>não</td></tr><tr><td><b>4</b></td><td>1/16</td><td>15/16 ≈ 0,94</td><td><b>sim: mínimo = 4</b></td></tr></table></div><h3 style="margin:0">O atalho em 3 passos (sem decorar)</h3>
+<ol class="passos3">
+<li><b>Vire pro “nenhuma”.</b> Pelo menos uma passar de 9/10 = o que <b>falta</b> pro 1 ficar menor: 1 − 9/10 = <b>1/10</b>. Então: <b>nenhuma tem que ser menor que 1/10</b>.</li>
+<li><b>Escreva o “nenhuma”.</b> Com n placas: 1/2 × 1/2 × … = <b>1 / (2 × 2 × …)</b>. Ex.: 4 placas = 1/16.</li>
+<li><b>Compare pelo de baixo.</b> Pizza: quanto mais pedaços, menor a fatia. 1/16 é <b>menor</b> que 1/10 porque 16 pedaços &gt; 10 pedaços. Então é só fazer <b>2 × 2 × …</b> até <b>passar de 10</b>: 2, 4, 8, <b>16</b> ✓ → 4 placas.</li>
+</ol>
+<div class="fatias"><div><b>1/10</b><span style="--n:10"></span><small>10 pedaços</small></div><div><b>1/16</b><span style="--n:16"></span><small>16 pedaços: fatia menor ✓</small></div></div>
+<p class="nota"><b>Exemplo do desafio:</b> superior a 95/100 → falta 5/100 = <b>1/20</b> → nenhuma tem que ser menor que 1/20 → 2 × 2 × … passa de <b>20</b>: 2, 4, 8, 16 (não), <b>32</b> ✓.</p><p class="nota"><b>Leia o que a pergunta conta:</b> o total de placas, ou só as <b>novas</b> (além das que já existem)?</p>`,
+      d:[{q:"Quantas placas, no mínimo, pra ver pelo menos uma ser <b>superior a 95/100</b>? (dica: 2 × 2 × … passa de 20)",r:5,h:"Nenhuma < 5/100 = 1/20. 2⁴ = 16 não passa de 20; 2⁵ = 32 passa."},
+         {q:"Já existe 1 placa. Quantas <b>novas</b>, no mínimo, pra passar de 9/10?",r:3,h:"Total mínimo = 4 (tabela). Já tem 1. Novas = 4 − 1."}]}
+  ];
+  const lerNum=t=>{ t=t.trim().replace(/\s/g,"").replace(",","."); if(!t) return NaN; if(t.endsWith("%")) return parseFloat(t)/100; if(t.includes("/")){ const [a,b]=t.split("/"); return parseFloat(a)/parseFloat(b);} return parseFloat(t); };
+  const box=document.getElementById("degraus");
+  box.innerHTML=DEG.map((g,i)=>`<div class="degrau" data-i="${i}" data-estado="${i===0?"aberto":"fechado"}"><h3><span class="num">${i+1}</span>${g.t}</h3><div class="corpo">${g.ex}${g.d.map((d,j)=>`<div class="desafio" data-j="${j}"><p class="q">${d.q}</p><input aria-label="resposta" placeholder="ex.: 3/8"><button type="button" class="conf">Conferir</button><p class="fb" aria-live="polite"></p></div>`).join("")}</div></div>`).join("");
+  const ok=new Set();
+  function marca(i,j){
+    ok.add(i+"-"+j);
+    if(DEG[i].d.every((_,k)=>ok.has(i+"-"+k))){
+      box.querySelector(`.degrau[data-i="${i}"]`).dataset.estado="feito";
+      const prox=box.querySelector(`.degrau[data-i="${i+1}"]`);
+      if(prox){ prox.dataset.estado="aberto"; prox.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"}); }
+      else { ["cartoes","placas"].forEach(id=>document.getElementById(id).classList.add("aberta")); document.getElementById("cad1").textContent="Aberta."; document.getElementById("cad2").textContent="Aberta."; document.getElementById("cartoes").scrollIntoView({block:"start"}); }
+    }
+  }
+  box.addEventListener("click",e=>{
+    if(!e.target.closest(".conf")) return;
+    const d=e.target.closest(".desafio"), i=+d.closest(".degrau").dataset.i, j=+d.dataset.j, dz=DEG[i].d[j], fb=d.querySelector(".fb"), inp=d.querySelector("input");
+    const v=lerNum(inp.value); if(isNaN(v)) { fb.textContent="Escreva um número ou fração, ex.: 3/8."; return; }
+    if(Math.abs(v-dz.r)<1e-6){ d.classList.add("ok"); inp.disabled=true; e.target.disabled=true; fb.textContent="Certo."; marca(i,j); }
+    else fb.textContent="Ainda não. Dica: "+dz.h;
+  });
+  box.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches(".desafio input")){ e.preventDefault(); e.target.nextElementSibling.click(); } });
+})();
+</script>
+
+<script>
+(function(){
+  const urna=(q,t,extra)=>`<div class="urna">${[...Array(t)].map((_,i)=>`<i class="${i<q?"q":""}" ${i>=t-(extra||0)?'style="outline:2px dashed var(--accent);outline-offset:1px"':''}></i>`).join("")}</div>`;
+  const DEG=[
+    {t:"Descobrir quantas bolinhas a urna tem", ex:`<p><b>Por quê:</b> o ENEM costuma dar a <b>chance</b> e o número de <b>pretas</b>, e esconde o total. Quero sobre Tudo ao contrário: se 4 pretas são 25% (1/4) da urna, a urna inteira é 4 × 4.</p>${urna(4,16)}<p style="text-align:center">4 pretas = 1/4 da urna → total = <b>16</b> (12 brancas)</p>`,
+      d:[{q:"Uma urna tem 3 pretas, e a chance de tirar preta é 20% (1/5). Quantas bolinhas ela tem no total?",r:15,h:"3 é 1/5 do total: total = 3 × 5."},
+         {q:"Uma urna tem 6 pretas, e a chance de preta é 1/3. Quantas <b>brancas</b> ela tem?",r:12,h:"Total = 6 × 3 = 18. Brancas = total − pretas."}]},
+    {t:"Pôr brancas só aumenta o Tudo", ex:`<p><b>Por quê:</b> adicionar bolinha branca não muda o “quero” (as pretas), só aumenta o “tudo”. A fatia da preta fica menor.</p>${urna(3,15,3)}<p style="text-align:center">3 pretas em 12 = 1/4 → pondo 3 brancas: 3 em <b>15</b> = 1/5</p><p class="regra">Pra chance da preta virar <b>1/15</b>: o total tem que ser 3 × 15 = <b>45</b>. Tinha 12, então põe <b>33</b> brancas.</p>`,
+      d:[{q:"Urna com 3 pretas e 12 brancas (15 no total). Quantas brancas <b>adicionar</b> pra chance de preta ficar 1/10?",r:15,h:"Total tem que ser 3 × 10 = 30. Já tem 15."},
+         {q:"Urna com 5 pretas e 15 brancas. Quantas brancas <b>adicionar</b> pra chance de preta ficar 1/8?",r:20,h:"Total = 5 × 8 = 40. Já tem 20."}]},
+    {t:"Duas urnas: “E” multiplica, e você descobre a que falta", ex:`<p><b>Por quê:</b> pra ganhar tem que tirar preta na urna A <b>E</b> na urna B: multiplica. Se a chance final tem um limite, a conta mostra quanto a urna B pode ter.</p><div class="tbl"><table class="comp"><tr><th>Urna A</th><th></th><th>Urna B</th><th></th><th>Ganhar</th></tr><tr><td>1/4</td><td>×</td><td><b>?</b></td><td>≤</td><td>1/100</td></tr></table></div><p class="regra">1/4 × ? ≤ 1/100 → ? ≤ 1/100 ÷ 1/4 = 4/100 = <b>1/25</b>. Pense: “1/4 de quanto dá 1/100?” → de 1/25.</p>`,
+      d:[{q:"Urna A: chance 1/4. Quer chance de ganhar (A e B) ≤ 1/40. A urna B pode ter chance de no máximo 1 sobre quanto? (digite só o número de baixo)",r:10,h:"1/4 × ? = 1/40 → ? = 1/10."},
+         {q:"Urna A: chance 1/2. Quer ganhar ≤ 1/30. Urna B tem 3 pretas: quantas bolinhas ela precisa ter, no mínimo?",r:45,h:"1/2 × ? = 1/30 → B ≤ 1/15. Total = 3 × 15."}]}
+  ];
+  const lerNum=t=>{ t=t.trim().replace(/\s/g,"").replace(",","."); if(!t) return NaN; if(t.endsWith("%")) return parseFloat(t)/100; if(t.includes("/")){ const [a,b]=t.split("/"); return parseFloat(a)/parseFloat(b);} return parseFloat(t); };
+  const box=document.getElementById("degraus2"), off=5;
+  box.innerHTML=DEG.map((g,i)=>`<div class="degrau" data-i="${i}" data-estado="${i===0?"aberto":"fechado"}"><h3><span class="num">${i+1+off}</span>${g.t}</h3><div class="corpo">${g.ex}${g.d.map((d,j)=>`<div class="desafio" data-j="${j}"><p class="q">${d.q}</p><input aria-label="resposta" inputmode="decimal"><button type="button" class="conf">Conferir</button><p class="fb" aria-live="polite"></p></div>`).join("")}</div></div>`).join("");
+  const ok=new Set();
+  function marca(i,j){
+    ok.add(i+"-"+j);
+    if(DEG[i].d.every((_,k)=>ok.has(i+"-"+k))){
+      box.querySelector(`.degrau[data-i="${i}"]`).dataset.estado="feito";
+      const prox=box.querySelector(`.degrau[data-i="${i+1}"]`);
+      if(prox){ prox.dataset.estado="aberto"; prox.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"center"}); }
+      else { const f=document.getElementById("voucher"); f.classList.add("aberta"); document.getElementById("cad3").textContent="Aberta."; f.scrollIntoView({block:"start"}); }
+    }
+  }
+  box.addEventListener("click",e=>{
+    if(!e.target.closest(".conf")) return;
+    const d=e.target.closest(".desafio"), i=+d.closest(".degrau").dataset.i, j=+d.dataset.j, dz=DEG[i].d[j], fb=d.querySelector(".fb"), inp=d.querySelector("input");
+    const v=lerNum(inp.value); if(isNaN(v)){ fb.textContent="Escreva um número."; return; }
+    if(Math.abs(v-dz.r)<1e-6){ d.classList.add("ok"); inp.disabled=true; e.target.disabled=true; fb.textContent="Certo."; marca(i,j); }
+    else fb.textContent="Ainda não. Dica: "+dz.h;
+  });
+  box.addEventListener("keydown",e=>{ if(e.key==="Enter"&&e.target.matches(".desafio input")){ e.preventDefault(); e.target.nextElementSibling.click(); } });
+})();
+</script>
