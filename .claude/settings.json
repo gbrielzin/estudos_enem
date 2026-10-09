@@ -3,6 +3,18 @@
     "ask": [
       "Bash(git *)",
       "PowerShell(git *)"
+    ],
+    "allow": [
+      "Bash(npx tsc --noEmit)",
+      "Bash(python -m unittest discover -p \"test_*.py\")",
+      "Bash(npm test)",
+      "Bash(python -m ruff check . --select F,E9)",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__read_console_messages",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__claude-in-chrome__find",
+      "mcp__claude-in-chrome__list_connected_browsers",
+      "mcp__claude-in-chrome__read_page"
     ]
   },
   "hooks": {
