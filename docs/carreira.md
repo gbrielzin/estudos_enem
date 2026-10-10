@@ -127,6 +127,8 @@ olimpíada.
 
 ## 5. Opções pra universitário (18+) — 2026-10-10
 
+**Calendário de séries recorrentes (mês de inscrição, como se preparar por empresa):** [calendario_hackathons.md](calendario_hackathons.md).
+
 **Busca automática:** rotina "Busca semanal de hackathons", toda segunda às
 7h50 (Brasília), com notificação no celular. Procura hackathons de empresas
 grandes no Brasil, hackathons online abertos a brasileiros, competições
