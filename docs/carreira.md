@@ -148,3 +148,22 @@ que interessam (Itaú, Bradesco, Nubank etc.).
 - [ ] Montar trio pra Maratona SBC (procurar na Estácio ou em comunidades).
 - [ ] Primeira competição Kaggle de iniciante.
 - [ ] Primeiro hackathon de empresa grande (vem da busca semanal).
+
+---
+
+## 6. Ideia de projeto: Claude Code controlando o Opera GX — 2026-10-10
+
+**Hipótese (não confirmada):** o Claude no navegador não conecta no Opera GX
+porque a ponte com o app é registrada só pro Chrome, apesar de o Opera GX ser
+Chromium.
+
+**Projeto pequeno:** fazer o Claude Code controlar o Opera GX via MCP de
+automação de navegador (Playwright MCP, Chrome DevTools MCP) pela porta de
+depuração do Chromium. Entregar um script de configuração e um README.
+
+- Bom pra build in public (funcionando ou não, o "por quê" vira conteúdo).
+- Treino direto de MCP, mesma linha do servidor MCP do ENEM GI.
+- Cuidado: dar controle do navegador a uma IA é sensível de segurança. Usar
+  perfil separado, sem contas logadas.
+- **Não apostar como produto:** depende de ferramenta fechada de terceiro.
+- Fazer **depois do ENEM**.
