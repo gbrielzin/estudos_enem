@@ -88,6 +88,10 @@ porque o ENEM GI ou um hackathon precisou dela.
 
 ## 4. Olimpíadas — 2026-10-09
 
+> **Atualização 2026-10-10:** já sou universitário (ADS, Estácio). A maioria
+> das olimpíadas da tabela abaixo é só pra ensino médio e **não se aplica**.
+> O equivalente na faculdade está na seção 5.
+
 Por que importam: viram diferencial no currículo (estágio em banco e big
 tech), treinam o tipo de problema de entrevista técnica e **algumas
 universidades (USP e Unicamp) têm vagas pra medalhistas** (conferir edital).
@@ -118,3 +122,27 @@ olimpíada.
 - [ ] Ver com a escola quais olimpíadas ela já inscreve.
 - [ ] Escolher 2 ou 3 pra 2027 (sugestão: OBI + uma que coincida com a matéria
       mais fraca no ENEM).
+
+---
+
+## 5. Opções pra universitário (18+) — 2026-10-10
+
+**Busca automática:** rotina "Busca semanal de hackathons", toda segunda às
+7h50 (Brasília), com notificação no celular. Procura hackathons de empresas
+grandes no Brasil, hackathons online abertos a brasileiros, competições
+universitárias e estágios. Pra complementar sem esforço: Google Alerts com
+`hackathon "inscrições abertas"` e seguir no LinkedIn as páginas das empresas
+que interessam (Itaú, Bradesco, Nubank etc.).
+
+| Opção | O que é | Por que vale |
+|---|---|---|
+| Hackathons de empresa grande | Bancos, fintechs, varejo, governo | Contato direto com recrutador; muitos viram porta pra estágio |
+| Maratona SBC de Programação | Competição universitária em trio (fase regional e nacional, ligada ao ICPC) | A "olimpíada" da faculdade; muito valorizada em big tech |
+| Kaggle | Competições de dados e ML, online | Encaixa no meu perfil de dados; ranking público |
+| Google Summer of Code | Open source pago, com mentor | Mesmo caminho do perfil de referência (open source) |
+| Programas de estágio de empresas grandes | Processos seletivos anuais | Objetivo direto; triagem pela skill `triagem` |
+| Construir com IA | Servidor MCP do ENEM GI, features com LLM, build in public | Hoje construir e mostrar pesa mais que certificado |
+
+- [ ] Montar trio pra Maratona SBC (procurar na Estácio ou em comunidades).
+- [ ] Primeira competição Kaggle de iniciante.
+- [ ] Primeiro hackathon de empresa grande (vem da busca semanal).
