@@ -100,8 +100,9 @@ depois dá pra dizer "os posts de número vão melhor que os de pergunta" com da
 - **Nome candidato:** Brazilian.dev. Conferir se `@brazilian.dev` está livre no Instagram, TikTok e YouTube e se o domínio `brazilian.dev` está disponível.
 - **Bio (precisa dizer "ENEM" na hora):** "Dados reais do ENEM pra você decidir o que estudar".
 - **Nome do produto:** ENEM GI (aparece na bio e no link do lançamento).
-- **Foto de perfil:** um **personagem**, não o rosto. Rascunho em [avatar_conceito.svg](avatar_conceito.svg): cabeça em formato de tela, fones de ouvido e moletom amarelo.
-- **Evolução planejada:** (1) personagem nos carrosséis e na foto; (2) personagem narrando os vídeos; (3) rosto real entra aos poucos, e o personagem fica como mascote. Dica: a tela do rascunho é o lugar onde o rosto entra depois.
+- **Foto de perfil:** um **personagem**, não o rosto. Escolhido: dev de cabelo cacheado, óculos redondos e moletom amarelo, com **6 expressões** (feliz, surpreso, pensando, chocado, rindo, desconfiado) em [personagem/](personagem/). A foto de perfil é a "feliz". Alternativa guardada: [alt_cabeca_tela.svg](personagem/alt_cabeca_tela.svg). Pra mudar cores ou criar outra expressão: `personagem/gerar_personagem.py`.
+- **Uso:** o mesmo personagem na foto, nas capas dos vídeos/carrosséis e narrando. A expressão certa na capa chama o clique.
+- **Evolução planejada:** (1) personagem nos carrosséis e na foto; (2) personagem narrando os vídeos; (3) rosto real entra aos poucos, e o personagem fica como mascote. Dica: o rosto entra aos poucos, em vídeo ou foto, ao lado do personagem.
 - **Não confundir com o Pipoco:** o Pipoco é o mascote do app (produto). Este personagem é o criador. Podem aparecer juntos.
 - **Cuidado:** o personagem tem que ser original. Nada de coruja verde nem nada que lembre o Duolingo ou outro personagem conhecido.
 
