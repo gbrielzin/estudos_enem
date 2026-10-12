@@ -95,8 +95,18 @@ Pra saber o que funciona. Anotar numa planilha simples, **por post**, 48 h depoi
 Sem meta numérica inventada por enquanto. Os 2 primeiros meses servem pra criar **a minha base de comparação**:
 depois dá pra dizer "os posts de número vão melhor que os de pergunta" com dado próprio.
 
-## 9. Perguntas em aberto
+## 9. Identidade do perfil (2026-10-12)
 
-- [ ] Nome e identidade do perfil (arroba, foto, bio).
+- **Nome candidato:** Brazilian.dev. Conferir se `@brazilian.dev` está livre no Instagram, TikTok e YouTube e se o domínio `brazilian.dev` está disponível.
+- **Bio (precisa dizer "ENEM" na hora):** "Dados reais do ENEM pra você decidir o que estudar".
+- **Nome do produto:** ENEM GI (aparece na bio e no link do lançamento).
+- **Foto de perfil:** um **personagem**, não o rosto. Rascunho em [avatar_conceito.svg](avatar_conceito.svg): cabeça em formato de tela, fones de ouvido e moletom amarelo.
+- **Evolução planejada:** (1) personagem nos carrosséis e na foto; (2) personagem narrando os vídeos; (3) rosto real entra aos poucos, e o personagem fica como mascote. Dica: a tela do rascunho é o lugar onde o rosto entra depois.
+- **Não confundir com o Pipoco:** o Pipoco é o mascote do app (produto). Este personagem é o criador. Podem aparecer juntos.
+- **Cuidado:** o personagem tem que ser original. Nada de coruja verde nem nada que lembre o Duolingo ou outro personagem conhecido.
+
+## 10. Perguntas em aberto
+
+- [x] Nome do perfil: Brazilian.dev (candidato, conferir disponibilidade).
 - [ ] Quais redes primeiro: Instagram + TikTok, ou só uma pra começar?
 - [ ] Qual a primeira série de dados (sugestão: redação, pelos dados dos microdados).
