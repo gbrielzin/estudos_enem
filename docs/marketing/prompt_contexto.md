@@ -43,6 +43,30 @@ Não invente números nem fatos. Se algo não estiver no material que colei, dig
 
 ---
 
+## Prompt 2: achar minha identidade (foto de perfil + estilo de vídeo)
+
+Usar **depois** de juntar 3 a 5 canais de inspiração (prints do perfil, da capa e da transcrição de
+cada um). Este prompt não pede ideia de post: pede **padrões e 3 direções de identidade**.
+Colar o "CONTEXTO FIXO" do prompt acima antes (ou na mesma mensagem), e depois isto:
+
+```
+OBJETIVO: achar a identidade ideal do meu perfil: (a) foto de perfil e personagem, (b) estilo de vídeo.
+
+MATERIAL: vou colar prints e textos de 3 a 5 canais de inspiração. Antes de começar, se faltar algo essencial, faça no máximo 5 perguntas curtas (ex.: que ferramenta de edição uso, quanto tempo por vídeo, se falo ou só mostro texto).
+
+RESTRIÇÕES DE PRODUÇÃO: gravo e edito no celular, sem estúdio e com pouco tempo (ENEM em 08 e 15/11/2026). Ainda não mostro o rosto: o personagem é a cara do perfil, e o rosto entra aos poucos depois.
+
+ENTREGUE, NESTA ORDEM:
+1. PADRÕES: uma tabela comparando os canais: tipo de foto de perfil (rosto, personagem, logo), paleta, composição da capa, formato de vídeo (rosto no canto, tela, animação, só texto), duração, ritmo de edição, legenda na tela, tom de voz, CTA. Só descrição e hipótese, nada de copiar.
+2. O QUE SERVE pro meu público (jovem do ensino médio, leigo, decide em 3 segundos) e o que não serve.
+3. TRÊS DIREÇÕES de identidade, cada uma com: nome da direção, sensação (3 palavras), paleta com códigos hex, mudanças no meu personagem (cabelo cacheado, óculos redondos, moletom amarelo), modelo de capa, estilo de vídeo (formato, duração, edição, voz) e um exemplo de post completo usando um dado real meu.
+4. RECOMENDAÇÃO: qual direção e por quê, ligando ao meu diferencial (dado real) e à minha restrição de tempo.
+5. TESTE DE 2 SEMANAS: como validar com poucos posts, usando as métricas: salvamentos, compartilhamentos, seguidores novos por post, tipo de gancho.
+6. ORIGINALIDADE: confirme que nada na minha identidade imita o personagem, o desenho, as cores ou o texto de nenhum canal citado e liste o que mudar se imitar.
+
+Não invente números de desempenho dos canais. O que não estiver no material, diga que não sei.
+```
+
 ## Como usar
 
 1. Achar o vídeo. No YouTube: descrição > **Mostrar transcrição** > copiar. Anotar título, canal e visualizações.
