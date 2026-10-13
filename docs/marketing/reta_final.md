@@ -53,7 +53,7 @@ Gravação: **domingo, 1 h** pros 3 vídeos da semana. Postagem: ter, qui, sáb.
 
 ### V0 — apresentação (gravar hoje, 20 min)
 
-1. **Gancho (0-3 s):** "Tenho 18 anos, faço o ENEM em novembro e tô construindo o app que eu uso pra estudar."
+1. **Gancho (0-3 s):** "Você acerta a conta e marca a errada? Eu também. Tenho 18 anos, faço o ENEM em novembro e tô construindo o app que mostra por quê."
 2. **Problema (3-12 s):** "Todo app de estudo te dá cronograma. Mas eu não errava por não ter estudado. Eu errava sempre do mesmo jeito."
 3. **O que eu fiz (12-25 s):** mostra a tela do simulado: "Então eu fiz um que corrige a prova, calcula a nota TRI e me mostra *por que* eu errei cada questão."
 4. **Prova (25-35 s):** "Já tem um amigo testando comigo. Até a prova eu vou postar aqui os erros que eu mais cometo, pra você não cometer."
@@ -63,7 +63,7 @@ Gravação: **domingo, 1 h** pros 3 vídeos da semana. Postagem: ter, qui, sáb.
 
 Fonte: sessão de 25-26/09 (ver ideias.md). Conferir a conta e o que o aluno respondeu na sessão antes de gravar.
 
-1. **Gancho:** "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." (mostra dois docinhos ou duas bolinhas de papel)
+1. **Gancho:** "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." (já é gancho de dor: o aluno se reconhece no erro) (mostra dois docinhos ou duas bolinhas de papel)
 2. **A armadilha:** "4 é o que acontece com a *área*. Massa é volume."
 3. **A regra:** "Dobrou a medida: área ×4, volume ×8. Triplicou: ×9 e ×27. É o expoente."
 4. **Fecha:** "Resposta: 8. No ENEM eles colocam o 4 nas alternativas de propósito."
@@ -80,6 +80,10 @@ sessão antes de gravar e contar do jeito que aconteceu.
 3. **O que não fazer:** "Ajustar a conta pra bater com uma alternativa."
 4. **O hábito:** "Resultado fora das alternativas? Relê as 5 e refaz a conta do zero."
 5. **Chamada:** "Segue pra ver o próximo."
+
+## Antes de gravar (aprendizado do funil)
+
+Escrever 3 linhas sobre quem é o aluno e o que ele sente quando erra, e medir 4 números por semana. Detalhe em [aprendizados_funil.md](aprendizados_funil.md).
 
 ## Checklist pra hoje (é literalmente só começar)
 

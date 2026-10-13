@@ -36,6 +36,7 @@ Nenhum conteúdo nasce do zero. Tudo sai de algo que já acontece:
 ## Arquivos
 
 - [ideias.md](ideias.md) — banco de ideias por pilar e público.
+- [aprendizados_funil.md](aprendizados_funil.md) — dor do aluno primeiro, segmentar, 4 números do funil (vídeo do Vinícius).
 - [reta_final.md](reta_final.md) — vídeo por vídeo até o ENEM (13/10 → 15/11), com roteiros prontos.
 - [calendario.md](calendario.md) — quando postar o quê, pelo calendário do ENEM/SISU.
 
