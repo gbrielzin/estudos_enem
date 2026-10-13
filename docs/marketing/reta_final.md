@@ -7,7 +7,7 @@ Montado em 13/10, a 26 dias do 1º dia de prova (8/11). Base:
 
 **O Gabriel também faz a prova.** Conteúdo não pode comer estudo. Por
 isso: 3 vídeos por semana, gravados em lote, e cada vídeo sai de uma
-sessão de estudo que já aconteceu (ideias E1-E7). Nenhum roteiro do zero.
+sessão de estudo que já aconteceu (ideias E1-E7). Nenhum roteiro do zero: os de Estudo (E) saem de sessão que já aconteceu; os de Dados (D) saem de análise que já está no repo (microdados, banco de redações), sem análise nova até a prova.
 
 ## Objetivo até 15/11
 
@@ -34,7 +34,7 @@ Gravação: **domingo, 1 h** pros 3 vídeos da semana. Postagem: ter, qui, sáb.
 
 | Data | Vídeo | Gancho | Status |
 |---|---|---|---|
-| **ter 13/10** | V0 | "Tenho 18 anos, faço o ENEM daqui a 26 dias e tô construindo o app que eu uso pra estudar." | 🎬 roteiro abaixo |
+| **ter 13/10** | V0 | "Tenho 18 anos, faço o ENEM em novembro e tô construindo o app que eu uso pra estudar." | 🎬 roteiro abaixo |
 | qui 15/10 | E1 | "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." | 🎬 roteiro abaixo |
 | sáb 17/10 | E5 | "Minha conta deu 93. Nas alternativas tinha 930." | 🎬 roteiro abaixo |
 | ter 20/10 | E2 | "Porcentagem tem uma pergunta que resolve metade das questões: porcento DE QUÊ?" | 💡 |
@@ -46,19 +46,22 @@ Gravação: **domingo, 1 h** pros 3 vídeos da semana. Postagem: ter, qui, sáb.
 | ter 03/11 | D3 | "Juntei 186 dicas de redação da internet. 4 contradizem o INEP." | 💡 |
 | qui 05/11 | E7 | "Evaporar rouba calor: por que dia úmido é abafado." | 💡 |
 | sáb 07/11 | — | Véspera: sem vídeo novo. Dormir. | — |
-| 09-14/11 | — | Entre as provas: repostar E1, E4, E6 (exatas e natureza caem no 2º dia). | — |
+| 09-14/11 | — | Entre as provas: repostar E1, E2, E3 (mesma lista do [calendario.md](calendario.md); exatas e natureza caem no 2º dia). | — |
+| dom 15/11 | — | 2º dia de prova: sem vídeo novo. | — |
 
 ## Roteiros prontos
 
 ### V0 — apresentação (gravar hoje, 20 min)
 
-1. **Gancho (0-3 s):** "Tenho 18 anos, faço o ENEM daqui a 26 dias e tô construindo o app que eu uso pra estudar."
+1. **Gancho (0-3 s):** "Tenho 18 anos, faço o ENEM em novembro e tô construindo o app que eu uso pra estudar."
 2. **Problema (3-12 s):** "Todo app de estudo te dá cronograma. Mas eu não errava por não ter estudado. Eu errava sempre do mesmo jeito."
 3. **O que eu fiz (12-25 s):** mostra a tela do simulado: "Então eu fiz um que corrige a prova, calcula a nota TRI e me mostra *por que* eu errei cada questão."
-4. **Prova (25-35 s):** "Tem gente testando comigo. Até a prova eu vou postar aqui os erros que eu mais cometo, pra você não cometer."
+4. **Prova (25-35 s):** "Já tem um amigo testando comigo. Até a prova eu vou postar aqui os erros que eu mais cometo, pra você não cometer."
 5. **Chamada:** "Segue pra acompanhar."
 
 ### E1 — o docinho (área × volume)
+
+Fonte: sessão de 25-26/09 (ver ideias.md). Conferir a conta e o que o aluno respondeu na sessão antes de gravar.
 
 1. **Gancho:** "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." (mostra dois docinhos ou duas bolinhas de papel)
 2. **A armadilha:** "4 é o que acontece com a *área*. Massa é volume."
@@ -84,4 +87,4 @@ sessão antes de gravar e contar do jeito que aconteceu.
 - [ ] Gravar o V0 em 3 tentativas no máximo. A 3ª vai pro ar mesmo se não estiver perfeita.
 - [ ] Legenda automática no CapCut, gancho escrito no topo.
 - [ ] Postar no TikTok e no Reels.
-- [ ] Marcar ✅ aqui e em [ideias.md](ideias.md).
+- [ ] Marcar ✅ na tabela do calendário acima (o V0 não está no banco de ideias).
