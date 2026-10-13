@@ -81,3 +81,48 @@ animação acaba em menos de 1 s e não bloqueia toque.
 
 - **"Mentor prompt"** (repo público do PC): prompt que nunca dá a resposta pronta e desafia cada decisão. Mesma linha do método das sessões de estudo; vale ler pra comparar com a skill `/estudo`.
 - **Validação antes de lançar:** ele perguntou à audiência se pagaria e o que faria desconfiar. Fazer o mesmo com os usuários do beta.
+
+---
+
+## 7. Segundo vídeo (13/10): app animado "estilo Finch" com Claude
+
+Fonte: "Watch Me Vibe Code an Animated App…" (24 min, transcrição lida inteira). O criador recria o Finch (app de autocuidado com um bichinho que reage) com um jacaré chamado Chewy: React Native + Expo, imagens e vídeos curtos gerados por IA via conector no Claude. Ele diz que o Finch fatura US$ 1 mi/mês; é alegação dele, não conferi.
+
+### Processo dele
+
+1. **Contexto antes do prompt:** imagem do personagem + **gravação de tela do app de referência** numa pasta, e o link da loja pra ler descrição e avaliações (avaliação mostra o recurso que o povo pede).
+2. **Primeiro prompt é de plano**, não de construção: "quebra as funcionalidades e as telas, quero planejar antes de construir".
+3. **Níveis:** (1) telas principais, (2) onboarding completo com paywall, (3) animar tudo. Depois, como ligar no celular.
+4. **Prompt falado** (ditado), não digitado.
+5. **Protótipo no navegador dentro de moldura de celular** antes do app de verdade.
+6. **Correção por print** ("tira o contorno", "imagem quebrada aqui") e, pra muita coisa, **vídeo gravado com voz e mouse** comentando tela por tela, que ele diz ser mais rápido que anotar print.
+7. **Enquanto a IA gera as animações, o agente (parado) monta o back end.** Tempo de espera não fica ocioso.
+8. **Animação pronta (Lottie):** baixa de um site de animações gratuitas, troca a cor pra combinar com o tema e pede "aparece no centro quando completar a meta".
+9. **Preview no celular de verdade** (EAS Build, exige conta de desenvolvedor Apple, ~US$ 99/ano) em vez do Expo Go, que não aceita banco de dados nem login do Google.
+
+### O que o app dele mostra que vale pro ENEM GI
+
+- **Personagem que reage é o que prende.** O Finch é um app de tarefa pequena (saúde mental) que virou jogo por causa do bichinho. Mesma lógica do Pipo.
+- **Onboarding de 17-18 telas antes do paywall** faz a pessoa "comprar a ideia". Pro ENEM GI a versão certa é o **diagnóstico grátis como onboarding** (perguntas que mostram o erro do aluno), sem paywall agora. Atenção: o público tem menor de idade, então qualquer cobrança precisa passar pelo responsável.
+- **Confete só no momento de concluir** (tarefa marcada), não solto.
+- Ele alerta pra **não copiar o app de referência telas por tela**. O ENEM GI tem identidade própria (Pipo, trilha, diagnóstico); a referência serve pra aprender o que funciona.
+
+### O que NÃO se aplica (e por quê)
+
+| Ideia dele | Por que não pro ENEM GI |
+|---|---|
+| Personagem animado com **vídeo gerado por IA** (loops em vídeo) | O Pipo já é **desenhado em código** (`components/mascote.tsx`) e já "respira" em loop. Vídeo pesa no app, e o próprio criador viu defeitos: personagem mudando de tamanho no loop, nuvem que não fecha o ciclo. Vetor em código não tem isso e funciona com `reduzir movimento`. |
+| Pagar plataforma de geração de imagem/vídeo | Gasto novo sem necessidade agora. Fica pra material da landing (imagem, não vídeo). |
+| EAS Build / conta Apple de US$ 99 | O app roda como web e Expo; publicar em loja é decisão futura, depois de autenticação e LGPD. |
+| Vídeo de tela como entrada | Aqui eu leio imagem e texto; **não assisto vídeo**. Funciona com sequência de prints ou transcrição. |
+
+### O que adotar (entra no backlog de animação, seção 4)
+
+| # | Ideia | Como | Status |
+|---|---|---|---|
+| A7 | **Pipo reage ao resultado do simulado** (comemora/consola conforme a nota) | o `Mascote` já tem `mood` (`happy`, `cheer`, `sad`, `sleep`); falta ligar ao placar na tela de resultado | 💡 |
+| A8 | **Pipo pisca e olha pro lado de vez em quando** (idle mais vivo) | extensão do "respirando", em código, sem vídeo | 💡 |
+| A9 | **Confete em Lottie na conclusão** | `lottie-react-native` ainda não está no `package.json`. Antes: conferir se o Expo 57 suporta, e **ler a licença de cada animação** baixada | 💡 |
+| A10 | **Protótipo em moldura de celular no navegador antes de codar** tela nova | já é o fluxo do Claude Design; manter | ✅ |
+| W8 | **Plano antes de construir** como primeiro prompt de feature grande | combina com o fluxo de issue antes de PR | 💡 |
+| W9 | **Agente trabalha em outra parte enquanto algo demora** (geração, teste longo) | usar subagente em paralelo quando houver tarefa independente | 💡 |
