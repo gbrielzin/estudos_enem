@@ -1,0 +1,43 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "849ccd3257b4e8678200",
+  "position": {
+    "x": 10,
+    "y": 5,
+    "z": 8000,
+    "height": 60,
+    "width": 1900,
+    "tabOrder": 8000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "ENEM GI — desempenho de estudo",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "fontWeight": "bold"
+                    }
+                  },
+                  {
+                    "value": "   SQLite → Snowflake (views) → Power BI · 1.067 tentativas em 1.514 questões · 24/08 a 13/10/2026",
+                    "textStyle": {
+                      "fontSize": "11pt"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

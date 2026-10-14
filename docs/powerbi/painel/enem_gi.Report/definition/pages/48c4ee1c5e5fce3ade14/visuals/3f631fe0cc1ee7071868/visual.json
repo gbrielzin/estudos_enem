@@ -1,0 +1,75 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "3f631fe0cc1ee7071868",
+  "position": {
+    "x": 10,
+    "y": 220,
+    "z": 3000,
+    "height": 400,
+    "width": 620,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "VW_DIM_QUESTAO"
+                    }
+                  },
+                  "Property": "AREA"
+                }
+              },
+              "queryRef": "VW_DIM_QUESTAO.AREA",
+              "nativeQueryRef": "AREA",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "VW_FATO_TENTATIVA"
+                    }
+                  },
+                  "Property": "% Acerto"
+                }
+              },
+              "queryRef": "VW_FATO_TENTATIVA.% Acerto",
+              "nativeQueryRef": "% Acerto"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "VW_FATO_TENTATIVA"
+                  }
+                },
+                "Property": "% Acerto"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

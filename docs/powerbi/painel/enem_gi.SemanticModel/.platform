@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "enem_gi"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "a5a33f8b-9a86-439c-8db5-cc2c5fa3041a"
+  }
+}
