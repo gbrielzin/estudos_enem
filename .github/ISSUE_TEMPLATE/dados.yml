@@ -1,0 +1,31 @@
+name: Qualidade de dados
+description: Valor faltando, inválido ou inconsistente no banco
+labels: ["dados"]
+body:
+  - type: input
+    id: tabela_coluna
+    attributes:
+      label: Tabela e coluna
+      placeholder: "tentativas.tipo_erro"
+    validations:
+      required: true
+  - type: textarea
+    id: achado
+    attributes:
+      label: O que foi encontrado
+      description: Quantas linhas, desde quando, e a consulta que mostra o problema.
+      render: sql
+    validations:
+      required: true
+  - type: textarea
+    id: impacto
+    attributes:
+      label: Impacto
+      description: Qual indicador, painel ou funcionalidade fica errado por causa disso.
+    validations:
+      required: true
+  - type: textarea
+    id: correcao
+    attributes:
+      label: Correção proposta
+      description: Corrigir na origem, tratar na view, ou documentar como limitação.

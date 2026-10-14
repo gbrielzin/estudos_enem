@@ -1,0 +1,38 @@
+name: Bug
+description: Algo que deveria funcionar e não funciona
+labels: ["bug"]
+body:
+  - type: textarea
+    id: o_que_aconteceu
+    attributes:
+      label: O que aconteceu
+      description: O comportamento observado, com a mensagem de erro se houver.
+    validations:
+      required: true
+  - type: textarea
+    id: esperado
+    attributes:
+      label: O que era esperado
+    validations:
+      required: true
+  - type: textarea
+    id: como_reproduzir
+    attributes:
+      label: Como reproduzir
+      placeholder: |
+        1. Abrir ...
+        2. Clicar em ...
+    validations:
+      required: true
+  - type: dropdown
+    id: onde
+    attributes:
+      label: Onde
+      options:
+        - App (mobile/web)
+        - API (core/api.py)
+        - Regra de negócio (core/db.py)
+        - Pipeline de dados
+        - Outro
+    validations:
+      required: true
