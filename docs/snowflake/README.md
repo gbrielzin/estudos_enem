@@ -8,6 +8,15 @@ praticar o SQL de ambiente corporativo e comparar os dialetos.
 | `01_criar_e_carregar.sql` | warehouse XSMALL com auto-suspend, database/schema, tabelas, file format, stage, `COPY INTO` e conferência de volume e integridade |
 | `02_indicadores.sql` | 4 indicadores (acerto por matéria, evolução semanal, top 3 por área com `QUALIFY`, acerto por faixa TRI) com o equivalente em SQLite e SQL Server em comentário |
 
+E a mesma carga num banco **on premise**, em `../sqlserver/` (SQL Server Express local):
+
+| Arquivo | O que faz |
+|---|---|
+| `../sqlserver/01_criar_e_carregar.sql` | database/schema, tabelas com PK/FK/CHECK **impostas**, `BULK INSERT ... CHECK_CONSTRAINTS`, conferência de volume e de `sys.foreign_keys.is_not_trusted`, e um INSERT órfão comentado que prova o erro 547 |
+| `../sqlserver/02_indicadores_tsql.sql` | os mesmos 4 indicadores em T-SQL (`TOP`, CTE no lugar de `QUALIFY`, `CROSS APPLY (VALUES ...)`, `SET DATEFIRST 1`) |
+
+Os três bancos (SQLite, Snowflake, SQL Server) deram os mesmos números nas 4 consultas.
+
 ## Como reproduzir
 
 1. Exportar as duas tabelas do `enem.db` para CSV (de dentro de `core/`):
@@ -43,6 +52,8 @@ praticar o SQL de ambiente corporativo e comparar os dialetos.
 | Limitar linhas | `LIMIT n` | `LIMIT n` | `TOP n` / `FETCH NEXT n ROWS ONLY` |
 | Filtrar window function | CTE | `QUALIFY` | CTE |
 | Truncar para semana | `strftime('%Y-%W', d)` | `DATE_TRUNC('WEEK', d)` | `DATETRUNC(week, d)` (2022+) |
+| Semana começa em | segunda | segunda | **domingo** (padrão EUA) — `SET DATEFIRST 1` |
+| Carga em lote | `.import` / Python | stage + `COPY INTO` | `BULK INSERT` (pula FK/CHECK sem `CHECK_CONSTRAINTS`) |
 | Apelido no `GROUP BY` | aceita | aceita | não aceita |
 | PK / FK | impostas (com `PRAGMA foreign_keys`) | **só informativas** — conferir órfãos com `LEFT JOIN` | impostas |
 | `TEXT PRIMARY KEY` aceita NULL? | sim (só `INTEGER PRIMARY KEY` não) | `NOT NULL` é a única restrição imposta — declare explícito | não (PK implica NOT NULL) |
