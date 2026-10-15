@@ -31,6 +31,7 @@ import {
   getStreak,
   getTrilha,
   getTrilhaFixa,
+  registrarEvento,
   registrarTentativa,
   reportarQuestao,
   Resolucao,
@@ -1254,7 +1255,12 @@ function ExplicacaoQuestao({ idQuestao }: { idQuestao: string }) {
 
   return (
     <View style={styles.explicacaoBox}>
-      <Pressable style={styles.explicacaoToggle} onPress={() => setAberto((v) => !v)}>
+      <Pressable
+        style={styles.explicacaoToggle}
+        onPress={() => {
+          if (!aberto) registrarEvento('explicacao_aberta');
+          setAberto((v) => !v);
+        }}>
         <Feather name={aberto ? 'chevron-up' : 'chevron-down'} size={15} color={Brand.roxoClaro} />
         <Text style={styles.explicacaoToggleTexto}>{aberto ? 'Ocultar explicação' : '💡 Por que essa resposta'}</Text>
       </Pressable>

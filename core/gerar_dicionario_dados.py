@@ -86,12 +86,21 @@ DESCRICOES: dict[str, dict[str, str]] = {
     },
     "eventos": {
         "_camada": "fato",
-        "_tabela": "Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo.",
+        "_tabela": "Uso do app (abriu, viu tela, deu erro, abriu explicação, respondeu molde) para o painel de admin: quem abriu e travou, que recurso usa, de onde veio. Sem IP nem User-Agent completo.",
         "id_evento": "Chave substituta.",
-        "tipo": "app_aberto, tela_vista ou erro (TIPOS_EVENTO).",
+        "tipo": "app_aberto, tela_vista, erro, explicacao_aberta ou molde_respondido (lista em db.TIPOS_EVENTO; sem CHECK para tipo novo não exigir recriar a tabela).",
         "tela": "Rota do app onde aconteceu (ex.: /simulado), sem parâmetro.",
+        "detalhe": "Identificador curto: origem do link (?origem=) no app_aberto, id do molde no molde_respondido.",
         "aparelho": "Sistema e navegador resumidos pelo servidor a partir do User-Agent (ex.: Android · Chrome).",
         "criado_em": "Data/hora local do evento.",
+    },
+    "respostas_pesquisa": {
+        "_camada": "fato",
+        "_tabela": "Pesquisa curta do app ('de 0 a 10, indicaria?' + 'o que mais te ajudou'), no máximo 1 vez por semana. Base do NPS do painel.",
+        "id_resposta": "Chave substituta.",
+        "nota": "0 a 10. NPS = % de 9-10 menos % de 0-6.",
+        "comentario": "Texto livre opcional (até 500 caracteres).",
+        "criado_em": "Data/hora local da resposta.",
     },
     "tentativas_usuario": {
         "_camada": "fato",

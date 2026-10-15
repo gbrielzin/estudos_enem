@@ -1040,6 +1040,56 @@ class TestRegistrarEvento(_TestComBancoTemporario):
         db.registrar_evento("erro", "/trilha", "x" * 500)
         self.assertEqual(len(self._eventos()[0][2]), 60)
 
+    def test_detalhe_identificador_curto(self):
+        db.registrar_evento("molde_respondido", "/explore", detalhe="frenagem")
+        with self.assertRaises(ValueError):
+            db.registrar_evento("app_aberto", "/", detalhe="texto livre com espaço")
+        with db._conectar() as conn:
+            self.assertEqual(conn.execute("SELECT detalhe FROM eventos").fetchall()[0][0], "frenagem")
+
+    def test_migra_eventos_da_primeira_versao(self):
+        # Banco com a tabela do PR #55 (CHECK em 3 tipos, sem detalhe), como os de produção.
+        with db._conectar() as conn:
+            conn.execute("DROP TABLE eventos")
+            conn.execute(
+                "CREATE TABLE eventos (id_evento INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "tipo TEXT NOT NULL CHECK(tipo IN ('app_aberto', 'tela_vista', 'erro')), tela TEXT, aparelho TEXT, "
+                "criado_em TEXT NOT NULL DEFAULT (datetime('now','localtime')))"
+            )
+            conn.execute("CREATE INDEX idx_eventos_data ON eventos(criado_em)")
+            conn.execute("INSERT INTO eventos (tipo, tela, aparelho) VALUES ('app_aberto', '/', 'Android · Chrome')")
+        db.inicializar_banco()
+        db.inicializar_banco()  # idempotente
+        db.registrar_evento("molde_respondido", "/explore", detalhe="aquario")  # tipo que o CHECK antigo recusaria
+        with db._conectar() as conn:
+            linhas = [tuple(r) for r in conn.execute("SELECT tipo, aparelho, detalhe FROM eventos ORDER BY id_evento")]
+            indices = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'eventos'")}
+            tabelas = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        self.assertEqual(linhas, [("app_aberto", "Android · Chrome", None), ("molde_respondido", None, "aquario")])
+        self.assertIn("idx_eventos_data", indices)
+        self.assertNotIn("_eventos_v1", tabelas)
+
+
+class TestPesquisa(_TestComBancoTemporario):
+    def test_grava_e_devolve_a_ultima(self):
+        self.assertIsNone(db.ultima_resposta_pesquisa())
+        db.registrar_resposta_pesquisa(9, "  a explicação  ")
+        db.registrar_resposta_pesquisa(10, "   ")
+        with db._conectar() as conn:
+            linhas = [tuple(r) for r in conn.execute("SELECT nota, comentario FROM respostas_pesquisa ORDER BY id_resposta")]
+        self.assertEqual(linhas, [(9, "a explicação"), (10, None)])
+        self.assertIsNotNone(db.ultima_resposta_pesquisa())
+
+    def test_nota_fora_de_0_a_10(self):
+        for nota in (-1, 11):
+            with self.assertRaises(ValueError):
+                db.registrar_resposta_pesquisa(nota)
+
+    def test_comentario_longo_e_cortado(self):
+        db.registrar_resposta_pesquisa(5, "x" * 2000)
+        with db._conectar() as conn:
+            self.assertEqual(len(conn.execute("SELECT comentario FROM respostas_pesquisa").fetchone()[0]), 500)
+
 
 if __name__ == "__main__":
     unittest.main()

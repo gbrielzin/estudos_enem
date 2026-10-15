@@ -228,7 +228,7 @@ async function buscarJson<T>(caminho: string): Promise<T> {
   return resposta.json() as Promise<T>;
 }
 
-export type TipoEvento = 'app_aberto' | 'tela_vista' | 'erro';
+export type TipoEvento = 'app_aberto' | 'tela_vista' | 'erro' | 'explicacao_aberta' | 'molde_respondido';
 
 // Tela onde a pessoa está, atualizada pelo _layout a cada troca de rota:
 // o evento de erro registra a TELA do app, não o endpoint que falhou.
@@ -248,22 +248,71 @@ export function telaDoCaminho(caminho: string): string {
   return caminho.split('?')[0].toLowerCase().replace(/[^a-z0-9_/-]/g, '').slice(0, 60) || '/';
 }
 
+/** Identificador curto que o backend aceita em `detalhe` (a-z, 0-9, _ e -); vazio = não manda. */
+export function identificador(texto: string | null | undefined): string | undefined {
+  const limpo = (texto ?? '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 40);
+  return limpo || undefined;
+}
+
+const CHAVE_ORIGEM = 'enem_origem';
+
+/**
+ * De onde a pessoa veio (`?origem=whatsapp` no link que você manda). Guarda
+ * a PRIMEIRA origem no navegador: quem entrou pelo TikTok e depois abriu
+ * pelo atalho continua contando como TikTok. Fora do navegador, undefined.
+ */
+export function origemDoLink(): string | undefined {
+  if (typeof window === 'undefined' || !window.location) return undefined;
+  try {
+    const guardada = window.localStorage.getItem(CHAVE_ORIGEM);
+    if (guardada) return guardada;
+    const daUrl = identificador(new URLSearchParams(window.location.search).get('origem'));
+    if (daUrl) window.localStorage.setItem(CHAVE_ORIGEM, daUrl);
+    return daUrl;
+  } catch {
+    return undefined; // navegador sem localStorage
+  }
+}
+
 /**
  * Evento de uso para o painel de admin (POST /eventos, ver core/api.py):
- * abriu o app, viu uma tela, deu erro. Dispara e esquece: nunca lança
- * erro nem atrasa a tela, porque medir uso não pode quebrar o uso. O
- * aparelho não vai daqui; o backend resume o User-Agent.
+ * abriu o app, viu uma tela, deu erro, abriu explicação, respondeu molde.
+ * Sem `tela`, usa a tela atual. Dispara e esquece: nunca lança erro nem
+ * atrasa a tela, porque medir uso não pode quebrar o uso. O aparelho não
+ * vai daqui; o backend resume o User-Agent.
  */
-export function registrarEvento(tipo: TipoEvento, tela?: string): void {
+export function registrarEvento(tipo: TipoEvento, tela?: string, detalhe?: string): void {
+  const corpo: Record<string, string> = { tipo, tela: tela ?? telaAtual };
+  const id = identificador(detalhe);
+  if (id) corpo.detalhe = id;
   try {
     fetch(`${getApiBaseUrl()}/eventos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
-      body: JSON.stringify({ tipo, tela: tela ?? null }),
+      body: JSON.stringify(corpo),
       keepalive: true,
     }).catch(() => undefined);
   } catch {
     // fetch indisponível (teste, ambiente sem rede): ignora.
+  }
+}
+
+/** Data/hora da última resposta da pesquisa (null = nunca respondeu), ver GET /pesquisa/ultima. */
+export async function getUltimaPesquisa(): Promise<string | null> {
+  const corpo = await buscarJson<{ criado_em: string | null }>('/pesquisa/ultima');
+  return corpo.criado_em;
+}
+
+/** Pesquisa curta do Perfil: nota de 0 a 10 + o que mais ajudou (opcional). */
+export async function enviarPesquisa(nota: number, comentario: string): Promise<void> {
+  const resposta = await fetch(`${getApiBaseUrl()}/pesquisa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+    body: JSON.stringify({ nota, comentario: comentario.trim() || null }),
+  });
+  if (!resposta.ok) {
+    avisarFalha(resposta.status);
+    throw new ErroApi(`Backend respondeu ${resposta.status} ao enviar a pesquisa.`);
   }
 }
 

@@ -17,7 +17,8 @@ usuário novo (`criar_banco_usuario.py`); *compartilhado* = conteúdo igual para
 | `questoes` | dimensão | compartilhado | 18 | 1.514 | Uma linha por questão: real de prova ENEM ou do banco de prática. Centro do modelo. |
 | `resolucoes` | dimensão | compartilhado | 6 | 0 | Resoluções de uma questão (1 questão → N). Hoje guarda texto escrito à mão e as explicações de IA versionadas em explicacoes.jsonl. |
 | `relatos_questao` | fato | pessoal | 5 | 22 | Botão 'reportar' do app: sinal de que algo na questão pode estar errado (gabarito, enunciado cortado), para revisar em lote. |
-| `eventos` | fato | pessoal | 5 | — | Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo. |
+| `eventos` | fato | pessoal | 6 | — | Uso do app (abriu, viu tela, deu erro, abriu explicação, respondeu molde) para o painel de admin: quem abriu e travou, que recurso usa, de onde veio. Sem IP nem User-Agent completo. |
+| `respostas_pesquisa` | fato | pessoal | 4 | — | Pesquisa curta do app ('de 0 a 10, indicaria?' + 'o que mais te ajudou'), no máximo 1 vez por semana. Base do NPS do painel. |
 | `tentativas_usuario` | fato | pessoal | 10 | 1.072 | Log de cada resposta dada. Append-only: é o histórico de verdade; só muda por correção de gabarito ou edição explícita, sempre recalculando estado_revisao. |
 | `estado_revisao` | estado | pessoal | 5 | 769 | Uma linha por questão já tentada: o ponteiro mutável 'o que revisar hoje', derivado de tentativas_usuario. |
 | `historico_alteracoes` | auditoria | pessoal | 7 | 549 | Trilha de auditoria: toda correção de matéria/gabarito (ou questão apagada) depois que a questão já existia. |
@@ -108,15 +109,27 @@ Botão 'reportar' do app: sinal de que algo na questão pode estar errado (gabar
 
 ### `eventos`
 
-Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo.
+Uso do app (abriu, viu tela, deu erro, abriu explicação, respondeu molde) para o painel de admin: quem abriu e travou, que recurso usa, de onde veio. Sem IP nem User-Agent completo.
 
 | Coluna | Tipo | Obrigatória | Chave | Valores permitidos | Descrição |
 |---|---|---|---|---|---|
 | `id_evento` | INTEGER | sim | PK |  | Chave substituta. |
-| `tipo` | TEXT | sim |  | `app_aberto`, `tela_vista`, `erro` | app_aberto, tela_vista ou erro (TIPOS_EVENTO). |
+| `tipo` | TEXT | sim |  |  | app_aberto, tela_vista, erro, explicacao_aberta ou molde_respondido (lista em db.TIPOS_EVENTO; sem CHECK para tipo novo não exigir recriar a tabela). |
 | `tela` | TEXT | não |  |  | Rota do app onde aconteceu (ex.: /simulado), sem parâmetro. |
+| `detalhe` | TEXT | não |  |  | Identificador curto: origem do link (?origem=) no app_aberto, id do molde no molde_respondido. |
 | `aparelho` | TEXT | não |  |  | Sistema e navegador resumidos pelo servidor a partir do User-Agent (ex.: Android · Chrome). |
 | `criado_em` | TEXT | sim |  |  | Data/hora local do evento. |
+
+### `respostas_pesquisa`
+
+Pesquisa curta do app ('de 0 a 10, indicaria?' + 'o que mais te ajudou'), no máximo 1 vez por semana. Base do NPS do painel.
+
+| Coluna | Tipo | Obrigatória | Chave | Valores permitidos | Descrição |
+|---|---|---|---|---|---|
+| `id_resposta` | INTEGER | sim | PK |  | Chave substituta. |
+| `nota` | INTEGER | sim |  |  | 0 a 10. NPS = % de 9-10 menos % de 0-6. |
+| `comentario` | TEXT | não |  |  | Texto livre opcional (até 500 caracteres). |
+| `criado_em` | TEXT | sim |  |  | Data/hora local da resposta. |
 
 ### `tentativas_usuario`
 

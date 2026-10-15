@@ -2,6 +2,7 @@ import {
   cabecalhosAutenticacao,
   caminhoVariacaoMolde,
   definirTelaAtual,
+  identificador,
   registrarEvento,
   registrarTentativa,
   telaDoCaminho,
@@ -19,6 +20,19 @@ describe('telaDoCaminho', () => {
 
   it('vazio vira a raiz', () => {
     expect(telaDoCaminho('')).toBe('/');
+  });
+});
+
+describe('identificador', () => {
+  it('limpa para o formato que o backend aceita', () => {
+    expect(identificador('WhatsApp')).toBe('whatsapp');
+    expect(identificador('grupo-enem_2026')).toBe('grupo-enem_2026');
+  });
+
+  it('vazio ou so lixo vira undefined (nao manda detalhe)', () => {
+    expect(identificador('')).toBeUndefined();
+    expect(identificador('!!!')).toBeUndefined();
+    expect(identificador(null)).toBeUndefined();
   });
 });
 
@@ -53,6 +67,14 @@ describe('registrarEvento', () => {
     globalThis.fetch = chamado as unknown as typeof fetch;
     await expect(registrarTentativa('2024_azul_136', 'A')).rejects.toThrow('401');
     expect(chamado.mock.calls.some(([url]) => String(url).endsWith('/eventos'))).toBe(false);
+  });
+
+  it('sem tela usa a tela atual e manda detalhe limpo', () => {
+    const chamado = jest.fn().mockResolvedValue({ ok: true });
+    globalThis.fetch = chamado as unknown as typeof fetch;
+    definirTelaAtual('/explore');
+    registrarEvento('molde_respondido', undefined, 'Carro Eletrico!');
+    expect(JSON.parse(chamado.mock.calls[0][1].body)).toEqual({ tipo: 'molde_respondido', tela: '/explore', detalhe: 'carroeletrico' });
   });
 
   it('nunca lanca erro, nem com a rede fora', async () => {

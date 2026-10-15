@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { CardPesquisa } from '@/components/card-pesquisa';
 import { Mascote } from '@/components/mascote';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import {
@@ -101,11 +102,13 @@ export default function PerfilScreen() {
             </>
           )}
 
+          <CardPesquisa />
+
           {/* O que fica guardado (LGPD/confiança): só o que a pessoa faz no app, ver core/uso_admin.py. */}
           <Text style={styles.privacidade}>
             O app guarda só o que você faz aqui, ligado ao seu código de acesso: suas respostas (com data, hora e tempo), a
-            revisão, os relatos que você enviar, quando abre o app e que telas vê, e o tipo de aparelho (ex.: Android ·
-            Chrome). Não pede e-mail nem telefone.
+            revisão, os relatos e notas que você enviar, quando abre o app, que telas e recursos usa, por qual link chegou e
+            o tipo de aparelho (ex.: Android · Chrome). Não pede e-mail nem telefone.
           </Text>
         </ScrollView>
       </SafeAreaView>
