@@ -40,6 +40,15 @@ class TestResumoUso(unittest.TestCase):
             )
             conn.commit()
 
+    def _eventos(self, nome, eventos):
+        """eventos: lista de (criado_em, tipo, aparelho). Cria a tabela no banco já existente."""
+        with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS eventos (id_evento INTEGER PRIMARY KEY, tipo TEXT, tela TEXT, aparelho TEXT, criado_em TEXT)"
+            )
+            conn.executemany("INSERT INTO eventos (criado_em, tipo, aparelho) VALUES (?, ?, ?)", eventos)
+            conn.commit()
+
     def _por_usuario(self, hoje=HOJE):
         return {r["usuario"]: r for r in uso_admin.resumo_uso(self.pasta, hoje=hoje)}
 
@@ -132,6 +141,45 @@ class TestResumoUso(unittest.TestCase):
         resumos = self._por_usuario()
         self.assertEqual(resumos["ana"]["tentativas"], 1)
         self.assertIn("erro", resumos["bia"])
+
+    def test_abriu_e_nao_respondeu(self):
+        self._banco("irma", [])
+        self._eventos("irma", [("2026-10-15 19:00:00", "app_aberto", "Android · Chrome"), ("2026-10-15 19:01:00", "erro", "Android · Chrome")])
+        irma = self._por_usuario()["irma"]
+        self.assertTrue(irma["abriu_sem_responder"])
+        self.assertEqual((irma["aberturas"], irma["erros"], irma["tentativas"]), (1, 1, 0))
+        self.assertEqual(irma["aparelho"], "Android · Chrome")
+        self.assertEqual(irma["primeira_atividade"], "2026-10-15 19:00:00")
+        self.assertIsNone(irma["taxa_acerto"])
+
+    def test_abrir_o_app_conta_como_voltar(self):
+        # Respondeu no dia 1 e só abriu o app no dia 2: voltou em D1.
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-02 08:00:00", "app_aberto", "iPhone · Safari")])
+        ana = self._por_usuario()["ana"]
+        self.assertTrue(ana["voltou_d1"])
+        self.assertFalse(ana["abriu_sem_responder"])
+        self.assertEqual(ana["ultima_atividade"], "2026-10-02 08:00:00")
+
+    def test_erro_conta_mas_nao_vira_atividade(self):
+        # Erro no dia 2 é o app falhando sozinho, não a pessoa voltando.
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-02 08:00:00", "erro", "Android · Chrome")])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["erros"], 1)
+        self.assertFalse(ana["voltou_d1"])
+        self.assertEqual(ana["ultima_atividade"], "2026-10-01 10:00:00")
+
+    def test_aparelho_e_o_mais_recente(self):
+        self._banco("ana", [])
+        self._eventos("ana", [("2026-10-01 10:00:00", "app_aberto", "Windows · Chrome"), ("2026-10-03 10:00:00", "app_aberto", "Android · Chrome")])
+        self.assertEqual(self._por_usuario()["ana"]["aparelho"], "Android · Chrome")
+
+    def test_banco_antigo_sem_tabela_eventos(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])  # sem eventos: banco de antes deste PR
+        ana = self._por_usuario()["ana"]
+        self.assertEqual((ana["tentativas"], ana["aberturas"], ana["aparelho"]), (1, 0, None))
+        self.assertNotIn("erro", ana)
 
     def test_pasta_que_nao_existe(self):
         self.assertEqual(uso_admin.resumo_uso(self.pasta / "nao_existe", hoje=HOJE), [])

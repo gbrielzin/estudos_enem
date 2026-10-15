@@ -222,9 +222,49 @@ async function buscarJson<T>(caminho: string): Promise<T> {
     throw new ErroApi(`Não consegui alcançar o backend em ${url} (${mensagem}). Confere se está na mesma wifi do computador e se o servidor está rodando.`);
   }
   if (!resposta.ok) {
+    avisarFalha(resposta.status);
     throw new ErroApi(`Backend respondeu ${resposta.status} em ${caminho}.`);
   }
   return resposta.json() as Promise<T>;
+}
+
+export type TipoEvento = 'app_aberto' | 'tela_vista' | 'erro';
+
+// Tela onde a pessoa está, atualizada pelo _layout a cada troca de rota:
+// o evento de erro registra a TELA do app, não o endpoint que falhou.
+let telaAtual = '/';
+
+export function definirTelaAtual(rota: string): void {
+  telaAtual = telaDoCaminho(rota);
+}
+
+/** Toda chamada que falha manda um evento de erro, menos 401: sem código válido não há banco onde gravar. */
+function avisarFalha(status: number): void {
+  if (status !== 401) registrarEvento('erro', telaAtual);
+}
+
+/** "/trilha?grande_area=x" -> "/trilha": a rota, sem parâmetro (o backend só aceita a-z, 0-9, _, / e -). */
+export function telaDoCaminho(caminho: string): string {
+  return caminho.split('?')[0].toLowerCase().replace(/[^a-z0-9_/-]/g, '').slice(0, 60) || '/';
+}
+
+/**
+ * Evento de uso para o painel de admin (POST /eventos, ver core/api.py):
+ * abriu o app, viu uma tela, deu erro. Dispara e esquece: nunca lança
+ * erro nem atrasa a tela, porque medir uso não pode quebrar o uso. O
+ * aparelho não vai daqui; o backend resume o User-Agent.
+ */
+export function registrarEvento(tipo: TipoEvento, tela?: string): void {
+  try {
+    fetch(`${getApiBaseUrl()}/eventos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+      body: JSON.stringify({ tipo, tela: tela ?? null }),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // fetch indisponível (teste, ambiente sem rede): ignora.
+  }
 }
 
 export function getMaterias(grandeArea: GrandeArea): Promise<string[]> {
@@ -322,6 +362,7 @@ export async function registrarTentativa(
     }),
   });
   if (!resposta.ok) {
+    avisarFalha(resposta.status);
     throw new ErroApi(`Backend respondeu ${resposta.status} ao registrar a tentativa.`);
   }
   return resposta.json();
@@ -353,6 +394,7 @@ export async function reportarQuestao(idQuestao: string, comentario: string): Pr
     body: JSON.stringify({ id_questao: idQuestao, comentario }),
   });
   if (!resposta.ok) {
+    avisarFalha(resposta.status);
     throw new ErroApi(`Backend respondeu ${resposta.status} ao enviar o relato.`);
   }
 }
@@ -457,6 +499,7 @@ export async function corrigirProva(
     body: JSON.stringify({ ...prova, respostas }),
   });
   if (!resposta.ok) {
+    avisarFalha(resposta.status);
     throw new ErroApi(`Backend respondeu ${resposta.status} ao corrigir a prova.`);
   }
   return resposta.json();

@@ -113,6 +113,20 @@ CREATE TABLE IF NOT EXISTS relatos_questao (
     criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 
+-- Eventos de uso do app (abriu, viu uma tela, deu erro), para o painel de
+-- admin saber quem abriu e travou antes de responder. Só o mínimo: tipo,
+-- tela, aparelho resumido ("Android · Chrome", montado no servidor a
+-- partir do User-Agent) e hora. Sem IP, sem User-Agent completo.
+CREATE TABLE IF NOT EXISTS eventos (
+    id_evento  INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo       TEXT NOT NULL CHECK(tipo IN ('app_aberto', 'tela_vista', 'erro')),
+    tela       TEXT,
+    aparelho   TEXT,
+    criado_em  TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_eventos_data ON eventos(criado_em);
+
 CREATE INDEX IF NOT EXISTS idx_relatos_questao ON relatos_questao(id_questao);
 CREATE INDEX IF NOT EXISTS idx_relatos_resolvido ON relatos_questao(resolvido);
 

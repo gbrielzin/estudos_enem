@@ -25,7 +25,7 @@ import db
 
 TABELAS_PESSOAIS = (
     "tentativas_usuario", "estado_revisao", "redacoes", "nomes_tentativas",
-    "relatos_questao", "historico_alteracoes",
+    "relatos_questao", "historico_alteracoes", "eventos",
 )
 CONFIGURACOES_PESSOAIS = ("motivo_pessoal", "data_inicio_plano")
 

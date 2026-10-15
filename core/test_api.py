@@ -368,6 +368,52 @@ class TestVariasPessoas(_TestComDuasPessoas):
             criar_banco_usuario.criar_banco("ana", self.pasta, origem=db.DB_PATH)
 
 
+class TestEventos(_TestComDuasPessoas):
+    """POST /eventos: grava no banco de quem mandou, com o aparelho resumido
+    pelo servidor (o User-Agent completo nunca chega ao banco)."""
+
+    UA_ANDROID = "Mozilla/5.0 (Linux; Android 14; SM-A546E) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36"
+
+    def _evento(self, codigo, corpo, ua=UA_ANDROID):
+        with patch.dict(os.environ, self.env):
+            return self.client.post("/eventos", json=corpo, headers={"Authorization": f"Bearer {codigo}", "User-Agent": ua})
+
+    def _gravados(self, nome):
+        with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
+            return conn.execute("SELECT tipo, tela, aparelho FROM eventos").fetchall()
+
+    def test_grava_no_banco_de_quem_mandou_com_aparelho_resumido(self):
+        self.assertEqual(self._evento(self.CODIGO_ANA, {"tipo": "app_aberto", "tela": "/"}).status_code, 200)
+        self.assertEqual(self._gravados("ana"), [("app_aberto", "/", "Android · Chrome")])
+        self.assertEqual(self._gravados("bia"), [])
+
+    def test_tipo_invalido_400_e_sem_codigo_401(self):
+        self.assertEqual(self._evento(self.CODIGO_ANA, {"tipo": "qualquer"}).status_code, 400)
+        self.assertEqual(self._evento("codigo-inventado-000000", {"tipo": "app_aberto"}).status_code, 401)
+        self.assertEqual(self._gravados("ana"), [])
+
+    def test_resumir_aparelho(self):
+        casos = {
+            self.UA_ANDROID: "Android · Chrome",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1": "iPhone · Safari",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36 Edg/129.0": "Windows · Edge",
+            "Mozilla/5.0 (Linux; Android 13; SAMSUNG SM-A135M) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/25.0 Chrome/121.0 Mobile Safari/537.36": "Android · Samsung",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/129.0 Mobile/15E148 Safari/604.1": "iPhone · Chrome",
+            "okhttp/4.12.0": "Android · app",
+            "curl/8.4.0": "outro · outro",
+        }
+        for ua, esperado in casos.items():
+            self.assertEqual(api.resumir_aparelho(ua), esperado)
+        self.assertIsNone(api.resumir_aparelho(None))
+
+    def test_banco_novo_nao_leva_eventos_do_dono(self):
+        import criar_banco_usuario
+        db.registrar_evento("app_aberto", "/", "Windows · Chrome")  # no banco de origem
+        destino = criar_banco_usuario.criar_banco("caio", self.pasta, origem=db.DB_PATH)
+        with closing(sqlite3.connect(destino)) as conn:
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM eventos").fetchone()[0], 0)
+
+
 class TestPainelAdmin(_TestComDuasPessoas):
     """/admin/uso (ver api._verificar_admin): chave própria do admin,
     separada dos códigos das pessoas. O cálculo em si é coberto em
@@ -391,6 +437,14 @@ class TestPainelAdmin(_TestComDuasPessoas):
         self.assertEqual((por_pessoa["ana"]["tentativas"], por_pessoa["ana"]["questoes"]), (2, 1))
         self.assertEqual(por_pessoa["ana"]["taxa_acerto"], 0.5)
         self.assertEqual(por_pessoa["bia"]["tentativas"], 0)
+
+    def test_quem_abriu_e_nao_respondeu_aparece_marcado(self):
+        with patch.dict(os.environ, self.env):
+            self.client.post("/eventos", json={"tipo": "app_aberto", "tela": "/"}, headers={"Authorization": f"Bearer {self.CODIGO_BIA}"})
+        bia = {p["usuario"]: p for p in self._uso(self.CHAVE_ADMIN).json()}["bia"]
+        self.assertEqual((bia["aberturas"], bia["tentativas"]), (1, 0))
+        self.assertTrue(bia["abriu_sem_responder"])
+        self.assertIsNotNone(bia["primeira_atividade"])
 
     def test_chave_errada_ou_codigo_de_pessoa_recusa(self):
         self.assertEqual(self._uso("chave-inventada-0000000000").status_code, 401)

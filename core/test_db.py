@@ -1019,5 +1019,27 @@ class TestCarregarGabaritoEIdempotente(_TestComBancoTemporario):
         self.assertEqual(db.detalhe_questao(id_q)["status_classificacao"], "classificado")
 
 
+class TestRegistrarEvento(_TestComBancoTemporario):
+    def _eventos(self):
+        with db._conectar() as conn:
+            return conn.execute("SELECT tipo, tela, aparelho FROM eventos ORDER BY id_evento").fetchall()
+
+    def test_grava_tipo_tela_e_aparelho(self):
+        db.registrar_evento("app_aberto", "/", "Android · Chrome")
+        db.registrar_evento("tela_vista", "/simulado")
+        self.assertEqual([tuple(e) for e in self._eventos()], [("app_aberto", "/", "Android · Chrome"), ("tela_vista", "/simulado", None)])
+
+    def test_recusa_tipo_e_tela_fora_do_padrao(self):
+        with self.assertRaises(ValueError):
+            db.registrar_evento("clicou_em_tudo")
+        with self.assertRaises(ValueError):
+            db.registrar_evento("tela_vista", "<script>")
+        self.assertEqual(self._eventos(), [])
+
+    def test_aparelho_longo_e_cortado(self):
+        db.registrar_evento("erro", "/trilha", "x" * 500)
+        self.assertEqual(len(self._eventos()[0][2]), 60)
+
+
 if __name__ == "__main__":
     unittest.main()

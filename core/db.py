@@ -2850,6 +2850,25 @@ def reportar_questao(id_questao: str, comentario: str) -> int:
         return cursor.lastrowid
 
 
+TIPOS_EVENTO = ("app_aberto", "tela_vista", "erro")
+_TELA_VALIDA = re.compile(r"[a-z0-9_/\-]{1,60}")
+
+
+def registrar_evento(tipo: str, tela: str | None = None, aparelho: str | None = None) -> int:
+    """Grava um evento de uso (ver tabela `eventos` em schema.sql) --
+    alimenta o painel de admin (uso_admin.py): quem abriu o app, que
+    telas viu, onde deu erro. `tela` é a rota do app ("/simulado"), não
+    texto livre; `aparelho` já chega resumido pela API. Retorna id_evento."""
+    if tipo not in TIPOS_EVENTO:
+        raise ValueError(f"tipo de evento inválido: '{tipo}'.")
+    if tela is not None and not _TELA_VALIDA.fullmatch(tela):
+        raise ValueError("tela inválida: use a rota do app (a-z, 0-9, _, / e -).")
+    aparelho = aparelho[:60] if aparelho else None
+    with _conectar() as conn:
+        cursor = conn.execute("INSERT INTO eventos (tipo, tela, aparelho) VALUES (?, ?, ?)", (tipo, tela, aparelho))
+        return cursor.lastrowid
+
+
 def listar_relatos_questao(resolvido: bool | None = None) -> list[dict]:
     """Relatos mais recentes primeiro -- alimenta uma futura tela de
     revisão em lote no Admin. `resolvido=None` traz tudo; True/False

@@ -337,6 +337,48 @@ def relatos(corpo: RelatoRequest) -> dict:
         raise HTTPException(status_code=400, detail=str(erro))
 
 
+# ============================================================
+# Eventos de uso (abriu o app, viu uma tela, deu erro) para o painel de
+# admin. O app manda só tipo e tela; o aparelho é resumido AQUI a partir
+# do User-Agent ("Android · Chrome"), para o banco nunca guardar o
+# User-Agent completo (que identifica modelo e versão do aparelho).
+# ============================================================
+
+# okhttp e CFNetwork/Darwin = fetch do app nativo (Expo Go/build), sem navegador.
+_SISTEMAS = (
+    ("Android", "Android"), ("okhttp", "Android"), ("iPhone", "iPhone"), ("iPad", "iPad"),
+    ("CFNetwork", "iPhone"), ("Windows", "Windows"), ("Mac OS", "Mac"), ("Linux", "Linux"),
+)
+# Ordem importa: Edge e Opera também dizem "Chrome", e Chrome diz "Safari";
+# no iPhone, Chrome/Firefox/Edge se apresentam como CriOS/FxiOS/EdgiOS.
+_NAVEGADORES = (
+    ("Edg/", "Edge"), ("EdgiOS", "Edge"), ("OPR/", "Opera"), ("SamsungBrowser", "Samsung"),
+    ("Firefox", "Firefox"), ("FxiOS", "Firefox"), ("CriOS", "Chrome"), ("Chrome", "Chrome"),
+    ("Safari", "Safari"), ("okhttp", "app"), ("CFNetwork", "app"),
+)
+
+
+def resumir_aparelho(user_agent: str | None) -> str | None:
+    if not user_agent:
+        return None
+    sistema = next((nome for chave, nome in _SISTEMAS if chave in user_agent), "outro")
+    navegador = next((nome for chave, nome in _NAVEGADORES if chave in user_agent), "outro")
+    return f"{sistema} · {navegador}"
+
+
+class EventoRequest(BaseModel):
+    tipo: str
+    tela: str | None = None
+
+
+@app.post("/eventos")
+def eventos(corpo: EventoRequest, user_agent: str | None = Header(default=None)) -> dict:
+    try:
+        return {"id_evento": db.registrar_evento(corpo.tipo, corpo.tela, resumir_aparelho(user_agent))}
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+
+
 @app.get("/resolucoes")
 def resolucoes(id_questao: str) -> list[dict]:
     return db.resolucoes_da_questao(id_questao)
