@@ -29,12 +29,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel
 
 import db
 import moldes
+import uso_admin
 
 # Carrega o .env da raiz do projeto pra dentro de os.environ -- é assim
 # que API_AUTH_TOKEN (ver _verificar_autenticacao abaixo) chega até
@@ -69,8 +71,12 @@ def usuarios_configurados() -> dict[str, str]:
     return usuarios
 
 
+def pasta_bancos() -> Path:
+    return Path(os.environ.get("API_PASTA_BANCOS", PASTA_BANCOS_PADRAO))
+
+
 def caminho_banco_usuario(nome: str) -> Path:
-    return Path(os.environ.get("API_PASTA_BANCOS", PASTA_BANCOS_PADRAO)) / f"{nome}.db"
+    return pasta_bancos() / f"{nome}.db"
 
 
 async def _verificar_autenticacao(authorization: str | None = Header(default=None)) -> None:
@@ -351,6 +357,59 @@ def variacao_molde(id_molde: str, seed: int | None = None, original: bool = Fals
         return moldes.gerar_variacao(id_molde, seed=seed, original=original)
     except ValueError as erro:
         raise HTTPException(status_code=404, detail=str(erro))
+
+
+# ============================================================
+# Painel de admin de uso: "a pessoa do beta acessou? voltou?".
+# É um app à parte montado em /admin, e não rota deste app, porque a
+# trava de _verificar_autenticacao vale para TODA rota daqui e abriria o
+# banco de uma pessoa. O admin tem a própria chave (API_ADMIN_TOKEN),
+# separada dos códigos das pessoas: o código de alguém nunca abre o
+# painel, e a chave do admin nunca abre o banco de ninguém pela API.
+# Não guarda nada novo: uso_admin.py só lê os bancos que já existem.
+# ============================================================
+
+TAMANHO_MINIMO_TOKEN_ADMIN = 16
+
+
+async def _verificar_admin(authorization: str | None = Header(default=None)) -> None:
+    """Fechada por padrão, como a trava das pessoas: sem API_ADMIN_TOKEN o
+    painel responde 503. Também recusa (503) chave curta ou igual a um
+    código de pessoa/API_AUTH_TOKEN, para a separação não ser só no nome."""
+    token = os.environ.get("API_ADMIN_TOKEN", "")
+    if not token:
+        raise HTTPException(status_code=503, detail="Painel de admin desligado: configure API_ADMIN_TOKEN.")
+    if len(token) < TAMANHO_MINIMO_TOKEN_ADMIN:
+        raise HTTPException(status_code=503, detail="API_ADMIN_TOKEN precisa de 16+ caracteres.")
+    if token in usuarios_configurados() or token == os.environ.get("API_AUTH_TOKEN"):
+        raise HTTPException(status_code=503, detail="API_ADMIN_TOKEN precisa ser diferente dos códigos de acesso.")
+    recebido = (authorization or "").encode("utf-8")
+    if not hmac.compare_digest(recebido, f"Bearer {token}".encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Chave de admin ausente ou inválida.")
+
+
+PAGINA_ADMIN = Path(__file__).parent / "admin_uso.html"
+
+admin = FastAPI(title="ENEM GI Admin", docs_url=None, redoc_url=None, openapi_url=None)
+
+
+@admin.get("/", include_in_schema=False)
+def pagina_admin() -> FileResponse:
+    """A tela em si não tem dado nenhum: ela pede a chave e chama /admin/uso."""
+    return FileResponse(PAGINA_ADMIN)
+
+
+@admin.get("/uso", dependencies=[Depends(_verificar_admin)])
+def uso() -> list[dict]:
+    """Por pessoa: 1ª e última atividade, tentativas, questões distintas,
+    % de acerto e se voltou no dia seguinte (D1) e na semana (D7)."""
+    return uso_admin.resumo_uso(pasta_bancos())
+
+
+# Rota do Starlette, não do FastAPI: não passa pela trava das pessoas.
+# Sem ela, "/admin" (sem a barra) cairia no app web montado em "/".
+app.router.add_route("/admin", lambda request: RedirectResponse("/admin/"), include_in_schema=False)
+app.mount("/admin", admin, name="admin")
 
 
 # ============================================================

@@ -100,6 +100,12 @@ export default function PerfilScreen() {
               </View>
             </>
           )}
+
+          {/* O que fica guardado (LGPD/confiança): só o que a pessoa faz no app, ver core/uso_admin.py. */}
+          <Text style={styles.privacidade}>
+            O app guarda só o que você faz aqui: suas respostas (com data, hora e tempo), a revisão e os relatos que você
+            enviar. Nada de nome, e-mail ou localização.
+          </Text>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -150,6 +156,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   espaco: { marginTop: 8 },
+  privacidade: {
+    fontFamily: Fontes.corpo,
+    fontSize: 12,
+    lineHeight: 17,
+    color: Brand.textoApagado,
+    textAlign: 'center',
+  },
   avisoErro: {
     padding: 12,
     borderRadius: 12,

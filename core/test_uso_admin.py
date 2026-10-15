@@ -1,0 +1,126 @@
+"""
+test_uso_admin.py — testes do resumo de uso do painel de admin (uso_admin.py).
+
+Só banco sintético: cada teste cria bancos pequenos numa pasta temporária,
+com a tabela tentativas_usuario mínima (as colunas que o painel lê) e
+datas escolhidas a dedo. Nunca toca em enem.db nem em banco de ninguém.
+
+Rodar (de dentro de core/):
+    python -m unittest test_uso_admin -v
+"""
+import hashlib
+import shutil
+import sqlite3
+import tempfile
+import unittest
+from contextlib import closing
+from datetime import date
+from pathlib import Path
+
+import uso_admin
+
+HOJE = date(2026, 10, 20)
+
+
+class TestResumoUso(unittest.TestCase):
+    def setUp(self):
+        self.pasta = Path(tempfile.mkdtemp(prefix="enem_teste_uso_"))
+
+    def tearDown(self):
+        shutil.rmtree(self.pasta, ignore_errors=True)
+
+    def _banco(self, nome, tentativas):
+        """tentativas: lista de (data_tentativa, id_questao, resultado)."""
+        with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
+            conn.execute(
+                "CREATE TABLE tentativas_usuario (id_tentativa INTEGER PRIMARY KEY, id_questao TEXT, data_tentativa TEXT, resultado TEXT)"
+            )
+            conn.executemany(
+                "INSERT INTO tentativas_usuario (data_tentativa, id_questao, resultado) VALUES (?, ?, ?)", tentativas
+            )
+            conn.commit()
+
+    def _por_usuario(self, hoje=HOJE):
+        return {r["usuario"]: r for r in uso_admin.resumo_uso(self.pasta, hoje)}
+
+    def test_contagens_e_acerto(self):
+        self._banco("ana", [
+            ("2026-10-01 10:00:00", "q1", "acertou"),
+            ("2026-10-01 10:05:00", "q2", "errou"),
+            ("2026-10-03 21:00:00", "q1", "acertou"),
+            ("2026-10-03 21:02:00", "q3", "acertou"),
+        ])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["primeira_atividade"], "2026-10-01 10:00:00")
+        self.assertEqual(ana["ultima_atividade"], "2026-10-03 21:02:00")
+        self.assertEqual(ana["tentativas"], 4)
+        self.assertEqual(ana["questoes"], 3)  # q1 respondida duas vezes conta uma
+        self.assertEqual(ana["taxa_acerto"], 0.75)
+
+    def test_voltou_no_dia_seguinte(self):
+        self._banco("ana", [("2026-10-01 23:50:00", "q1", "acertou"), ("2026-10-02 00:10:00", "q2", "errou")])
+        ana = self._por_usuario()["ana"]
+        self.assertTrue(ana["voltou_d1"])
+        self.assertTrue(ana["voltou_d7"])
+
+    def test_voltou_so_no_meio_da_semana(self):
+        self._banco("bia", [("2026-10-01 10:00:00", "q1", "acertou"), ("2026-10-05 10:00:00", "q2", "acertou")])
+        bia = self._por_usuario()["bia"]
+        self.assertFalse(bia["voltou_d1"])
+        self.assertTrue(bia["voltou_d7"])
+
+    def test_voltar_depois_da_semana_nao_conta_como_d7(self):
+        self._banco("caio", [("2026-10-01 10:00:00", "q1", "acertou"), ("2026-10-09 10:00:00", "q2", "acertou")])
+        caio = self._por_usuario()["caio"]
+        self.assertFalse(caio["voltou_d1"])
+        self.assertFalse(caio["voltou_d7"])
+
+    def test_quem_comecou_agora_ainda_nao_tem_resposta(self):
+        # Começou ontem e não voltou hoje: D1 e D7 ainda podem acontecer.
+        self._banco("duda", [("2026-10-19 10:00:00", "q1", "acertou")])
+        duda = self._por_usuario()["duda"]
+        self.assertIsNone(duda["voltou_d1"])
+        self.assertIsNone(duda["voltou_d7"])
+        # Dois dias depois, D1 já fechou; D7 ainda não.
+        duda = self._por_usuario(hoje=date(2026, 10, 21))["duda"]
+        self.assertFalse(duda["voltou_d1"])
+        self.assertIsNone(duda["voltou_d7"])
+
+    def test_banco_sem_tentativa_aparece_zerado_no_fim(self):
+        self._banco("nova", [])
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        resumos = uso_admin.resumo_uso(self.pasta, HOJE)
+        self.assertEqual([r["usuario"] for r in resumos], ["ana", "nova"])
+        nova = resumos[1]
+        self.assertEqual((nova["tentativas"], nova["questoes"]), (0, 0))
+        self.assertIsNone(nova["taxa_acerto"])
+        self.assertIsNone(nova["primeira_atividade"])
+        self.assertIsNone(nova["voltou_d1"])
+
+    def test_ordem_por_ultima_atividade(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._banco("bia", [("2026-10-10 10:00:00", "q1", "acertou")])
+        self.assertEqual([r["usuario"] for r in uso_admin.resumo_uso(self.pasta, HOJE)], ["bia", "ana"])
+
+    def test_nao_altera_o_banco(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        caminho = self.pasta / "ana.db"
+        antes = hashlib.sha256(caminho.read_bytes()).hexdigest()
+        uso_admin.resumo_uso(self.pasta, HOJE)
+        self.assertEqual(hashlib.sha256(caminho.read_bytes()).hexdigest(), antes)
+        self.assertEqual(sorted(p.name for p in self.pasta.iterdir()), ["ana.db"])  # nem -journal, nem -wal
+
+    def test_arquivo_que_nao_e_banco_do_app_nao_derruba_os_outros(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        with closing(sqlite3.connect(self.pasta / "outro.db")) as conn:
+            conn.execute("CREATE TABLE qualquer (x)")
+        resumos = self._por_usuario()
+        self.assertEqual(resumos["ana"]["tentativas"], 1)
+        self.assertIn("erro", resumos["outro"])
+
+    def test_pasta_que_nao_existe(self):
+        self.assertEqual(uso_admin.resumo_uso(self.pasta / "nao_existe", HOJE), [])
+
+
+if __name__ == "__main__":
+    unittest.main()
