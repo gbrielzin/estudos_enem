@@ -41,7 +41,7 @@ class TestResumoUso(unittest.TestCase):
             conn.commit()
 
     def _por_usuario(self, hoje=HOJE):
-        return {r["usuario"]: r for r in uso_admin.resumo_uso(self.pasta, hoje)}
+        return {r["usuario"]: r for r in uso_admin.resumo_uso(self.pasta, hoje=hoje)}
 
     def test_contagens_e_acerto(self):
         self._banco("ana", [
@@ -89,7 +89,7 @@ class TestResumoUso(unittest.TestCase):
     def test_banco_sem_tentativa_aparece_zerado_no_fim(self):
         self._banco("nova", [])
         self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
-        resumos = uso_admin.resumo_uso(self.pasta, HOJE)
+        resumos = uso_admin.resumo_uso(self.pasta, hoje=HOJE)
         self.assertEqual([r["usuario"] for r in resumos], ["ana", "nova"])
         nova = resumos[1]
         self.assertEqual((nova["tentativas"], nova["questoes"]), (0, 0))
@@ -100,13 +100,13 @@ class TestResumoUso(unittest.TestCase):
     def test_ordem_por_ultima_atividade(self):
         self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
         self._banco("bia", [("2026-10-10 10:00:00", "q1", "acertou")])
-        self.assertEqual([r["usuario"] for r in uso_admin.resumo_uso(self.pasta, HOJE)], ["bia", "ana"])
+        self.assertEqual([r["usuario"] for r in uso_admin.resumo_uso(self.pasta, hoje=HOJE)], ["bia", "ana"])
 
     def test_nao_altera_o_banco(self):
         self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
         caminho = self.pasta / "ana.db"
         antes = hashlib.sha256(caminho.read_bytes()).hexdigest()
-        uso_admin.resumo_uso(self.pasta, HOJE)
+        uso_admin.resumo_uso(self.pasta, hoje=HOJE)
         self.assertEqual(hashlib.sha256(caminho.read_bytes()).hexdigest(), antes)
         self.assertEqual(sorted(p.name for p in self.pasta.iterdir()), ["ana.db"])  # nem -journal, nem -wal
 
@@ -118,8 +118,23 @@ class TestResumoUso(unittest.TestCase):
         self.assertEqual(resumos["ana"]["tentativas"], 1)
         self.assertIn("erro", resumos["outro"])
 
+    def test_com_nomes_so_entram_as_pessoas_configuradas(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._banco("ana_backup", [("2026-10-01 10:00:00", "q1", "acertou")])
+        resumos = {r["usuario"]: r for r in uso_admin.resumo_uso(self.pasta, ["ana", "bia"], hoje=HOJE)}
+        self.assertEqual(set(resumos), {"ana", "bia"})  # o backup fica de fora
+        self.assertIn("erro", resumos["bia"])  # configurada, mas o banco ainda não existe
+        self.assertEqual(sorted(p.name for p in self.pasta.iterdir()), ["ana.db", "ana_backup.db"])  # não criou bia.db
+
+    def test_data_fora_do_formato_nao_derruba_o_painel(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._banco("bia", [("01/10/2026", "q1", "acertou")])
+        resumos = self._por_usuario()
+        self.assertEqual(resumos["ana"]["tentativas"], 1)
+        self.assertIn("erro", resumos["bia"])
+
     def test_pasta_que_nao_existe(self):
-        self.assertEqual(uso_admin.resumo_uso(self.pasta / "nao_existe", HOJE), [])
+        self.assertEqual(uso_admin.resumo_uso(self.pasta / "nao_existe", hoje=HOJE), [])
 
 
 if __name__ == "__main__":

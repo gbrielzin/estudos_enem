@@ -407,6 +407,15 @@ class TestPainelAdmin(_TestComDuasPessoas):
         self.assertEqual(self._uso("curta", {"API_ADMIN_TOKEN": "curta"}).status_code, 503)
         self.assertEqual(self._uso(self.CODIGO_ANA, {"API_ADMIN_TOKEN": self.CODIGO_ANA}).status_code, 503)
 
+    def test_quem_nao_tem_a_chave_nao_descobre_erro_de_configuracao(self):
+        # Chave configurada curta demais: sem a chave, a resposta é só 401.
+        self.assertEqual(self._uso("chute-qualquer-000000", {"API_ADMIN_TOKEN": "curta"}).status_code, 401)
+
+    def test_so_aparecem_as_pessoas_de_api_usuarios(self):
+        shutil.copy(self.pasta / "ana.db", self.pasta / "ana_backup.db")
+        nomes = {p["usuario"] for p in self._uso(self.CHAVE_ADMIN).json()}
+        self.assertEqual(nomes, {"ana", "bia"})
+
     def test_chave_do_admin_nao_abre_banco_de_ninguem(self):
         with patch.dict(os.environ, {**self.env, "API_ADMIN_TOKEN": self.CHAVE_ADMIN}):
             self.assertEqual(self._responder(self.CHAVE_ADMIN, "A").status_code, 401)

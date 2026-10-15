@@ -80,14 +80,18 @@
     evento.preventDefault();
     aviso.className = '';
     aviso.textContent = 'Carregando...';
+    // Some com a tabela antes de pedir de novo: chave errada não deixa o
+    // resultado anterior na tela.
+    document.getElementById('tabela').hidden = true;
+    linhas.replaceChildren();
     try {
       const resposta = await fetch('/admin/uso', {
         headers: { Authorization: 'Bearer ' + document.getElementById('chave').value },
         cache: 'no-store',
       });
-      const corpo = await resposta.json();
-      if (!resposta.ok) throw new Error(corpo.detail || 'Erro ' + resposta.status);
-      linhas.replaceChildren();
+      // Erro do proxy (502 em HTML) não é JSON: mostra o status em vez de "Unexpected token".
+      const corpo = await resposta.json().catch(() => null);
+      if (!resposta.ok || !Array.isArray(corpo)) throw new Error((corpo && corpo.detail) || 'Erro ' + resposta.status);
       for (const p of corpo) {
         const tr = document.createElement('tr');
         tr.append(

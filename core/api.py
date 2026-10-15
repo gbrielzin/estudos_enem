@@ -48,6 +48,8 @@ load_dotenv()
 
 PASTA_BANCOS_PADRAO = Path(__file__).parent / "bancos"
 _NOME_USUARIO = re.compile(r"[a-z0-9_]{1,40}")
+# Tamanho mínimo de toda chave: código de pessoa e chave de admin.
+TAMANHO_MINIMO_CODIGO = 16
 
 
 def usuarios_configurados() -> dict[str, str]:
@@ -63,7 +65,7 @@ def usuarios_configurados() -> dict[str, str]:
         if not par.strip():
             continue
         nome, _, codigo = par.strip().partition(":")
-        if not _NOME_USUARIO.fullmatch(nome) or len(codigo) < 16:
+        if not _NOME_USUARIO.fullmatch(nome) or len(codigo) < TAMANHO_MINIMO_CODIGO:
             raise RuntimeError(
                 f"API_USUARIOS mal formado em '{nome}': nome só com a-z, 0-9 e _, código com 16+ caracteres."
             )
@@ -369,23 +371,24 @@ def variacao_molde(id_molde: str, seed: int | None = None, original: bool = Fals
 # Não guarda nada novo: uso_admin.py só lê os bancos que já existem.
 # ============================================================
 
-TAMANHO_MINIMO_TOKEN_ADMIN = 16
-
-
 async def _verificar_admin(authorization: str | None = Header(default=None)) -> None:
     """Fechada por padrão, como a trava das pessoas: sem API_ADMIN_TOKEN o
     painel responde 503. Também recusa (503) chave curta ou igual a um
-    código de pessoa/API_AUTH_TOKEN, para a separação não ser só no nome."""
+    código de pessoa/API_AUTH_TOKEN, para a separação não ser só no nome.
+
+    Confere a chave ANTES de validar a configuração: quem não tem a chave
+    recebe só 401, sem descobrir que a chave configurada é curta ou repete
+    um código."""
     token = os.environ.get("API_ADMIN_TOKEN", "")
     if not token:
         raise HTTPException(status_code=503, detail="Painel de admin desligado: configure API_ADMIN_TOKEN.")
-    if len(token) < TAMANHO_MINIMO_TOKEN_ADMIN:
-        raise HTTPException(status_code=503, detail="API_ADMIN_TOKEN precisa de 16+ caracteres.")
-    if token in usuarios_configurados() or token == os.environ.get("API_AUTH_TOKEN"):
-        raise HTTPException(status_code=503, detail="API_ADMIN_TOKEN precisa ser diferente dos códigos de acesso.")
     recebido = (authorization or "").encode("utf-8")
     if not hmac.compare_digest(recebido, f"Bearer {token}".encode("utf-8")):
         raise HTTPException(status_code=401, detail="Chave de admin ausente ou inválida.")
+    if len(token) < TAMANHO_MINIMO_CODIGO:
+        raise HTTPException(status_code=503, detail=f"API_ADMIN_TOKEN precisa de {TAMANHO_MINIMO_CODIGO}+ caracteres.")
+    if token in usuarios_configurados() or token == os.environ.get("API_AUTH_TOKEN"):
+        raise HTTPException(status_code=503, detail="API_ADMIN_TOKEN precisa ser diferente dos códigos de acesso.")
 
 
 PAGINA_ADMIN = Path(__file__).parent / "admin_uso.html"
@@ -402,8 +405,10 @@ def pagina_admin() -> FileResponse:
 @admin.get("/uso", dependencies=[Depends(_verificar_admin)])
 def uso() -> list[dict]:
     """Por pessoa: 1ª e última atividade, tentativas, questões distintas,
-    % de acerto e se voltou no dia seguinte (D1) e na semana (D7)."""
-    return uso_admin.resumo_uso(pasta_bancos())
+    % de acerto e se voltou no dia seguinte (D1) e na semana (D7). Com
+    API_USUARIOS, só as pessoas configuradas (ver uso_admin.resumo_uso)."""
+    nomes = list(usuarios_configurados().values()) or None
+    return uso_admin.resumo_uso(pasta_bancos(), nomes)
 
 
 # Rota do Starlette, não do FastAPI: não passa pela trava das pessoas.
