@@ -1,4 +1,12 @@
-import { cabecalhosAutenticacao, caminhoVariacaoMolde, registrarEvento, telaDoCaminho, urlImagemEnunciado } from './api';
+import {
+  cabecalhosAutenticacao,
+  caminhoVariacaoMolde,
+  definirTelaAtual,
+  registrarEvento,
+  registrarTentativa,
+  telaDoCaminho,
+  urlImagemEnunciado,
+} from './api';
 
 describe('telaDoCaminho', () => {
   it('tira a query e fica so com a rota', () => {
@@ -29,6 +37,22 @@ describe('registrarEvento', () => {
     expect(url).toBe('http://localhost:8000/eventos');
     expect(opcoes.method).toBe('POST');
     expect(JSON.parse(opcoes.body)).toEqual({ tipo: 'tela_vista', tela: '/simulado' });
+  });
+
+  it('POST que falha manda evento de erro com a tela do app, nao o endpoint', async () => {
+    const chamado = jest.fn().mockResolvedValue({ ok: false, status: 500 });
+    globalThis.fetch = chamado as unknown as typeof fetch;
+    definirTelaAtual('/simulado');
+    await expect(registrarTentativa('2024_azul_136', 'A')).rejects.toThrow('500');
+    const evento = chamado.mock.calls.find(([url]) => String(url).endsWith('/eventos'));
+    expect(JSON.parse(evento![1].body)).toEqual({ tipo: 'erro', tela: '/simulado' });
+  });
+
+  it('401 nao vira evento (sem codigo valido nao ha banco onde gravar)', async () => {
+    const chamado = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+    globalThis.fetch = chamado as unknown as typeof fetch;
+    await expect(registrarTentativa('2024_azul_136', 'A')).rejects.toThrow('401');
+    expect(chamado.mock.calls.some(([url]) => String(url).endsWith('/eventos'))).toBe(false);
   });
 
   it('nunca lanca erro, nem com a rede fora', async () => {

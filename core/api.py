@@ -344,9 +344,18 @@ def relatos(corpo: RelatoRequest) -> dict:
 # User-Agent completo (que identifica modelo e versão do aparelho).
 # ============================================================
 
-_SISTEMAS = (("Android", "Android"), ("iPhone", "iPhone"), ("iPad", "iPad"), ("Windows", "Windows"), ("Mac OS", "Mac"), ("Linux", "Linux"))
-# Ordem importa: Edge e Opera também dizem "Chrome", e Chrome diz "Safari".
-_NAVEGADORES = (("Edg/", "Edge"), ("OPR/", "Opera"), ("SamsungBrowser", "Samsung"), ("Firefox", "Firefox"), ("Chrome", "Chrome"), ("Safari", "Safari"))
+# okhttp e CFNetwork/Darwin = fetch do app nativo (Expo Go/build), sem navegador.
+_SISTEMAS = (
+    ("Android", "Android"), ("okhttp", "Android"), ("iPhone", "iPhone"), ("iPad", "iPad"),
+    ("CFNetwork", "iPhone"), ("Windows", "Windows"), ("Mac OS", "Mac"), ("Linux", "Linux"),
+)
+# Ordem importa: Edge e Opera também dizem "Chrome", e Chrome diz "Safari";
+# no iPhone, Chrome/Firefox/Edge se apresentam como CriOS/FxiOS/EdgiOS.
+_NAVEGADORES = (
+    ("Edg/", "Edge"), ("EdgiOS", "Edge"), ("OPR/", "Opera"), ("SamsungBrowser", "Samsung"),
+    ("Firefox", "Firefox"), ("FxiOS", "Firefox"), ("CriOS", "Chrome"), ("Chrome", "Chrome"),
+    ("Safari", "Safari"), ("okhttp", "app"), ("CFNetwork", "app"),
+)
 
 
 def resumir_aparelho(user_agent: str | None) -> str | None:

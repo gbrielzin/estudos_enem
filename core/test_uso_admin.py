@@ -161,6 +161,15 @@ class TestResumoUso(unittest.TestCase):
         self.assertFalse(ana["abriu_sem_responder"])
         self.assertEqual(ana["ultima_atividade"], "2026-10-02 08:00:00")
 
+    def test_erro_conta_mas_nao_vira_atividade(self):
+        # Erro no dia 2 é o app falhando sozinho, não a pessoa voltando.
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-02 08:00:00", "erro", "Android · Chrome")])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["erros"], 1)
+        self.assertFalse(ana["voltou_d1"])
+        self.assertEqual(ana["ultima_atividade"], "2026-10-01 10:00:00")
+
     def test_aparelho_e_o_mais_recente(self):
         self._banco("ana", [])
         self._eventos("ana", [("2026-10-01 10:00:00", "app_aberto", "Windows · Chrome"), ("2026-10-03 10:00:00", "app_aberto", "Android · Chrome")])

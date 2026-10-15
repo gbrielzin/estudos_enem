@@ -35,6 +35,7 @@
   .nao { color: var(--vermelho); }
   .legenda { font-size: 13px; margin-top: 12px; }
   .funil { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .funil[hidden] { display: none; }  /* sem isto o display: grid vence o hidden */
   .etapa { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
   .etapa b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
   .etapa span { color: var(--apagado); font-size: 12px; }
@@ -82,7 +83,7 @@
   // Funil: das pessoas com código, quantas abriram, responderam e voltaram.
   function mostrarFunil(pessoas) {
     const etapas = [
-      ['Abriram', pessoas.filter((p) => p.primeira_atividade).length],
+      ['Abriram', pessoas.filter((p) => p.aberturas > 0 || p.tentativas > 0).length],
       ['Responderam', pessoas.filter((p) => p.tentativas > 0).length],
       ['Voltaram D1', pessoas.filter((p) => p.voltou_d1 === true).length],
       ['Voltaram D7', pessoas.filter((p) => p.voltou_d7 === true).length],

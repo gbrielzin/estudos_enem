@@ -68,7 +68,9 @@ def resumo_banco(caminho: Path, hoje: date) -> dict:
             aberturas = erros = 0
             aparelho = None
             if tem_eventos:
-                horas += " UNION ALL SELECT criado_em FROM eventos"
+                # Erro não conta como atividade: é o app que manda sozinho,
+                # não a pessoa escolhendo voltar (ver legenda do painel).
+                horas += " UNION ALL SELECT criado_em FROM eventos WHERE tipo IN ('app_aberto', 'tela_vista')"
                 aberturas, erros = conn.execute(
                     """
                     SELECT COALESCE(SUM(CASE WHEN tipo = 'app_aberto' THEN 1 ELSE 0 END), 0),
