@@ -297,19 +297,28 @@ export function registrarEvento(tipo: TipoEvento, tela?: string, detalhe?: strin
   }
 }
 
-/** Data/hora da última resposta da pesquisa (null = nunca respondeu), ver GET /pesquisa/ultima. */
-export async function getUltimaPesquisa(): Promise<string | null> {
-  const corpo = await buscarJson<{ criado_em: string | null }>('/pesquisa/ultima');
-  return corpo.criado_em;
+export interface UltimaPesquisa {
+  criado_em: string | null;
+  dias_desde: number | null;
+}
+
+/** Última resposta da pesquisa e há quantos dias (null = nunca respondeu), ver GET /pesquisa/ultima. */
+export function getUltimaPesquisa(): Promise<UltimaPesquisa> {
+  return buscarJson('/pesquisa/ultima');
 }
 
 /** Pesquisa curta do Perfil: nota de 0 a 10 + o que mais ajudou (opcional). */
 export async function enviarPesquisa(nota: number, comentario: string): Promise<void> {
-  const resposta = await fetch(`${getApiBaseUrl()}/pesquisa`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
-    body: JSON.stringify({ nota, comentario: comentario.trim() || null }),
-  });
+  let resposta: Response;
+  try {
+    resposta = await fetch(`${getApiBaseUrl()}/pesquisa`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+      body: JSON.stringify({ nota, comentario: comentario.trim() || null }),
+    });
+  } catch {
+    throw new ErroApi('Sem conexão agora. Tenta enviar de novo daqui a pouco.');
+  }
   if (!resposta.ok) {
     avisarFalha(resposta.status);
     throw new ErroApi(`Backend respondeu ${resposta.status} ao enviar a pesquisa.`);

@@ -421,9 +421,13 @@ def inicializar_banco() -> None:
                 eventos_v1 = True
 
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
-        if eventos_v1:
+        # Olha o banco de novo em vez de confiar em `eventos_v1`: o
+        # executescript já salvou o RENAME, então se a cópia abaixo falhar
+        # (ou o processo cair), `_eventos_v1` fica lá e a próxima
+        # inicialização termina o serviço. INSERT OR IGNORE: repetir não duplica.
+        if eventos_v1 or conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='_eventos_v1'").fetchone():
             conn.execute(
-                "INSERT INTO eventos (id_evento, tipo, tela, aparelho, criado_em) "
+                "INSERT OR IGNORE INTO eventos (id_evento, tipo, tela, aparelho, criado_em) "
                 "SELECT id_evento, tipo, tela, aparelho, criado_em FROM _eventos_v1"
             )
             conn.execute("DROP TABLE _eventos_v1")
@@ -2909,12 +2913,17 @@ def registrar_resposta_pesquisa(nota: int, comentario: str | None = None) -> int
         return cursor.lastrowid
 
 
-def ultima_resposta_pesquisa() -> str | None:
-    """Data/hora da última resposta da pesquisa, ou None se nunca respondeu
-    -- o app usa para perguntar no máximo uma vez por semana."""
+def ultima_resposta_pesquisa() -> dict:
+    """Última resposta da pesquisa: {'criado_em', 'dias_desde'} (None se
+    nunca respondeu). `dias_desde` é calculado AQUI, no relógio do
+    servidor que gravou criado_em: o celular está em outro fuso, e
+    comparar a hora do servidor com a do aparelho erraria por horas. O
+    app usa para perguntar no máximo uma vez por semana."""
     with _conectar() as conn:
-        linha = conn.execute("SELECT MAX(criado_em) FROM respostas_pesquisa").fetchone()
-    return linha[0] if linha else None
+        criado_em, dias = conn.execute(
+            "SELECT MAX(criado_em), julianday('now','localtime') - julianday(MAX(criado_em)) FROM respostas_pesquisa"
+        ).fetchone()
+    return {"criado_em": criado_em, "dias_desde": round(dias, 2) if dias is not None else None}
 
 
 def listar_relatos_questao(resolvido: bool | None = None) -> list[dict]:

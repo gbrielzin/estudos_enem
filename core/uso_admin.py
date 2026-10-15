@@ -43,9 +43,11 @@ def _voltou(dias: set[date], primeiro: date, de: int, ate: int, hoje: date) -> b
 def _hora(texto: str | None) -> datetime | None:
     # 'AAAA-MM-DD HH:MM:SS' (datetime('now','localtime')); fora do formato = ignorada.
     try:
-        return datetime.fromisoformat(texto) if texto else None
+        hora = datetime.fromisoformat(texto) if texto else None
     except ValueError:
         return None
+    # Valor com fuso ('...+00:00') misturado com os sem fuso quebraria o min()/sorted().
+    return hora.replace(tzinfo=None) if hora and hora.tzinfo else hora
 
 
 def _sessoes(horas: list[datetime]) -> list[timedelta]:
@@ -146,13 +148,17 @@ def resumo_banco(caminho: Path, hoje: date) -> dict:
     if total:
         resumo["taxa_acerto"] = round((acertos or 0) / total, 3)
     if pesquisa:
-        resumo["nota_pesquisa"], resumo["comentario_pesquisa"] = pesquisa[-1]
+        resumo["nota_pesquisa"] = pesquisa[-1][0]
+        # O último comentário ESCRITO: responder de novo só com a nota não apaga o anterior do painel.
+        comentarios = [c for _, c in pesquisa if c]
+        resumo["comentario_pesquisa"] = comentarios[-1] if comentarios else None
 
     # Atividade = responder questão OU evento da pessoa usando o app.
     textos = horas_tentativas + [h for h, tipo, _, _ in eventos if tipo in TIPOS_ATIVIDADE]
     horas = [(hora, texto) for texto in textos if (hora := _hora(texto))]
-    # O caso que o painel mais precisa mostrar: abriu o app e travou antes da 1ª questão.
-    resumo["abriu_sem_responder"] = bool(textos) and not total
+    # O caso que o painel mais precisa mostrar: abriu o app e travou antes da
+    # 1ª questão. Quem só treinou molde usou o app (molde não vira tentativa).
+    resumo["abriu_sem_responder"] = bool(textos) and not total and not contagem["molde_respondido"]
     if not textos:
         return resumo
     if not horas:
@@ -166,11 +172,14 @@ def resumo_banco(caminho: Path, hoje: date) -> dict:
         sessoes=len(duracoes),
         minutos_por_sessao=_minutos(sum(duracoes, timedelta()) / len(duracoes)),
     )
-    # Ativação: da 1ª abertura até a 1ª resposta (só se abriu antes de responder).
+    # Ativação: da abertura que levou à 1ª resposta até ela, dentro da mesma
+    # sessão. Abrir no dia 1 e responder no dia 5 não é atrito de 4 dias.
     hora_tentativas = [h for t in horas_tentativas if (h := _hora(t))]
-    hora_aberturas = [h for h in aberturas if h]
-    if hora_tentativas and hora_aberturas and min(hora_aberturas) <= min(hora_tentativas):
-        resumo["minutos_ate_1a_questao"] = _minutos(min(hora_tentativas) - min(hora_aberturas))
+    if hora_tentativas:
+        primeira_resposta = min(hora_tentativas)
+        antes = [h for h in aberturas if h and h <= primeira_resposta]
+        if antes and primeira_resposta - max(antes) <= INTERVALO_SESSAO:
+            resumo["minutos_ate_1a_questao"] = _minutos(primeira_resposta - max(antes))
 
     dias = {h.date() for h, _ in horas}
     primeiro_dia = primeira[0].date()

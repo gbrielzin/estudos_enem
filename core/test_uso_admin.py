@@ -223,6 +223,29 @@ class TestResumoUso(unittest.TestCase):
         self.assertEqual((ana["explicacoes_abertas"], ana["moldes_respondidos"]), (1, 2))
         self.assertEqual((ana["nota_pesquisa"], ana["comentario_pesquisa"], ana["respostas_pesquisa"]), (9, "a explicação", 2))
 
+    def test_comentario_antigo_nao_some_com_resposta_so_de_nota(self):
+        self._banco("ana", [])
+        self._pesquisa("ana", [("2026-10-01 11:00:00", 7, "as explicações ajudam"), ("2026-10-08 11:00:00", 9, None)])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual((ana["nota_pesquisa"], ana["comentario_pesquisa"]), (9, "as explicações ajudam"))
+
+    def test_quem_so_treinou_molde_nao_aparece_como_travado(self):
+        self._banco("ana", [])
+        self._eventos("ana", [("2026-10-15 10:00:00", "app_aberto", None), ("2026-10-15 10:02:00", "molde_respondido", None, "frenagem")])
+        self.assertFalse(self._por_usuario()["ana"]["abriu_sem_responder"])
+
+    def test_tempo_ate_a_1a_questao_so_dentro_da_sessao(self):
+        # Abriu dia 1 e só respondeu dia 5, numa abertura nova 3 min antes: conta 3 min, não 4 dias.
+        self._banco("ana", [("2026-10-05 10:03:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-01 10:00:00", "app_aberto", None), ("2026-10-05 10:00:00", "app_aberto", None)])
+        self.assertEqual(self._por_usuario()["ana"]["minutos_ate_1a_questao"], 3.0)
+
+    def test_data_com_fuso_nao_derruba_o_painel(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou"), ("2026-10-02 10:00:00+00:00", "q2", "acertou")])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["tentativas"], 2)
+        self.assertTrue(ana["voltou_d1"])
+
     def test_eventos_da_primeira_versao_sem_detalhe(self):
         self._banco("ana", [])
         with closing(sqlite3.connect(self.pasta / "ana.db")) as conn:

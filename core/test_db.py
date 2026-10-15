@@ -1069,16 +1069,28 @@ class TestRegistrarEvento(_TestComBancoTemporario):
         self.assertIn("idx_eventos_data", indices)
         self.assertNotIn("_eventos_v1", tabelas)
 
+    def test_migracao_interrompida_termina_na_proxima_inicializacao(self):
+        # Simula queda depois do RENAME salvo: sobra _eventos_v1 com as linhas e uma eventos nova vazia.
+        with db._conectar() as conn:
+            conn.execute("CREATE TABLE _eventos_v1 (id_evento INTEGER PRIMARY KEY, tipo TEXT, tela TEXT, aparelho TEXT, criado_em TEXT)")
+            conn.execute("INSERT INTO _eventos_v1 VALUES (7, 'app_aberto', '/', 'Android · Chrome', '2026-10-15 10:00:00')")
+        db.inicializar_banco()
+        with db._conectar() as conn:
+            self.assertEqual(tuple(conn.execute("SELECT id_evento, tipo FROM eventos").fetchone()), (7, "app_aberto"))
+            self.assertIsNone(conn.execute("SELECT 1 FROM sqlite_master WHERE name = '_eventos_v1'").fetchone())
+
 
 class TestPesquisa(_TestComBancoTemporario):
     def test_grava_e_devolve_a_ultima(self):
-        self.assertIsNone(db.ultima_resposta_pesquisa())
+        self.assertEqual(db.ultima_resposta_pesquisa(), {"criado_em": None, "dias_desde": None})
         db.registrar_resposta_pesquisa(9, "  a explicação  ")
         db.registrar_resposta_pesquisa(10, "   ")
         with db._conectar() as conn:
             linhas = [tuple(r) for r in conn.execute("SELECT nota, comentario FROM respostas_pesquisa ORDER BY id_resposta")]
         self.assertEqual(linhas, [(9, "a explicação"), (10, None)])
-        self.assertIsNotNone(db.ultima_resposta_pesquisa())
+        ultima = db.ultima_resposta_pesquisa()
+        self.assertIsNotNone(ultima["criado_em"])
+        self.assertLess(ultima["dias_desde"], 0.01)  # acabou de responder, no relógio do próprio banco
 
     def test_nota_fora_de_0_a_10(self):
         for nota in (-1, 11):

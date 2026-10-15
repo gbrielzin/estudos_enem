@@ -88,23 +88,24 @@
 
   // Funil: das pessoas com código, quantas abriram, responderam e voltaram.
   function mostrarFunil(pessoas) {
+    const deTotal = (n) => n + ' de ' + pessoas.length;
     const etapas = [
-      ['Abriram', pessoas.filter((p) => p.aberturas > 0 || p.tentativas > 0).length],
-      ['Responderam', pessoas.filter((p) => p.tentativas > 0).length],
-      ['Voltaram D1', pessoas.filter((p) => p.voltou_d1 === true).length],
-      ['Voltaram D7', pessoas.filter((p) => p.voltou_d7 === true).length],
+      ['Abriram', deTotal(pessoas.filter((p) => p.aberturas > 0 || p.tentativas > 0 || p.moldes_respondidos > 0).length)],
+      ['Responderam', deTotal(pessoas.filter((p) => p.tentativas > 0).length)],
+      ['Voltaram D1', deTotal(pessoas.filter((p) => p.voltou_d1 === true).length)],
+      ['Voltaram D7', deTotal(pessoas.filter((p) => p.voltou_d7 === true).length)],
     ];
     const funil = document.getElementById('funil');
     const notas = pessoas.map((p) => p.nota_pesquisa).filter((n) => n !== null && n !== undefined);
     const nps = notas.length
       ? Math.round(((notas.filter((n) => n >= 9).length - notas.filter((n) => n <= 6).length) / notas.length) * 100)
       : null;
-    etapas.push([`NPS (${notas.length} resposta${notas.length === 1 ? '' : 's'})`, nps]);
-    funil.replaceChildren(...etapas.map(([rotulo, n]) => {
+    etapas.push([`NPS (${notas.length} resposta${notas.length === 1 ? '' : 's'})`, nps === null ? '—' : String(nps)]);
+    funil.replaceChildren(...etapas.map(([rotulo, valor]) => {
       const div = document.createElement('div');
       div.className = 'etapa';
       const numero = document.createElement('b');
-      numero.textContent = rotulo.startsWith('NPS') ? (n === null ? '—' : String(n)) : n + ' de ' + pessoas.length;
+      numero.textContent = valor;
       const texto = document.createElement('span');
       texto.textContent = rotulo;
       div.append(numero, texto);

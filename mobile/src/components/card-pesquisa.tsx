@@ -7,12 +7,13 @@ import { enviarPesquisa, getUltimaPesquisa } from '@/lib/api';
 const DIAS_ENTRE_PERGUNTAS = 7;
 const NOTAS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-/** Já passou uma semana desde a última resposta? `criadoEm` vem como 'AAAA-MM-DD HH:MM:SS'. */
-export function devePerguntar(criadoEm: string | null, agora: Date = new Date()): boolean {
-  if (!criadoEm) return true;
-  const ultima = new Date(criadoEm.replace(' ', 'T'));
-  if (Number.isNaN(ultima.getTime())) return true;
-  return agora.getTime() - ultima.getTime() >= DIAS_ENTRE_PERGUNTAS * 24 * 60 * 60 * 1000;
+/**
+ * Já passou uma semana desde a última resposta? `diasDesde` vem pronto do
+ * servidor (GET /pesquisa/ultima), no relógio de quem gravou a resposta:
+ * comparar a hora do servidor com a do celular erraria pelo fuso.
+ */
+export function devePerguntar(diasDesde: number | null): boolean {
+  return diasDesde === null || diasDesde >= DIAS_ENTRE_PERGUNTAS;
 }
 
 /**
@@ -30,7 +31,7 @@ export function CardPesquisa() {
 
   useEffect(() => {
     getUltimaPesquisa()
-      .then((criadoEm) => setMostrar(devePerguntar(criadoEm)))
+      .then((ultima) => setMostrar(devePerguntar(ultima.dias_desde)))
       .catch(() => setMostrar(false));
   }, []);
 

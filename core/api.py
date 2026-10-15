@@ -396,9 +396,9 @@ def pesquisa(corpo: PesquisaRequest) -> dict:
 
 @app.get("/pesquisa/ultima")
 def pesquisa_ultima() -> dict:
-    """Quando a pessoa respondeu pela última vez (None = nunca): o app só
-    pergunta de novo depois de 7 dias."""
-    return {"criado_em": db.ultima_resposta_pesquisa()}
+    """Quando a pessoa respondeu pela última vez e há quantos dias (None =
+    nunca): o app só pergunta de novo depois de 7 dias."""
+    return db.ultima_resposta_pesquisa()
 
 
 @app.get("/resolucoes")
