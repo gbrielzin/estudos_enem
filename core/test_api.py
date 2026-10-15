@@ -292,9 +292,9 @@ class TestAutenticacao(_TestComBancoTemporario):
 
 
 
-class TestVariasPessoas(_TestComBancoTemporario):
-    """API com API_USUARIOS (ver adr/0010): cada código de acesso usa o
-    próprio banco, criado por criar_banco_usuario.py sem dado pessoal."""
+class _TestComDuasPessoas(_TestComBancoTemporario):
+    """Bancos de "ana" e "bia" criados por criar_banco_usuario.py, base de
+    TestVariasPessoas e TestPainelAdmin."""
 
     CODIGO_ANA = "codigo-da-ana-123456"
     CODIGO_BIA = "codigo-da-bia-654321"
@@ -324,6 +324,11 @@ class TestVariasPessoas(_TestComBancoTemporario):
             "/tentativas", json={"id_questao": self.id_q, "resposta_escolhida": letra},
             headers={"Authorization": f"Bearer {codigo}"},
         )
+
+
+class TestVariasPessoas(_TestComDuasPessoas):
+    """API com API_USUARIOS (ver adr/0010): cada código de acesso usa o
+    próprio banco, criado por criar_banco_usuario.py sem dado pessoal."""
 
     def test_banco_novo_nao_leva_dado_pessoal(self):
         self.assertEqual(self._tentativas("ana"), [])
@@ -361,6 +366,74 @@ class TestVariasPessoas(_TestComBancoTemporario):
         import criar_banco_usuario
         with self.assertRaises(SystemExit):
             criar_banco_usuario.criar_banco("ana", self.pasta, origem=db.DB_PATH)
+
+
+class TestPainelAdmin(_TestComDuasPessoas):
+    """/admin/uso (ver api._verificar_admin): chave própria do admin,
+    separada dos códigos das pessoas. O cálculo em si é coberto em
+    test_uso_admin.py; aqui só a trava e a ligação com a pasta de bancos."""
+
+    CHAVE_ADMIN = "chave-do-admin-0123456789"
+
+    def _uso(self, chave, env_extra=None):
+        env = {**self.env, "API_ADMIN_TOKEN": self.CHAVE_ADMIN, **(env_extra or {})}
+        with patch.dict(os.environ, env):
+            return self.client.get("/admin/uso", headers={"Authorization": f"Bearer {chave}"})
+
+    def test_chave_certa_ve_uso_de_cada_pessoa(self):
+        with patch.dict(os.environ, self.env):
+            self._responder(self.CODIGO_ANA, "A")  # acertou
+            self._responder(self.CODIGO_ANA, "B")  # errou, mesma questão
+        resposta = self._uso(self.CHAVE_ADMIN)
+        self.assertEqual(resposta.status_code, 200)
+        por_pessoa = {p["usuario"]: p for p in resposta.json()}
+        self.assertEqual(set(por_pessoa), {"ana", "bia"})
+        self.assertEqual((por_pessoa["ana"]["tentativas"], por_pessoa["ana"]["questoes"]), (2, 1))
+        self.assertEqual(por_pessoa["ana"]["taxa_acerto"], 0.5)
+        self.assertEqual(por_pessoa["bia"]["tentativas"], 0)
+
+    def test_chave_errada_ou_codigo_de_pessoa_recusa(self):
+        self.assertEqual(self._uso("chave-inventada-0000000000").status_code, 401)
+        self.assertEqual(self._uso(self.CODIGO_ANA).status_code, 401)
+        self.assertEqual(self._uso("").status_code, 401)
+
+    def test_sem_chave_configurada_fica_desligado(self):
+        with patch.dict(os.environ, self.env):
+            os.environ.pop("API_ADMIN_TOKEN", None)
+            resposta = self.client.get("/admin/uso", headers={"Authorization": f"Bearer {self.CHAVE_ADMIN}"})
+        self.assertEqual(resposta.status_code, 503)
+
+    def test_chave_curta_ou_igual_a_codigo_de_pessoa_e_recusada(self):
+        self.assertEqual(self._uso("curta", {"API_ADMIN_TOKEN": "curta"}).status_code, 503)
+        self.assertEqual(self._uso(self.CODIGO_ANA, {"API_ADMIN_TOKEN": self.CODIGO_ANA}).status_code, 503)
+
+    def test_quem_nao_tem_a_chave_nao_descobre_erro_de_configuracao(self):
+        # Chave configurada curta demais: sem a chave, a resposta é só 401.
+        self.assertEqual(self._uso("chute-qualquer-000000", {"API_ADMIN_TOKEN": "curta"}).status_code, 401)
+
+    def test_so_aparecem_as_pessoas_de_api_usuarios(self):
+        shutil.copy(self.pasta / "ana.db", self.pasta / "ana_backup.db")
+        nomes = {p["usuario"] for p in self._uso(self.CHAVE_ADMIN).json()}
+        self.assertEqual(nomes, {"ana", "bia"})
+
+    def test_chave_do_admin_nao_abre_banco_de_ninguem(self):
+        with patch.dict(os.environ, {**self.env, "API_ADMIN_TOKEN": self.CHAVE_ADMIN}):
+            self.assertEqual(self._responder(self.CHAVE_ADMIN, "A").status_code, 401)
+            self.assertEqual(self.client.get("/health", headers={"Authorization": f"Bearer {self.CHAVE_ADMIN}"}).status_code, 401)
+
+    def test_painel_nao_grava_nada(self):
+        antes = {p.name: p.read_bytes() for p in self.pasta.iterdir()}
+        self.assertEqual(self._uso(self.CHAVE_ADMIN).status_code, 200)
+        self.assertEqual({p.name: p.read_bytes() for p in self.pasta.iterdir()}, antes)
+
+    def test_pagina_abre_sem_chave_e_sem_dado(self):
+        with patch.dict(os.environ, {**self.env, "API_ADMIN_TOKEN": self.CHAVE_ADMIN}):
+            pagina = self.client.get("/admin/")
+            sem_barra = self.client.get("/admin", follow_redirects=False)
+        self.assertEqual(pagina.status_code, 200)
+        self.assertIn("Painel de uso", pagina.text)
+        self.assertEqual(sem_barra.status_code, 307)
+        self.assertEqual(sem_barra.headers["location"], "/admin/")
 
 
 class TestArquivosSemTrava(_TestComBancoTemporario):

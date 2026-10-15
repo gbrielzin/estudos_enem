@@ -111,6 +111,9 @@ toca em "Adicionar à tela inicial" e usa como um app. Custo: ~US$5/mês.
    - `API_USUARIOS` = `nome:codigo,nome2:codigo2`. Gere cada código com
      `python -c "import secrets; print(secrets.token_urlsafe(24))"`.
    - `API_CORS_ORIGENS` = o domínio que a Railway der (ex.: `https://enem-gi.up.railway.app`).
+   - `API_ADMIN_TOKEN` (opcional) = chave do painel de uso em `https://<domínio>/admin/`
+     (quem usou, % de acerto, se voltou no dia seguinte e na semana). Gere com o
+     mesmo comando dos códigos; tem que ser diferente de todos eles. Sem ela, o painel fica desligado.
 5. *Settings → Networking → Generate domain*.
 
 **O link de cada pessoa:** `https://<domínio>/?codigo=<código dela>`.

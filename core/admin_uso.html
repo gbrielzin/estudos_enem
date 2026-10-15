@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Painel de uso</title>
+<!--
+  Painel de admin de uso (ver core/api.py, seção "Painel de admin de uso").
+  A página não tem dado nenhum: pede a chave de admin (API_ADMIN_TOKEN) e
+  chama /admin/uso. A chave fica só na memória da aba, nunca no
+  localStorage, para não ficar salva no celular de ninguém.
+-->
+<style>
+  :root { --bg: #fafafa; --card: #fff; --texto: #1f2328; --apagado: #6b7280; --borda: #e5e7eb; --verde: #15803d; --vermelho: #b91c1c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1115; --card: #171a21; --texto: #e6e8eb; --apagado: #9aa3ad; --borda: #2a2f38; --verde: #4ade80; --vermelho: #f87171; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--texto); font: 15px/1.45 system-ui, "Segoe UI", sans-serif; }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { color: var(--apagado); margin: 0 0 16px; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  input { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid var(--borda); border-radius: 8px; background: var(--card); color: var(--texto); font: inherit; }
+  button { padding: 10px 16px; border: 0; border-radius: 8px; background: var(--verde); color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  #aviso { min-height: 1.4em; }
+  #aviso.erro { color: var(--vermelho); }
+  .tabela { overflow-x: auto; background: var(--card); border: 1px solid var(--borda); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { padding: 9px 10px; border-bottom: 1px solid var(--borda); text-align: left; white-space: nowrap; }
+  th { color: var(--apagado); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .sim { color: var(--verde); font-weight: 600; }
+  .nao { color: var(--vermelho); }
+  .legenda { font-size: 13px; margin-top: 12px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Painel de uso</h1>
+  <p>Quem usou o app e quem voltou. Lido na hora dos bancos de cada pessoa, sem guardar nada novo.</p>
+  <form id="form">
+    <input id="chave" type="password" placeholder="Chave de admin" autocomplete="off" required>
+    <button type="submit">Ver uso</button>
+  </form>
+  <div id="aviso"></div>
+  <div class="tabela" id="tabela" hidden>
+    <table>
+      <thead>
+        <tr><th>Pessoa</th><th>1ª atividade</th><th>Última</th><th>Questões</th><th>Tentativas</th><th>Acerto</th><th>D1</th><th>D7</th></tr>
+      </thead>
+      <tbody id="linhas"></tbody>
+    </table>
+  </div>
+  <p class="legenda">D1: voltou no dia seguinte ao primeiro uso. D7: voltou em algum dia da semana seguinte. "—": ainda não dá pra saber.</p>
+</main>
+<script>
+  const aviso = document.getElementById('aviso');
+  const linhas = document.getElementById('linhas');
+
+  function celula(texto, classe) {
+    const td = document.createElement('td');
+    td.textContent = texto;  // textContent, nunca innerHTML: nome de arquivo vira texto
+    if (classe) td.className = classe;
+    return td;
+  }
+
+  function voltou(valor) {
+    if (valor === true) return celula('sim', 'sim');
+    if (valor === false) return celula('não', 'nao');
+    return celula('—');
+  }
+
+  function data(texto) {
+    return texto ? texto.slice(0, 16).replace('T', ' ') : '—';
+  }
+
+  document.getElementById('form').addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    aviso.className = '';
+    aviso.textContent = 'Carregando...';
+    // Some com a tabela antes de pedir de novo: chave errada não deixa o
+    // resultado anterior na tela.
+    document.getElementById('tabela').hidden = true;
+    linhas.replaceChildren();
+    try {
+      const resposta = await fetch('/admin/uso', {
+        headers: { Authorization: 'Bearer ' + document.getElementById('chave').value },
+        cache: 'no-store',
+      });
+      // Erro do proxy (502 em HTML) não é JSON: mostra o status em vez de "Unexpected token".
+      const corpo = await resposta.json().catch(() => null);
+      if (!resposta.ok || !Array.isArray(corpo)) throw new Error((corpo && corpo.detail) || 'Erro ' + resposta.status);
+      for (const p of corpo) {
+        const tr = document.createElement('tr');
+        tr.append(
+          celula(p.usuario),
+          celula(data(p.primeira_atividade)),
+          celula(data(p.ultima_atividade)),
+          celula(p.questoes, 'num'),
+          celula(p.tentativas, 'num'),
+          celula(p.taxa_acerto === null ? '—' : Math.round(p.taxa_acerto * 100) + '%', 'num'),
+          voltou(p.voltou_d1),
+          voltou(p.voltou_d7),
+        );
+        if (p.erro) tr.title = 'Erro ao ler: ' + p.erro;
+        linhas.append(tr);
+      }
+      document.getElementById('tabela').hidden = false;
+      aviso.textContent = corpo.length ? corpo.length + ' pessoa(s).' : 'Nenhum banco encontrado.';
+    } catch (erro) {
+      aviso.className = 'erro';
+      aviso.textContent = erro.message;
+    }
+  });
+</script>
+</body>
+</html>
