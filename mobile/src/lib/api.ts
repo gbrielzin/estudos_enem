@@ -222,9 +222,37 @@ async function buscarJson<T>(caminho: string): Promise<T> {
     throw new ErroApi(`Não consegui alcançar o backend em ${url} (${mensagem}). Confere se está na mesma wifi do computador e se o servidor está rodando.`);
   }
   if (!resposta.ok) {
+    // 401 não vira evento: sem código válido não há banco onde gravar.
+    if (resposta.status !== 401) registrarEvento('erro', telaDoCaminho(caminho));
     throw new ErroApi(`Backend respondeu ${resposta.status} em ${caminho}.`);
   }
   return resposta.json() as Promise<T>;
+}
+
+export type TipoEvento = 'app_aberto' | 'tela_vista' | 'erro';
+
+/** "/trilha?grande_area=x" -> "/trilha": a rota, sem parâmetro (o backend só aceita a-z, 0-9, _, / e -). */
+export function telaDoCaminho(caminho: string): string {
+  return caminho.split('?')[0].toLowerCase().replace(/[^a-z0-9_/-]/g, '').slice(0, 60) || '/';
+}
+
+/**
+ * Evento de uso para o painel de admin (POST /eventos, ver core/api.py):
+ * abriu o app, viu uma tela, deu erro. Dispara e esquece: nunca lança
+ * erro nem atrasa a tela, porque medir uso não pode quebrar o uso. O
+ * aparelho não vai daqui; o backend resume o User-Agent.
+ */
+export function registrarEvento(tipo: TipoEvento, tela?: string): void {
+  try {
+    fetch(`${getApiBaseUrl()}/eventos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...cabecalhosAutenticacao() },
+      body: JSON.stringify({ tipo, tela: tela ?? null }),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    // fetch indisponível (teste, ambiente sem rede): ignora.
+  }
 }
 
 export function getMaterias(grandeArea: GrandeArea): Promise<string[]> {

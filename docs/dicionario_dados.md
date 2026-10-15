@@ -4,7 +4,7 @@
 > mude `DESCRICOES` no script e rode de novo. O teste `test_dicionario_dados.py` quebra
 > se uma coluna nova entrar no banco sem descrição.
 
-Atualizado em 13/10/2026. Perfil lido do `enem.db` local.
+Atualizado em 15/10/2026. Perfil lido do `enem.db` local.
 
 **Classificação:** *pessoal* = dado de uso de uma pessoa, apagado ao criar o banco de um
 usuário novo (`criar_banco_usuario.py`); *compartilhado* = conteúdo igual para todos.
@@ -17,7 +17,8 @@ usuário novo (`criar_banco_usuario.py`); *compartilhado* = conteúdo igual para
 | `questoes` | dimensão | compartilhado | 18 | 1.514 | Uma linha por questão: real de prova ENEM ou do banco de prática. Centro do modelo. |
 | `resolucoes` | dimensão | compartilhado | 6 | 0 | Resoluções de uma questão (1 questão → N). Hoje guarda texto escrito à mão e as explicações de IA versionadas em explicacoes.jsonl. |
 | `relatos_questao` | fato | pessoal | 5 | 22 | Botão 'reportar' do app: sinal de que algo na questão pode estar errado (gabarito, enunciado cortado), para revisar em lote. |
-| `tentativas_usuario` | fato | pessoal | 10 | 1.067 | Log de cada resposta dada. Append-only: é o histórico de verdade; só muda por correção de gabarito ou edição explícita, sempre recalculando estado_revisao. |
+| `eventos` | fato | pessoal | 5 | — | Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo. |
+| `tentativas_usuario` | fato | pessoal | 10 | 1.072 | Log de cada resposta dada. Append-only: é o histórico de verdade; só muda por correção de gabarito ou edição explícita, sempre recalculando estado_revisao. |
 | `estado_revisao` | estado | pessoal | 5 | 769 | Uma linha por questão já tentada: o ponteiro mutável 'o que revisar hoje', derivado de tentativas_usuario. |
 | `historico_alteracoes` | auditoria | pessoal | 7 | 549 | Trilha de auditoria: toda correção de matéria/gabarito (ou questão apagada) depois que a questão já existia. |
 | `configuracoes` | configuração | misto (motivo_pessoal, data_inicio_plano são pessoais) | 2 | 3 | Chave-valor de preferências da pessoa (data da prova, início do plano, motivo pessoal). |
@@ -41,7 +42,7 @@ defeito (ex.: `topico` é opcional de propósito); o alerta é o que vale invest
 
 - `questoes.topico` tem 75% de nulos.
 - `questoes.enunciado_imagem_path` tem 74% de nulos.
-- `tentativas_usuario.tipo_erro` está 100% nula em 1.067 linhas: campo existe, mas ninguém preenche.
+- `tentativas_usuario.tipo_erro` está 100% nula em 1.072 linhas: campo existe, mas ninguém preenche.
 - `tentativas_usuario.duracao_segundos` tem 88% de nulos.
 
 ## Tabelas
@@ -105,20 +106,32 @@ Botão 'reportar' do app: sinal de que algo na questão pode estar errado (gabar
 | `resolvido` | INTEGER | sim |  |  | 0 = pendente, 1 = já revisado (o relato não é apagado). | 0% | 2 |
 | `criado_em` | TEXT | sim |  |  | Quando foi reportado. | 0% | 22 |
 
+### `eventos`
+
+Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo.
+
+| Coluna | Tipo | Obrigatória | Chave | Valores permitidos | Descrição |
+|---|---|---|---|---|---|
+| `id_evento` | INTEGER | sim | PK |  | Chave substituta. |
+| `tipo` | TEXT | sim |  | `app_aberto`, `tela_vista`, `erro` | app_aberto, tela_vista ou erro (TIPOS_EVENTO). |
+| `tela` | TEXT | não |  |  | Rota do app onde aconteceu (ex.: /simulado), sem parâmetro. |
+| `aparelho` | TEXT | não |  |  | Sistema e navegador resumidos pelo servidor a partir do User-Agent (ex.: Android · Chrome). |
+| `criado_em` | TEXT | sim |  |  | Data/hora local do evento. |
+
 ### `tentativas_usuario`
 
 Log de cada resposta dada. Append-only: é o histórico de verdade; só muda por correção de gabarito ou edição explícita, sempre recalculando estado_revisao.
 
 | Coluna | Tipo | Obrigatória | Chave | Valores permitidos | Descrição | % nulos | Distintos |
 |---|---|---|---|---|---|---|---|
-| `id_tentativa` | INTEGER | sim | PK |  | Chave substituta. | 0% | 1067 |
+| `id_tentativa` | INTEGER | sim | PK |  | Chave substituta. | 0% | 1072 |
 | `id_questao` | TEXT | sim | FK → `questoes.id_questao` |  | Questão respondida. | 0% | 769 |
-| `data_tentativa` | TEXT | sim |  |  | Data/hora local da resposta (local, não UTC — ver comentário no schema). | 0% | 274 |
+| `data_tentativa` | TEXT | sim |  |  | Data/hora local da resposta (local, não UTC — ver comentário no schema). | 0% | 277 |
 | `resposta_escolhida` | TEXT | não |  | `A`, `B`, `C`, `D`, `E`, `NULL` | Letra marcada. NULL = deixou em branco (conta como erro). | 8% | 5 |
 | `resultado` | TEXT | sim |  | `acertou`, `errou` | Calculado contra o gabarito, nunca digitado. | 0% | 2 |
 | `intervalo_dias` | INTEGER | sim |  |  | Intervalo Leitner calculado nesta tentativa. | 0% | 4 |
 | `streak_acertos` | INTEGER | sim |  |  | Acertos seguidos até esta tentativa. | 0% | 5 |
-| `proxima_revisao` | TEXT | sim |  |  | Data em que a questão volta para revisão. | 0% | 33 |
+| `proxima_revisao` | TEXT | sim |  |  | Data em que a questão volta para revisão. | 0% | 34 |
 | `tipo_erro` | TEXT | não |  |  | Por que errou: erro_de_conta, erro_de_pegadinha ou erro_de_conteudo (TIPOS_ERRO). Opcional. | 100% | 0 |
 | `duracao_segundos` | INTEGER | não |  |  | Tempo gasto na questão, quando cronometrado. | 88% | 72 |
 
@@ -131,8 +144,8 @@ Uma linha por questão já tentada: o ponteiro mutável 'o que revisar hoje', de
 | `id_questao` | TEXT | não | PK |  | Questão. | 0% | 769 |
 | `intervalo_dias` | INTEGER | sim |  |  | Intervalo Leitner atual. | 0% | 4 |
 | `streak_acertos` | INTEGER | sim |  |  | Acertos seguidos atuais. | 0% | 5 |
-| `proxima_revisao` | TEXT | sim |  |  | Próxima data de revisão. | 0% | 28 |
-| `ultima_tentativa` | TEXT | sim |  |  | Data da última resposta. | 0% | 26 |
+| `proxima_revisao` | TEXT | sim |  |  | Próxima data de revisão. | 0% | 29 |
+| `ultima_tentativa` | TEXT | sim |  |  | Data da última resposta. | 0% | 27 |
 
 ### `historico_alteracoes`
 

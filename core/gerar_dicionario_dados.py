@@ -84,6 +84,15 @@ DESCRICOES: dict[str, dict[str, str]] = {
         "resolvido": "0 = pendente, 1 = já revisado (o relato não é apagado).",
         "criado_em": "Quando foi reportado.",
     },
+    "eventos": {
+        "_camada": "fato",
+        "_tabela": "Uso do app (abriu, viu tela, deu erro) para o painel de admin saber quem abriu e travou antes de responder. Sem IP nem User-Agent completo.",
+        "id_evento": "Chave substituta.",
+        "tipo": "app_aberto, tela_vista ou erro (TIPOS_EVENTO).",
+        "tela": "Rota do app onde aconteceu (ex.: /simulado), sem parâmetro.",
+        "aparelho": "Sistema e navegador resumidos pelo servidor a partir do User-Agent (ex.: Android · Chrome).",
+        "criado_em": "Data/hora local do evento.",
+    },
     "tentativas_usuario": {
         "_camada": "fato",
         "_tabela": "Log de cada resposta dada. Append-only: é o histórico de verdade; só muda por correção de gabarito ou edição explícita, sempre recalculando estado_revisao.",

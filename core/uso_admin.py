@@ -1,9 +1,10 @@
 """
 uso_admin.py — resumo de uso por pessoa, para o painel de admin (/admin/uso).
 
-Responde "a pessoa do beta usou o app? voltou?" sem guardar dado novo:
-lê só o que cada banco já tem (`tentativas_usuario`, ver adr/0010) e
-calcula na hora. Nada de IP, aparelho ou registro de acesso.
+Responde "a pessoa do beta abriu o app? respondeu? voltou?" lendo o que
+cada banco já tem (ver adr/0010): `tentativas_usuario` e `eventos`
+(abriu o app, viu tela, deu erro, com aparelho resumido; sem IP) e
+calculando na hora.
 
 Abre cada banco em modo somente leitura (`?mode=ro`): o painel nunca
 escreve no banco de ninguém, nem migração. Por isso não reaproveita as
@@ -39,46 +40,70 @@ def resumo_banco(caminho: Path, hoje: date) -> dict:
         "usuario": caminho.stem,
         "primeira_atividade": None,
         "ultima_atividade": None,
+        "aberturas": 0,
         "tentativas": 0,
         "questoes": 0,
         "taxa_acerto": None,
+        "erros": 0,
+        "aparelho": None,
+        "abriu_sem_responder": False,
         "voltou_d1": None,
         "voltou_d7": None,
     }
     try:
         uri = f"{caminho.resolve().as_uri()}?mode=ro"
         with closing(sqlite3.connect(uri, uri=True)) as conn:
-            primeira, ultima, total, questoes, acertos = conn.execute(
+            total, questoes, acertos = conn.execute(
                 """
-                SELECT MIN(data_tentativa), MAX(data_tentativa), COUNT(*),
-                       COUNT(DISTINCT id_questao),
+                SELECT COUNT(*), COUNT(DISTINCT id_questao),
                        SUM(CASE WHEN resultado = 'acertou' THEN 1 ELSE 0 END)
                 FROM tentativas_usuario
                 """
             ).fetchone()
+            # Atividade = responder questão OU qualquer evento de uso. Banco
+            # criado antes da tabela `eventos` (e nunca migrado, porque o
+            # painel não escreve) continua funcionando só com tentativas.
+            tem_eventos = conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'eventos'").fetchone()
+            horas = "SELECT data_tentativa AS h FROM tentativas_usuario"
+            aberturas = erros = 0
+            aparelho = None
+            if tem_eventos:
+                horas += " UNION ALL SELECT criado_em FROM eventos"
+                aberturas, erros = conn.execute(
+                    """
+                    SELECT COALESCE(SUM(CASE WHEN tipo = 'app_aberto' THEN 1 ELSE 0 END), 0),
+                           COALESCE(SUM(CASE WHEN tipo = 'erro' THEN 1 ELSE 0 END), 0)
+                    FROM eventos
+                    """
+                ).fetchone()
+                linha = conn.execute(
+                    "SELECT aparelho FROM eventos WHERE aparelho IS NOT NULL ORDER BY criado_em DESC, id_evento DESC LIMIT 1"
+                ).fetchone()
+                aparelho = linha[0] if linha else None
+            primeira, ultima = conn.execute(f"SELECT MIN(h), MAX(h) FROM ({horas})").fetchone()
             # Um dia por linha (mesmo padrão de db.calcular_ofensiva); data
             # fora do formato vira NULL no date() do SQLite e fica de fora.
             dias = {
                 date.fromisoformat(d)
-                for (d,) in conn.execute(
-                    "SELECT DISTINCT date(data_tentativa) FROM tentativas_usuario WHERE date(data_tentativa) IS NOT NULL"
-                )
+                for (d,) in conn.execute(f"SELECT DISTINCT date(h) FROM ({horas}) WHERE date(h) IS NOT NULL")
             }
     except (sqlite3.Error, ValueError) as erro:
         return {**resumo, "erro": str(erro)}
 
-    if not total:
+    resumo.update(aberturas=aberturas, erros=erros, aparelho=aparelho, tentativas=total, questoes=questoes)
+    if total:
+        resumo["taxa_acerto"] = round((acertos or 0) / total, 3)
+    # O caso que o painel mais precisa mostrar: abriu o app e travou antes da 1ª questão.
+    resumo["abriu_sem_responder"] = bool(primeira) and not total
+    if not primeira:
         return resumo
     if not dias:
-        return {**resumo, "tentativas": total, "erro": "data_tentativa fora do formato AAAA-MM-DD"}
+        return {**resumo, "erro": "data fora do formato AAAA-MM-DD"}
     primeiro_dia = min(dias)
     return {
         **resumo,
         "primeira_atividade": primeira,
         "ultima_atividade": ultima,
-        "tentativas": total,
-        "questoes": questoes,
-        "taxa_acerto": round((acertos or 0) / total, 3),
         # D1: voltou no dia seguinte ao primeiro. D7: voltou em algum dia da
         # semana seguinte (do 1º ao 7º dia depois do primeiro).
         "voltou_d1": _voltou(dias, primeiro_dia, 1, 1, hoje),

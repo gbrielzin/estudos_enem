@@ -1,4 +1,42 @@
-import { cabecalhosAutenticacao, caminhoVariacaoMolde, urlImagemEnunciado } from './api';
+import { cabecalhosAutenticacao, caminhoVariacaoMolde, registrarEvento, telaDoCaminho, urlImagemEnunciado } from './api';
+
+describe('telaDoCaminho', () => {
+  it('tira a query e fica so com a rota', () => {
+    expect(telaDoCaminho('/trilha?grande_area=matematica&materia=x')).toBe('/trilha');
+  });
+
+  it('remove caractere que o backend recusa', () => {
+    expect(telaDoCaminho('/Simulado <>')).toBe('/simulado');
+  });
+
+  it('vazio vira a raiz', () => {
+    expect(telaDoCaminho('')).toBe('/');
+  });
+});
+
+describe('registrarEvento', () => {
+  const fetchOriginal = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = fetchOriginal;
+  });
+
+  it('manda tipo e tela para /eventos', () => {
+    const chamado = jest.fn().mockResolvedValue({ ok: true });
+    globalThis.fetch = chamado as unknown as typeof fetch;
+    registrarEvento('tela_vista', '/simulado');
+    const [url, opcoes] = chamado.mock.calls[0];
+    expect(url).toBe('http://localhost:8000/eventos');
+    expect(opcoes.method).toBe('POST');
+    expect(JSON.parse(opcoes.body)).toEqual({ tipo: 'tela_vista', tela: '/simulado' });
+  });
+
+  it('nunca lanca erro, nem com a rede fora', async () => {
+    globalThis.fetch = jest.fn().mockRejectedValue(new Error('sem rede')) as unknown as typeof fetch;
+    expect(() => registrarEvento('app_aberto')).not.toThrow();
+    await Promise.resolve();
+  });
+});
 
 describe('cabecalhosAutenticacao', () => {
   const originalEnv = process.env.EXPO_PUBLIC_API_AUTH_TOKEN;

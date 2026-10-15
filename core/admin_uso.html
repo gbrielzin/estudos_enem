@@ -34,26 +34,33 @@
   .sim { color: var(--verde); font-weight: 600; }
   .nao { color: var(--vermelho); }
   .legenda { font-size: 13px; margin-top: 12px; }
+  .funil { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+  .etapa { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
+  .etapa b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .etapa span { color: var(--apagado); font-size: 12px; }
+  tr.travou td { background: color-mix(in srgb, #f59e0b 14%, transparent); }
+  @media (max-width: 520px) { .funil { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
 <main>
   <h1>Painel de uso</h1>
-  <p>Quem usou o app e quem voltou. Lido na hora dos bancos de cada pessoa, sem guardar nada novo.</p>
+  <p>Quem abriu o app, quem respondeu e quem voltou. Lido na hora dos bancos de cada pessoa.</p>
   <form id="form">
     <input id="chave" type="password" placeholder="Chave de admin" autocomplete="off" required>
     <button type="submit">Ver uso</button>
   </form>
   <div id="aviso"></div>
+  <div class="funil" id="funil" hidden></div>
   <div class="tabela" id="tabela" hidden>
     <table>
       <thead>
-        <tr><th>Pessoa</th><th>1ª atividade</th><th>Última</th><th>Questões</th><th>Tentativas</th><th>Acerto</th><th>D1</th><th>D7</th></tr>
+        <tr><th>Pessoa</th><th>1ª atividade</th><th>Última</th><th>Aberturas</th><th>Questões</th><th>Tentativas</th><th>Acerto</th><th>D1</th><th>D7</th><th>Erros</th><th>Aparelho</th></tr>
       </thead>
       <tbody id="linhas"></tbody>
     </table>
   </div>
-  <p class="legenda">D1: voltou no dia seguinte ao primeiro uso. D7: voltou em algum dia da semana seguinte. "—": ainda não dá pra saber.</p>
+  <p class="legenda">Atividade = abrir o app ou responder questão. D1: voltou no dia seguinte ao primeiro uso. D7: voltou em algum dia da semana seguinte. "—": ainda não dá pra saber. Linha em laranja: abriu e não respondeu nenhuma questão. Código de acesso inválido não aparece aqui (a API recusa antes de saber quem é).</p>
 </main>
 <script>
   const aviso = document.getElementById('aviso');
@@ -72,6 +79,28 @@
     return celula('—');
   }
 
+  // Funil: das pessoas com código, quantas abriram, responderam e voltaram.
+  function mostrarFunil(pessoas) {
+    const etapas = [
+      ['Abriram', pessoas.filter((p) => p.primeira_atividade).length],
+      ['Responderam', pessoas.filter((p) => p.tentativas > 0).length],
+      ['Voltaram D1', pessoas.filter((p) => p.voltou_d1 === true).length],
+      ['Voltaram D7', pessoas.filter((p) => p.voltou_d7 === true).length],
+    ];
+    const funil = document.getElementById('funil');
+    funil.replaceChildren(...etapas.map(([rotulo, n]) => {
+      const div = document.createElement('div');
+      div.className = 'etapa';
+      const numero = document.createElement('b');
+      numero.textContent = n + ' de ' + pessoas.length;
+      const texto = document.createElement('span');
+      texto.textContent = rotulo;
+      div.append(numero, texto);
+      return div;
+    }));
+    funil.hidden = false;
+  }
+
   function data(texto) {
     return texto ? texto.slice(0, 16).replace('T', ' ') : '—';
   }
@@ -83,6 +112,7 @@
     // Some com a tabela antes de pedir de novo: chave errada não deixa o
     // resultado anterior na tela.
     document.getElementById('tabela').hidden = true;
+    document.getElementById('funil').hidden = true;
     linhas.replaceChildren();
     try {
       const resposta = await fetch('/admin/uso', {
@@ -98,15 +128,20 @@
           celula(p.usuario),
           celula(data(p.primeira_atividade)),
           celula(data(p.ultima_atividade)),
+          celula(p.aberturas, 'num'),
           celula(p.questoes, 'num'),
           celula(p.tentativas, 'num'),
           celula(p.taxa_acerto === null ? '—' : Math.round(p.taxa_acerto * 100) + '%', 'num'),
           voltou(p.voltou_d1),
           voltou(p.voltou_d7),
+          celula(p.erros, 'num'),
+          celula(p.aparelho || '—'),
         );
+        if (p.abriu_sem_responder) tr.className = 'travou';
         if (p.erro) tr.title = 'Erro ao ler: ' + p.erro;
         linhas.append(tr);
       }
+      mostrarFunil(corpo);
       document.getElementById('tabela').hidden = false;
       aviso.textContent = corpo.length ? corpo.length + ' pessoa(s).' : 'Nenhum banco encontrado.';
     } catch (erro) {

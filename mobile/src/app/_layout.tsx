@@ -1,11 +1,12 @@
 import { Baloo2_700Bold, Baloo2_800ExtraBold } from '@expo-google-fonts/baloo-2';
 import { Nunito_400Regular, Nunito_700Bold, Nunito_800ExtraBold, useFonts } from '@expo-google-fonts/nunito';
-import { DarkTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
+import { registrarEvento, telaDoCaminho } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,6 +28,16 @@ export default function TabLayout() {
   useEffect(() => {
     if (fontesCarregadas) SplashScreen.hideAsync();
   }, [fontesCarregadas]);
+
+  // Eventos de uso para o painel de admin (ver registrarEvento em lib/api.ts):
+  // uma abertura por carregamento do app e uma visita por troca de tela.
+  const rota = usePathname();
+  useEffect(() => {
+    registrarEvento('app_aberto', telaDoCaminho(rota));
+  }, []); // lista vazia de propósito: uma vez por abertura, não a cada troca de tela
+  useEffect(() => {
+    registrarEvento('tela_vista', telaDoCaminho(rota));
+  }, [rota]);
 
   if (!fontesCarregadas) return null;
 
