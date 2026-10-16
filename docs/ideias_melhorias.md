@@ -220,3 +220,11 @@ O que eles têm e dá pra fazer no ENEM GI com os **parâmetros TRI oficiais do 
 - **Ao concluir:** aviso de quantas estão em branco (“em branco conta como erro”).
 Diferencial possível: entregar de graça o que eles cobram (mapa térmico + custo do erro), já que o dado é público.
 Preço (09/10/2026): MaTRIx+ só vem no pacote “Revisão Enem CdM”, R$ 147 à vista ou 12x R$ 14,70, acesso até 30/11/2026, garantia de 7 dias. Âncora de “R$ 991” sem venda avulsa visível. Diferenciais anunciados: TRI “calculada, não estimada” com parâmetros do INEP, % de marcação por alternativa (microdados), TRI Lab (chance de acerto por faixa de nota), matriz de 9 perfis, link com SISU (simulador “em breve”).
+
+## 10. Ideias de 2026-10-13 (live do PC: workflow de design com IA)
+
+Detalhe completo em [workflow_ia_design.md](workflow_ia_design.md).
+
+- **Animações que faltam** (seção 4 de workflow_ia_design.md): placar do simulado contando de 0 até o valor (✅ `components/numero-sobe.tsx`, 13/10), barras por matéria enchendo em sequência, cards de erro entrando em cascata, skeleton no loading. Tudo respeitando "reduzir movimento".
+- **Landing de captação com hero primeiro:** diagnóstico grátis → cadastro. Protótipo em HTML antes do código, 3 variações do hero, as outras seções herdam o estilo. Só divulgar link de cadastro depois de autenticação real e LGPD (ver pesquisa_produto_visual_regras_marketing.md, resumo item 5).
+- **Verificação visual antes de PR de tela:** subir o app web, tirar print com Playwright e comparar com o design.
