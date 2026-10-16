@@ -1,0 +1,152 @@
+table VW_FATO_TENTATIVA
+	lineageTag: fa1c8fd2-f531-41f4-9462-dc1d2a6420db
+
+	measure Tentativas = COUNTROWS(VW_FATO_TENTATIVA)
+		formatString: 0
+		lineageTag: 996849fd-512c-46a5-9bc2-2e14940f89cf
+
+	measure '% Acerto' = DIVIDE(SUM(VW_FATO_TENTATIVA[ACERTOU]), [Tentativas])
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: eee7e166-73de-4c73-b5b3-e4b57b5fd38d
+
+	/// Texto já formatado (1.067): o cartão novo do Power BI abrevia número para "1 Mil" e não guarda o ajuste de unidade.
+	measure 'Total de tentativas' = FORMAT([Tentativas], "#,0")
+		lineageTag: e1ae14dc-cc24-4cc4-9972-5d5a4cbc4207
+
+	measure 'Em branco' = SUM(VW_FATO_TENTATIVA[EM_BRANCO])
+		formatString: 0
+		lineageTag: 6507e433-4553-4a2e-83bd-17f12d639155
+
+	/// Esconde matéria com menos de 10 tentativas: % de 1 ou 2 respostas não diz nada (mesma ideia de MIN_AMOSTRA_CONFIAVEL no app).
+	measure 'Tentativas (amostra 10+)' = IF([Tentativas] >= 10, [Tentativas])
+		formatString: 0
+		lineageTag: 7a391ed0-3169-4129-8c32-a50137c34a9d
+
+	/// % de acerto só onde há 10+ tentativas; em branco nas demais, o que tira a linha da tabela.
+	measure '% Acerto (amostra 10+)' = IF([Tentativas] >= 10, [% Acerto])
+		formatString: 0.0%;-0.0%;0.0%
+		lineageTag: 24938827-9971-4009-acd3-520c2cc15041
+
+	column ID_TENTATIVA
+		dataType: double
+		lineageTag: df62d899-cd9c-4434-aa18-e7c9137a1ca8
+		summarizeBy: none
+		sourceColumn: ID_TENTATIVA
+
+		annotation SummarizationSetBy = User
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ID_QUESTAO
+		dataType: string
+		lineageTag: 947fd502-90f4-4379-b52f-72f78208319a
+		summarizeBy: none
+		sourceColumn: ID_QUESTAO
+
+		annotation SummarizationSetBy = Automatic
+
+	column DATA_TENTATIVA
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 5fcfbc9b-4feb-47f0-a878-d5be0e348a2a
+		summarizeBy: none
+		sourceColumn: DATA_TENTATIVA
+
+		variation Variation
+			isDefault
+			relationship: 6dd743d5-19f6-4065-828c-76e7b8f4e373
+			defaultHierarchy: LocalDateTable_e3abe0f7-82a1-4818-836c-083fce89a603.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+	column DATA
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 504cf4e1-bf51-4219-b61b-f0b6b8b8b133
+		summarizeBy: none
+		sourceColumn: DATA
+
+		variation Variation
+			isDefault
+			relationship: 23ea5b4e-e574-4d0c-a8ed-c068ebf48ff3
+			defaultHierarchy: LocalDateTable_0e037dad-2d1b-4236-9525-a4400abe19cd.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column SEMANA
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 8766aabe-1d38-4fa1-8dc1-ec3439f7b357
+		summarizeBy: none
+		sourceColumn: SEMANA
+
+		variation Variation
+			isDefault
+			relationship: a1959acb-5ccb-4032-b672-6692ca73eb38
+			defaultHierarchy: LocalDateTable_a8b63b47-582e-4db8-b081-9aedc0c752ff.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column RESPOSTA_ESCOLHIDA
+		dataType: string
+		lineageTag: 269e3a33-51b0-4f33-880b-5b5c692c0f54
+		summarizeBy: none
+		sourceColumn: RESPOSTA_ESCOLHIDA
+
+		annotation SummarizationSetBy = Automatic
+
+	column RESULTADO
+		dataType: string
+		lineageTag: 5c7a8683-727f-486b-8199-401c13bfdc8c
+		summarizeBy: none
+		sourceColumn: RESULTADO
+
+		annotation SummarizationSetBy = Automatic
+
+	column ACERTOU
+		dataType: double
+		lineageTag: 293a928b-f5a8-4686-8e73-02befe02fa61
+		summarizeBy: sum
+		sourceColumn: ACERTOU
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column EM_BRANCO
+		dataType: double
+		lineageTag: 3b147f5c-bb1a-4d22-bab7-37d044b19779
+		summarizeBy: sum
+		sourceColumn: EM_BRANCO
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column DURACAO_SEGUNDOS
+		dataType: double
+		lineageTag: 3475a741-caaa-41c4-b14e-a4f1b1c24a4c
+		summarizeBy: sum
+		sourceColumn: DURACAO_SEGUNDOS
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition VW_FATO_TENTATIVA = m
+		mode: import
+		source =
+				let
+				    Fonte = Snowflake.Databases("SUA_ORG-SUA_CONTA.snowflakecomputing.com","ENEM_WH",[Implementation="2.0"]),
+				    ENEM_GI_Database = Fonte{[Name="ENEM_GI",Kind="Database"]}[Data],
+				    ESTUDO_Schema = ENEM_GI_Database{[Name="ESTUDO",Kind="Schema"]}[Data],
+				    VW_FATO_TENTATIVA_View = ESTUDO_Schema{[Name="VW_FATO_TENTATIVA",Kind="View"]}[Data]
+				in
+				    VW_FATO_TENTATIVA_View
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,104 @@
+table VW_DIM_QUESTAO
+	lineageTag: f9451297-d96d-4481-ae19-d890bb286e58
+
+	column ID_QUESTAO
+		dataType: string
+		lineageTag: 99fc27e6-8665-4d10-884b-91a2dae7b516
+		summarizeBy: none
+		sourceColumn: ID_QUESTAO
+
+		annotation SummarizationSetBy = Automatic
+
+	column ANO
+		dataType: double
+		lineageTag: c6ee60a6-2e79-4934-920b-460c75a24b48
+		summarizeBy: none
+		sourceColumn: ANO
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column CADERNO
+		dataType: string
+		lineageTag: 08396f20-198e-4a51-82cb-204e886b283f
+		summarizeBy: none
+		sourceColumn: CADERNO
+
+		annotation SummarizationSetBy = Automatic
+
+	column NUMERO_QUESTAO
+		dataType: double
+		lineageTag: f1c2aa22-c66d-43cf-8c4d-d9ca8fc50204
+		summarizeBy: none
+		sourceColumn: NUMERO_QUESTAO
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column AREA
+		dataType: string
+		lineageTag: 35f670c4-7d00-4685-a429-a70d3d367353
+		summarizeBy: none
+		sourceColumn: AREA
+
+		annotation SummarizationSetBy = Automatic
+
+	column MATERIA
+		dataType: string
+		lineageTag: 08e06027-2288-4f98-b311-2cbc5bf0098b
+		summarizeBy: none
+		sourceColumn: MATERIA
+
+		annotation SummarizationSetBy = Automatic
+
+	column ORIGEM
+		dataType: string
+		lineageTag: 916a90ea-ad46-4d06-81ed-16deabbae5bf
+		summarizeBy: none
+		sourceColumn: ORIGEM
+
+		annotation SummarizationSetBy = Automatic
+
+	column HABILIDADE
+		dataType: double
+		lineageTag: 01fa267b-fea7-46b3-b7c1-c37b84b4156c
+		summarizeBy: none
+		sourceColumn: HABILIDADE
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column TRI_B
+		dataType: double
+		lineageTag: c2216a22-3de2-49ab-9e02-8ef74eb0cb3c
+		summarizeBy: none
+		sourceColumn: TRI_B
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column FAIXA_TRI
+		dataType: string
+		lineageTag: 61845165-3005-4dca-a607-a11402e1a28c
+		summarizeBy: none
+		sourceColumn: FAIXA_TRI
+
+		annotation SummarizationSetBy = Automatic
+
+	partition VW_DIM_QUESTAO = m
+		mode: import
+		source =
+				let
+				    Fonte = Snowflake.Databases("SUA_ORG-SUA_CONTA.snowflakecomputing.com","ENEM_WH",[Implementation="2.0"]),
+				    ENEM_GI_Database = Fonte{[Name="ENEM_GI",Kind="Database"]}[Data],
+				    ESTUDO_Schema = ENEM_GI_Database{[Name="ESTUDO",Kind="Schema"]}[Data],
+				    VW_DIM_QUESTAO_View = ESTUDO_Schema{[Name="VW_DIM_QUESTAO",Kind="View"]}[Data]
+				in
+				    VW_DIM_QUESTAO_View
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,105 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "456ee6d3ffab2a98c002",
+  "position": {
+    "x": 1270,
+    "y": 70,
+    "z": 9000,
+    "height": 390,
+    "width": 640,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "O que os dados dizem",
+                    "textStyle": {
+                      "fontSize": "14pt",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "1. A média de 57,6% está inflada. ",
+                    "textStyle": {
+                      "fontWeight": "bold",
+                      "fontSize": "11pt"
+                    }
+                  },
+                  {
+                    "value": "Questões sem TRI (170 de 182 são do banco de prática, mais fáceis) têm 75,8% de acerto; nas questões oficiais com TRI o acerto é 53,9%.",
+                    "textStyle": {
+                      "fontSize": "11pt"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "2. Desempenho coerente com a TRI. ",
+                    "textStyle": {
+                      "fontWeight": "bold",
+                      "fontSize": "11pt"
+                    }
+                  },
+                  {
+                    "value": "O acerto cai com a dificuldade oficial: 68,2% (fácil) → 52,5% (média) → 46,0% (difícil).",
+                    "textStyle": {
+                      "fontSize": "11pt"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "3. Resto de funcionalidade descontinuada. ",
+                    "textStyle": {
+                      "fontWeight": "bold",
+                      "fontSize": "11pt"
+                    }
+                  },
+                  {
+                    "value": "451 questões oficiais (446 de Natureza) têm 'sem_video_pendente' no lugar da matéria — sobra da ideia abandonada de classificar pelo vídeo do YouTube. A view já trata e mostra '(não classificada)'; o próximo passo é classificar essas questões.",
+                    "textStyle": {
+                      "fontSize": "11pt"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "4. Prioridade de estudo. ",
+                    "textStyle": {
+                      "fontWeight": "bold",
+                      "fontSize": "11pt"
+                    }
+                  },
+                  {
+                    "value": "Funções orgânicas (16,7%), física (37,8%) e função do 2º grau (40,0%), entre matérias com 10+ tentativas.",
+                    "textStyle": {
+                      "fontSize": "11pt"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

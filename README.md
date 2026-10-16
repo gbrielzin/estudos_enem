@@ -98,6 +98,36 @@ Classificação de matéria passa por um pipeline de normalização
 entrar no banco — questão fora da taxonomia é marcada `nao_classificado`
 em vez de rejeitada, alimentando uma fila de triagem manual.
 
+## Plataforma de dados
+
+O mesmo banco do app também roda num SQL Server local (on premise) e num
+data warehouse em nuvem (Snowflake), que alimenta um painel no Power BI.
+
+```mermaid
+flowchart LR
+    A[PDFs e API do INEP] --> B[(SQLite<br/>banco do app)]
+    B -->|CSV| C[(SQL Server<br/>on premise)]
+    B -->|CSV · stage · COPY INTO| D[(Snowflake<br/>warehouse em nuvem)]
+    D -->|views fato/dimensão| E[Power BI<br/>usuário só leitura]
+    B -.->|schema| F[Dicionário de dados<br/>gerado e checado no CI]
+```
+
+![Painel do ENEM GI no Power BI](docs/powerbi/painel.png)
+
+- **Reconciliação entre bancos:** 1.514 questões e 1.067 tentativas, e os 4
+  indicadores deram o mesmo resultado no SQLite, no SQL Server e no Snowflake
+  (scripts em [`docs/snowflake/`](docs/snowflake/) e
+  [`docs/sqlserver/`](docs/sqlserver/)).
+- **Regra de negócio no warehouse:** a faixa TRI e o "acertou" ficam nas
+  views, não em cada painel; o Power BI entra com um usuário que só tem
+  `SELECT` ([`docs/powerbi/`](docs/powerbi/)).
+- **Dicionário de dados** gerado do schema, com perfil de qualidade; o CI
+  falha se o dicionário ficar desatualizado
+  ([`docs/dicionario_dados.md`](docs/dicionario_dados.md)).
+- **Achado do painel:** a média de acerto de 57,6% estava inflada pelas
+  questões do banco de prática; nas questões oficiais com TRI, o acerto é
+  53,9%.
+
 ## Principais resultados
 
 - **1504 questões** no banco (1157 de provas oficiais 2010-2025 + 347 de
