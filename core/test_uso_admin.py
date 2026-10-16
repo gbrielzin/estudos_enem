@@ -41,12 +41,20 @@ class TestResumoUso(unittest.TestCase):
             conn.commit()
 
     def _eventos(self, nome, eventos):
-        """eventos: lista de (criado_em, tipo, aparelho). Cria a tabela no banco já existente."""
+        """eventos: lista de (criado_em, tipo, aparelho[, detalhe]). Cria a tabela no banco já existente."""
         with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
             conn.execute(
-                "CREATE TABLE IF NOT EXISTS eventos (id_evento INTEGER PRIMARY KEY, tipo TEXT, tela TEXT, aparelho TEXT, criado_em TEXT)"
+                "CREATE TABLE IF NOT EXISTS eventos (id_evento INTEGER PRIMARY KEY, tipo TEXT, tela TEXT, detalhe TEXT, aparelho TEXT, criado_em TEXT)"
             )
-            conn.executemany("INSERT INTO eventos (criado_em, tipo, aparelho) VALUES (?, ?, ?)", eventos)
+            linhas = [(e[0], e[1], e[2], e[3] if len(e) > 3 else None) for e in eventos]
+            conn.executemany("INSERT INTO eventos (criado_em, tipo, aparelho, detalhe) VALUES (?, ?, ?, ?)", linhas)
+            conn.commit()
+
+    def _pesquisa(self, nome, respostas):
+        """respostas: lista de (criado_em, nota, comentario)."""
+        with closing(sqlite3.connect(self.pasta / f"{nome}.db")) as conn:
+            conn.execute("CREATE TABLE respostas_pesquisa (id_resposta INTEGER PRIMARY KEY, nota INTEGER, comentario TEXT, criado_em TEXT)")
+            conn.executemany("INSERT INTO respostas_pesquisa (criado_em, nota, comentario) VALUES (?, ?, ?)", respostas)
             conn.commit()
 
     def _por_usuario(self, hoje=HOJE):
@@ -179,6 +187,73 @@ class TestResumoUso(unittest.TestCase):
         self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])  # sem eventos: banco de antes deste PR
         ana = self._por_usuario()["ana"]
         self.assertEqual((ana["tentativas"], ana["aberturas"], ana["aparelho"]), (1, 0, None))
+        self.assertNotIn("erro", ana)
+
+    def test_sessoes_e_tempo_ate_a_1a_questao(self):
+        # Abriu 10:00, respondeu 10:04 e 10:20 (1ª sessão, 20 min); voltou 15:00 e respondeu 15:10 (2ª, 10 min).
+        self._banco("ana", [
+            ("2026-10-01 10:04:00", "q1", "acertou"),
+            ("2026-10-01 10:20:00", "q2", "errou"),
+            ("2026-10-01 15:10:00", "q3", "acertou"),
+        ])
+        self._eventos("ana", [("2026-10-01 10:00:00", "app_aberto", None), ("2026-10-01 15:00:00", "app_aberto", None)])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["sessoes"], 2)
+        self.assertEqual(ana["minutos_por_sessao"], 15.0)
+        self.assertEqual(ana["minutos_ate_1a_questao"], 4.0)
+
+    def test_sem_abertura_antes_nao_inventa_tempo_ate_a_1a_questao(self):
+        # Respondeu antes de existir evento (dado de antes do PR #55): sem número.
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-05 10:00:00", "app_aberto", None)])
+        self.assertIsNone(self._por_usuario()["ana"]["minutos_ate_1a_questao"])
+
+    def test_origem_recursos_e_pesquisa(self):
+        self._banco("ana", [("2026-10-01 10:05:00", "q1", "acertou")])
+        self._eventos("ana", [
+            ("2026-10-01 10:00:00", "app_aberto", None, "whatsapp"),
+            ("2026-10-02 10:00:00", "app_aberto", None, "tiktok"),
+            ("2026-10-01 10:06:00", "explicacao_aberta", None),
+            ("2026-10-01 10:07:00", "molde_respondido", None, "frenagem"),
+            ("2026-10-01 10:08:00", "molde_respondido", None, "aquario"),
+        ])
+        self._pesquisa("ana", [("2026-10-01 11:00:00", 7, "ok"), ("2026-10-08 11:00:00", 9, "a explicação")])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["origem"], "whatsapp")  # o 1º link, não o último
+        self.assertEqual((ana["explicacoes_abertas"], ana["moldes_respondidos"]), (1, 2))
+        self.assertEqual((ana["nota_pesquisa"], ana["comentario_pesquisa"], ana["respostas_pesquisa"]), (9, "a explicação", 2))
+
+    def test_comentario_antigo_nao_some_com_resposta_so_de_nota(self):
+        self._banco("ana", [])
+        self._pesquisa("ana", [("2026-10-01 11:00:00", 7, "as explicações ajudam"), ("2026-10-08 11:00:00", 9, None)])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual((ana["nota_pesquisa"], ana["comentario_pesquisa"]), (9, "as explicações ajudam"))
+
+    def test_quem_so_treinou_molde_nao_aparece_como_travado(self):
+        self._banco("ana", [])
+        self._eventos("ana", [("2026-10-15 10:00:00", "app_aberto", None), ("2026-10-15 10:02:00", "molde_respondido", None, "frenagem")])
+        self.assertFalse(self._por_usuario()["ana"]["abriu_sem_responder"])
+
+    def test_tempo_ate_a_1a_questao_so_dentro_da_sessao(self):
+        # Abriu dia 1 e só respondeu dia 5, numa abertura nova 3 min antes: conta 3 min, não 4 dias.
+        self._banco("ana", [("2026-10-05 10:03:00", "q1", "acertou")])
+        self._eventos("ana", [("2026-10-01 10:00:00", "app_aberto", None), ("2026-10-05 10:00:00", "app_aberto", None)])
+        self.assertEqual(self._por_usuario()["ana"]["minutos_ate_1a_questao"], 3.0)
+
+    def test_data_com_fuso_nao_derruba_o_painel(self):
+        self._banco("ana", [("2026-10-01 10:00:00", "q1", "acertou"), ("2026-10-02 10:00:00+00:00", "q2", "acertou")])
+        ana = self._por_usuario()["ana"]
+        self.assertEqual(ana["tentativas"], 2)
+        self.assertTrue(ana["voltou_d1"])
+
+    def test_eventos_da_primeira_versao_sem_detalhe(self):
+        self._banco("ana", [])
+        with closing(sqlite3.connect(self.pasta / "ana.db")) as conn:
+            conn.execute("CREATE TABLE eventos (id_evento INTEGER PRIMARY KEY, tipo TEXT, tela TEXT, aparelho TEXT, criado_em TEXT)")
+            conn.execute("INSERT INTO eventos (criado_em, tipo, aparelho) VALUES ('2026-10-15 10:00:00', 'app_aberto', 'Android · Chrome')")
+            conn.commit()
+        ana = self._por_usuario()["ana"]
+        self.assertEqual((ana["aberturas"], ana["origem"]), (1, None))
         self.assertNotIn("erro", ana)
 
     def test_pasta_que_nao_existe(self):

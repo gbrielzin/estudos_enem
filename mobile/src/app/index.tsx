@@ -31,6 +31,7 @@ import {
   getStreak,
   getTrilha,
   getTrilhaFixa,
+  registrarEvento,
   registrarTentativa,
   reportarQuestao,
   Resolucao,
@@ -1241,10 +1242,13 @@ function BotaoReportar({ idQuestao }: { idQuestao: string }) {
 function ExplicacaoQuestao({ idQuestao }: { idQuestao: string }) {
   const [resolucoes, setResolucoes] = useState<Resolucao[] | null>(null);
   const [aberto, setAberto] = useState(false);
+  // Um evento por questão: abrir/fechar várias vezes não infla o "Explicações" do painel.
+  const registrouAbertura = useRef(false);
 
   useEffect(() => {
     setResolucoes(null);
     setAberto(false);
+    registrouAbertura.current = false;
     getResolucoes(idQuestao)
       .then((r) => setResolucoes(r.filter((res) => res.tipo === 'texto')))
       .catch(() => setResolucoes([]));
@@ -1254,7 +1258,15 @@ function ExplicacaoQuestao({ idQuestao }: { idQuestao: string }) {
 
   return (
     <View style={styles.explicacaoBox}>
-      <Pressable style={styles.explicacaoToggle} onPress={() => setAberto((v) => !v)}>
+      <Pressable
+        style={styles.explicacaoToggle}
+        onPress={() => {
+          if (!aberto && !registrouAbertura.current) {
+            registrouAbertura.current = true;
+            registrarEvento('explicacao_aberta');
+          }
+          setAberto((v) => !v);
+        }}>
         <Feather name={aberto ? 'chevron-up' : 'chevron-down'} size={15} color={Brand.roxoClaro} />
         <Text style={styles.explicacaoToggleTexto}>{aberto ? 'Ocultar explicação' : '💡 Por que essa resposta'}</Text>
       </Pressable>

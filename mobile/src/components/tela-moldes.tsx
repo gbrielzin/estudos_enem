@@ -4,7 +4,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
-import { ItemKit, Molde, VariacaoMolde, getMoldes, getVariacaoMolde } from '@/lib/api';
+import { ItemKit, Molde, VariacaoMolde, getMoldes, getVariacaoMolde, registrarEvento } from '@/lib/api';
 
 const LETRAS = ['A', 'B', 'C', 'D', 'E'];
 
@@ -107,6 +107,8 @@ function TreinoMolde({ molde, onVoltar }: { molde: Molde; onVoltar: () => void }
   function confirmar() {
     if (!variacao || !escolha) return;
     setConfirmada(true);
+    // Resposta de molde não vira tentativa: este evento é o único registro de uso.
+    registrarEvento('molde_respondido', undefined, molde.id_molde);
     setPlacar((p) => ({ acertos: p.acertos + (escolha === variacao.correta ? 1 : 0), total: p.total + 1 }));
   }
 

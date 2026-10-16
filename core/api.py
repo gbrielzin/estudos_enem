@@ -369,14 +369,36 @@ def resumir_aparelho(user_agent: str | None) -> str | None:
 class EventoRequest(BaseModel):
     tipo: str
     tela: str | None = None
+    detalhe: str | None = None
 
 
 @app.post("/eventos")
 def eventos(corpo: EventoRequest, user_agent: str | None = Header(default=None)) -> dict:
     try:
-        return {"id_evento": db.registrar_evento(corpo.tipo, corpo.tela, resumir_aparelho(user_agent))}
+        return {"id_evento": db.registrar_evento(corpo.tipo, corpo.tela, resumir_aparelho(user_agent), corpo.detalhe)}
     except ValueError as erro:
         raise HTTPException(status_code=400, detail=str(erro))
+
+
+class PesquisaRequest(BaseModel):
+    nota: int
+    comentario: str | None = None
+
+
+@app.post("/pesquisa")
+def pesquisa(corpo: PesquisaRequest) -> dict:
+    """Pesquisa curta do app (NPS), ver db.registrar_resposta_pesquisa."""
+    try:
+        return {"id_resposta": db.registrar_resposta_pesquisa(corpo.nota, corpo.comentario)}
+    except ValueError as erro:
+        raise HTTPException(status_code=400, detail=str(erro))
+
+
+@app.get("/pesquisa/ultima")
+def pesquisa_ultima() -> dict:
+    """Quando a pessoa respondeu pela última vez e há quantos dias (None =
+    nunca): o app só pergunta de novo depois de 7 dias."""
+    return db.ultima_resposta_pesquisa()
 
 
 @app.get("/resolucoes")

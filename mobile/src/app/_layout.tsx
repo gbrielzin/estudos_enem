@@ -7,7 +7,7 @@ import { AppState } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
-import { definirTelaAtual, registrarEvento, telaDoCaminho } from '@/lib/api';
+import { definirTelaAtual, origemDoLink, registrarEvento, telaDoCaminho } from '@/lib/api';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -38,7 +38,7 @@ export default function TabLayout() {
     definirTelaAtual(rota);
     // A 1ª tela já vai no app_aberto: tela_vista só nas trocas, sem linha duplicada.
     if (rotaAnterior.current === null) {
-      registrarEvento('app_aberto', telaDoCaminho(rota));
+      registrarEvento('app_aberto', telaDoCaminho(rota), origemDoLink());
     } else if (rotaAnterior.current !== rota) {
       registrarEvento('tela_vista', telaDoCaminho(rota));
     }
@@ -50,7 +50,7 @@ export default function TabLayout() {
   useEffect(() => {
     const assinatura = AppState.addEventListener('change', (estado) => {
       if (estado === 'active' && rotaAnterior.current !== null) {
-        registrarEvento('app_aberto', telaDoCaminho(rotaAnterior.current));
+        registrarEvento('app_aberto', telaDoCaminho(rotaAnterior.current), origemDoLink());
       }
     });
     return () => assinatura.remove();

@@ -392,6 +392,18 @@ class TestEventos(_TestComDuasPessoas):
         self.assertEqual(self._evento("codigo-inventado-000000", {"tipo": "app_aberto"}).status_code, 401)
         self.assertEqual(self._gravados("ana"), [])
 
+    def test_detalhe_e_pesquisa_no_banco_de_quem_mandou(self):
+        self.assertEqual(self._evento(self.CODIGO_ANA, {"tipo": "app_aberto", "tela": "/", "detalhe": "whatsapp"}).status_code, 200)
+        with closing(sqlite3.connect(self.pasta / "ana.db")) as conn:
+            self.assertEqual(conn.execute("SELECT detalhe FROM eventos").fetchone()[0], "whatsapp")
+        cabecalho = {"Authorization": f"Bearer {self.CODIGO_BIA}"}
+        with patch.dict(os.environ, self.env):
+            self.assertIsNone(self.client.get("/pesquisa/ultima", headers=cabecalho).json()["criado_em"])
+            self.assertEqual(self.client.post("/pesquisa", json={"nota": 11}, headers=cabecalho).status_code, 400)
+            self.assertEqual(self.client.post("/pesquisa", json={"nota": 9, "comentario": "a explicação"}, headers=cabecalho).status_code, 200)
+            self.assertIsNotNone(self.client.get("/pesquisa/ultima", headers=cabecalho).json()["criado_em"])
+            self.assertIsNone(self.client.get("/pesquisa/ultima", headers={"Authorization": f"Bearer {self.CODIGO_ANA}"}).json()["criado_em"])
+
     def test_resumir_aparelho(self):
         casos = {
             self.UA_ANDROID: "Android · Chrome",

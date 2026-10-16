@@ -408,7 +408,29 @@ def inicializar_banco() -> None:
                 if coluna not in colunas_questoes:
                     conn.execute(f"ALTER TABLE questoes ADD COLUMN {coluna} {tipo}")
 
+        # `eventos` da 1ª versão (PR #55) tinha CHECK no tipo e não tinha
+        # `detalhe`. SQLite não altera CHECK: tira a tabela antiga do
+        # caminho (com o índice, senão ele segue preso a ela), deixa o
+        # schema.sql criar a nova e copia as linhas depois do script.
+        eventos_v1 = False
+        if "eventos" in tabelas:
+            colunas_eventos = {r[1] for r in conn.execute("PRAGMA table_info(eventos)").fetchall()}
+            if "detalhe" not in colunas_eventos:
+                conn.execute("DROP INDEX IF EXISTS idx_eventos_data")
+                conn.execute("ALTER TABLE eventos RENAME TO _eventos_v1")
+                eventos_v1 = True
+
         conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        # Olha o banco de novo em vez de confiar em `eventos_v1`: o
+        # executescript já salvou o RENAME, então se a cópia abaixo falhar
+        # (ou o processo cair), `_eventos_v1` fica lá e a próxima
+        # inicialização termina o serviço. INSERT OR IGNORE: repetir não duplica.
+        if eventos_v1 or conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='_eventos_v1'").fetchone():
+            conn.execute(
+                "INSERT OR IGNORE INTO eventos (id_evento, tipo, tela, aparelho, criado_em) "
+                "SELECT id_evento, tipo, tela, aparelho, criado_em FROM _eventos_v1"
+            )
+            conn.execute("DROP TABLE _eventos_v1")
         conn.executemany(
             "INSERT OR IGNORE INTO topicos_validos (grande_area, materia) VALUES (?, ?)",
             list(TAXONOMIA_VALIDA),
@@ -2850,23 +2872,58 @@ def reportar_questao(id_questao: str, comentario: str) -> int:
         return cursor.lastrowid
 
 
-TIPOS_EVENTO = ("app_aberto", "tela_vista", "erro")
+# app_aberto (detalhe = de onde veio o link, ?origem=), tela_vista, erro,
+# explicacao_aberta (tocou em "Por que essa resposta") e molde_respondido
+# (detalhe = id do molde; resposta de molde não vira tentativa).
+TIPOS_EVENTO = ("app_aberto", "tela_vista", "erro", "explicacao_aberta", "molde_respondido")
 _TELA_VALIDA = re.compile(r"[a-z0-9_/\-]{1,60}")
+_DETALHE_VALIDO = re.compile(r"[a-z0-9_\-]{1,40}")
 
 
-def registrar_evento(tipo: str, tela: str | None = None, aparelho: str | None = None) -> int:
+def registrar_evento(tipo: str, tela: str | None = None, aparelho: str | None = None, detalhe: str | None = None) -> int:
     """Grava um evento de uso (ver tabela `eventos` em schema.sql) --
     alimenta o painel de admin (uso_admin.py): quem abriu o app, que
-    telas viu, onde deu erro. `tela` é a rota do app ("/simulado"), não
-    texto livre; `aparelho` já chega resumido pela API. Retorna id_evento."""
+    telas viu, onde deu erro, que recurso usou. `tela` é a rota do app
+    ("/simulado") e `detalhe` um identificador curto (origem do link, id
+    do molde), nunca texto livre; `aparelho` já chega resumido pela API.
+    Retorna id_evento."""
     if tipo not in TIPOS_EVENTO:
         raise ValueError(f"tipo de evento inválido: '{tipo}'.")
     if tela is not None and not _TELA_VALIDA.fullmatch(tela):
         raise ValueError("tela inválida: use a rota do app (a-z, 0-9, _, / e -).")
+    if detalhe is not None and not _DETALHE_VALIDO.fullmatch(detalhe):
+        raise ValueError("detalhe inválido: identificador curto (a-z, 0-9, _ e -).")
     aparelho = aparelho[:60] if aparelho else None
     with _conectar() as conn:
-        cursor = conn.execute("INSERT INTO eventos (tipo, tela, aparelho) VALUES (?, ?, ?)", (tipo, tela, aparelho))
+        cursor = conn.execute(
+            "INSERT INTO eventos (tipo, tela, detalhe, aparelho) VALUES (?, ?, ?, ?)", (tipo, tela, detalhe, aparelho)
+        )
         return cursor.lastrowid
+
+
+def registrar_resposta_pesquisa(nota: int, comentario: str | None = None) -> int:
+    """Resposta da pesquisa curta do app (NPS: 'de 0 a 10, indicaria?' +
+    'o que mais te ajudou'). Comentário vazio vira NULL; longo é cortado
+    em 500 caracteres. Retorna id_resposta."""
+    if not isinstance(nota, int) or not 0 <= nota <= 10:
+        raise ValueError("nota precisa ser um inteiro de 0 a 10.")
+    comentario = (comentario or "").strip()[:500] or None
+    with _conectar() as conn:
+        cursor = conn.execute("INSERT INTO respostas_pesquisa (nota, comentario) VALUES (?, ?)", (nota, comentario))
+        return cursor.lastrowid
+
+
+def ultima_resposta_pesquisa() -> dict:
+    """Última resposta da pesquisa: {'criado_em', 'dias_desde'} (None se
+    nunca respondeu). `dias_desde` é calculado AQUI, no relógio do
+    servidor que gravou criado_em: o celular está em outro fuso, e
+    comparar a hora do servidor com a do aparelho erraria por horas. O
+    app usa para perguntar no máximo uma vez por semana."""
+    with _conectar() as conn:
+        criado_em, dias = conn.execute(
+            "SELECT MAX(criado_em), julianday('now','localtime') - julianday(MAX(criado_em)) FROM respostas_pesquisa"
+        ).fetchone()
+    return {"criado_em": criado_em, "dias_desde": round(dias, 2) if dias is not None else None}
 
 
 def listar_relatos_questao(resolvido: bool | None = None) -> list[dict]:
