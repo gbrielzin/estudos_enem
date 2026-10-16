@@ -1,0 +1,30 @@
+name: Tarefa ou melhoria
+description: Funcionalidade nova, refatoração ou documentação
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Problema
+      description: O que dói hoje, para quem, com um caso real.
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceite
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: fora_do_escopo
+    attributes:
+      label: Fora do escopo
