@@ -3303,6 +3303,38 @@ def provas_para_corrigir() -> list[dict]:
     ]
 
 
+def prova_por_dificuldade(ano: int, caderno: str, grande_area: str) -> list[dict]:
+    """Questões de uma prova da mais fácil pra mais difícil pelo `tri_b`
+    oficial (menor b = mais gente acertou). Cada item traz a posição
+    ('posicao': 1 = mais fácil) e o total ranqueado, pra tela dizer
+    "17ª mais difícil de 45". Questão sem parâmetro TRI não entra no
+    ranking -- vai no fim, com posicao None, em vez de receber uma
+    dificuldade inventada. Empate de b desempata pelo número da questão."""
+    questoes = listar_questoes_da_prova(ano, caderno, grande_area)
+    if not questoes:
+        raise ValueError(f"Prova {ano} {caderno} {grande_area} não existe.")
+    with _conectar() as conn:
+        bs = dict(conn.execute(
+            "SELECT id_questao, tri_b FROM questoes WHERE ano = ? AND caderno = ? AND grande_area = ?",
+            (ano, normalizar_texto(caderno), normalizar_texto(grande_area)),
+        ).fetchall())
+    com_b = sorted((q for q in questoes if bs[q["id_questao"]] is not None),
+                   key=lambda q: (bs[q["id_questao"]], q["numero_questao"]))
+    sem_b = [q for q in questoes if bs[q["id_questao"]] is None]
+    resultado = [
+        {"id_questao": q["id_questao"], "numero_questao": q["numero_questao"], "materia": q["materia"],
+         "tri_b": bs[q["id_questao"]], "nivel": nivel_tri(bs[q["id_questao"]]),
+         "posicao": i, "total_ranqueado": len(com_b)}
+        for i, q in enumerate(com_b, start=1)
+    ]
+    resultado += [
+        {"id_questao": q["id_questao"], "numero_questao": q["numero_questao"], "materia": q["materia"],
+         "tri_b": None, "nivel": None, "posicao": None, "total_ranqueado": len(com_b)}
+        for q in sem_b
+    ]
+    return resultado
+
+
 def corrigir_prova(ano: int, caderno: str, grande_area: str, respostas: dict[int, str | None]) -> dict:
     """Cartão-resposta de prova inteira (feita no papel ou no celular):
     registra UMA tentativa por questão da prova -- a que não veio em
