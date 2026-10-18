@@ -248,6 +248,14 @@ def provas() -> list[dict]:
     return db.provas_para_corrigir()
 
 
+@app.get("/provas/por-dificuldade")
+def prova_por_dificuldade(ano: int, caderno: str, grande_area: str) -> list[dict]:
+    try:
+        return db.prova_por_dificuldade(ano, caderno, grande_area)
+    except ValueError as erro:
+        raise HTTPException(status_code=404, detail=str(erro))
+
+
 class CorrecaoRequest(BaseModel):
     ano: int
     caderno: str

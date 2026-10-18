@@ -63,5 +63,52 @@ class TestCorrigirProva(_TestComBancoTemporario):
         self.assertEqual(r.status_code, 400)
 
 
+class TestProvaPorDificuldade(_TestComBancoTemporario):
+    def setUp(self):
+        super().setUp()
+        # b fora de ordem de propósito: o número da questão não pode ditar o ranking
+        for numero, b in [(91, 1.5), (92, -0.5), (93, 0.2), (94, None)]:
+            id_q, _ = db.inserir_questao(
+                ano=2023, caderno="Azul", numero=numero, grande_area="ciencias_natureza",
+                materia="Optica", alternativa_correta="A",
+            )
+            if b is not None:
+                db.atualizar_parametros_tri(id_q, 2.0, b, 0.2, 1)
+
+    def test_ordena_do_mais_facil_pro_mais_dificil_e_deixa_sem_tri_no_fim(self):
+        r = db.prova_por_dificuldade(2023, "azul", "ciencias_natureza")
+        self.assertEqual([q["numero_questao"] for q in r], [92, 93, 91, 94])
+        self.assertEqual([q["posicao"] for q in r], [1, 2, 3, None])
+        self.assertEqual([q["posicao_dificil"] for q in r], [3, 2, 1, None])
+        self.assertTrue(all(q["total_ranqueado"] == 3 for q in r))
+        self.assertIsNone(r[-1]["tri_b"])
+
+    def test_rota_devolve_ranking_e_404_pra_prova_inexistente(self):
+        cliente = TestClient(api.app)
+        r = cliente.get("/provas/por-dificuldade",
+                        params={"ano": 2023, "caderno": "azul", "grande_area": "ciencias_natureza"})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()[0]["numero_questao"], 92)
+        r = cliente.get("/provas/por-dificuldade",
+                        params={"ano": 1999, "caderno": "azul", "grande_area": "ciencias_natureza"})
+        self.assertEqual(r.status_code, 404)
+
+    def test_empate_de_b_desempata_pelo_numero_e_mantem_o_mesmo_b(self):
+        id_q, _ = db.inserir_questao(
+            ano=2023, caderno="Azul", numero=95, grande_area="ciencias_natureza",
+            materia="Optica", alternativa_correta="A",
+        )
+        db.atualizar_parametros_tri(id_q, 2.0, 0.2, 0.2, 1)  # mesmo b da 93
+        r = db.prova_por_dificuldade(2023, "Azul", "ciencias_natureza")  # caderno em qualquer caixa
+        empatadas = [q for q in r if q["tri_b"] == 0.2]
+        self.assertEqual([q["numero_questao"] for q in empatadas], [93, 95])
+
+    def test_prova_sem_nenhum_tri_fica_toda_sem_posicao(self):
+        db.inserir_questao(ano=2022, caderno="Azul", numero=91, grande_area="ciencias_natureza",
+                           materia="Optica", alternativa_correta="A")
+        r = db.prova_por_dificuldade(2022, "azul", "ciencias_natureza")
+        self.assertEqual([(q["posicao"], q["total_ranqueado"]) for q in r], [(None, 0)])
+
+
 if __name__ == "__main__":
     unittest.main()
