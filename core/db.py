@@ -3305,32 +3305,33 @@ def provas_para_corrigir() -> list[dict]:
 
 def prova_por_dificuldade(ano: int, caderno: str, grande_area: str) -> list[dict]:
     """Questões de uma prova da mais fácil pra mais difícil pelo `tri_b`
-    oficial (menor b = mais gente acertou). Cada item traz a posição
-    ('posicao': 1 = mais fácil) e o total ranqueado, pra tela dizer
-    "17ª mais difícil de 45". Questão sem parâmetro TRI não entra no
-    ranking -- vai no fim, com posicao None, em vez de receber uma
-    dificuldade inventada. Empate de b desempata pelo número da questão."""
-    questoes = listar_questoes_da_prova(ano, caderno, grande_area)
-    if not questoes:
-        raise ValueError(f"Prova {ano} {caderno} {grande_area} não existe.")
+    oficial (menor b = mais gente acertou). 'posicao' conta a partir da
+    mais FÁCIL (1 = mais fácil); 'posicao_dificil' conta a partir da mais
+    difícil (1 = mais difícil) -- é ela que a tela usa em "17ª mais difícil
+    de 45". Questão sem parâmetro TRI não entra no ranking: vai no fim, com
+    as duas posições None, em vez de receber dificuldade inventada. Empate
+    de b desempata pelo número da questão (só ordem estável: as duas
+    questões têm o mesmo b, que vem no resultado)."""
     with _conectar() as conn:
-        bs = dict(conn.execute(
-            "SELECT id_questao, tri_b FROM questoes WHERE ano = ? AND caderno = ? AND grande_area = ?",
+        linhas = conn.execute(
+            "SELECT id_questao, numero_questao, materia, tri_b FROM questoes "
+            "WHERE ano = ? AND caderno = ? AND grande_area = ?",
             (ano, normalizar_texto(caderno), normalizar_texto(grande_area)),
-        ).fetchall())
-    com_b = sorted((q for q in questoes if bs[q["id_questao"]] is not None),
-                   key=lambda q: (bs[q["id_questao"]], q["numero_questao"]))
-    sem_b = [q for q in questoes if bs[q["id_questao"]] is None]
+        ).fetchall()
+    if not linhas:
+        raise ValueError(f"Prova {ano} {caderno} {grande_area} não existe.")
+    com_b = sorted((l for l in linhas if l[3] is not None), key=lambda l: (l[3], l[1]))
+    sem_b = sorted((l for l in linhas if l[3] is None), key=lambda l: l[1])
+    total = len(com_b)
     resultado = [
-        {"id_questao": q["id_questao"], "numero_questao": q["numero_questao"], "materia": q["materia"],
-         "tri_b": bs[q["id_questao"]], "nivel": nivel_tri(bs[q["id_questao"]]),
-         "posicao": i, "total_ranqueado": len(com_b)}
-        for i, q in enumerate(com_b, start=1)
+        {"id_questao": id_q, "numero_questao": n, "materia": m, "tri_b": b, "nivel": nivel_tri(b),
+         "posicao": i, "posicao_dificil": total - i + 1, "total_ranqueado": total}
+        for i, (id_q, n, m, b) in enumerate(com_b, start=1)
     ]
     resultado += [
-        {"id_questao": q["id_questao"], "numero_questao": q["numero_questao"], "materia": q["materia"],
-         "tri_b": None, "nivel": None, "posicao": None, "total_ranqueado": len(com_b)}
-        for q in sem_b
+        {"id_questao": id_q, "numero_questao": n, "materia": m, "tri_b": None, "nivel": None,
+         "posicao": None, "posicao_dificil": None, "total_ranqueado": total}
+        for id_q, n, m, _ in sem_b
     ]
     return resultado
 
