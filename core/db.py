@@ -3422,7 +3422,9 @@ def calcular_ofensiva() -> dict:
     uma tentativa registrada. 'Seguido' conta a partir de hoje ou
     ontem (se ainda não respondeu nada hoje, a ofensiva de ontem
     continua valendo até o fim do dia). Também devolve os últimos 30
-    dias pra desenhar um calendário simples."""
+    dias pra desenhar um calendário simples. Também devolve a constância:
+    quantos desses 30 dias tiveram estudo (`dias_ativos_30`) e quantos no
+    total (`dias_ativos_total`); um dia perdido zera a ofensiva, não esses."""
     with _conectar() as conn:
         linhas = conn.execute(
             "SELECT DISTINCT date(data_tentativa) FROM tentativas_usuario ORDER BY date(data_tentativa) DESC"
@@ -3458,7 +3460,13 @@ def calcular_ofensiva() -> dict:
         for i in range(29, -1, -1)
     ]
 
-    return {"atual": atual, "melhor": melhor, "calendario_30_dias": calendario_30_dias}
+    return {
+        "atual": atual,
+        "melhor": melhor,
+        "calendario_30_dias": calendario_30_dias,
+        "dias_ativos_30": sum(1 for d in calendario_30_dias if d["ativo"]),
+        "dias_ativos_total": len(dias_com_atividade),
+    }
 
 
 def obter_configuracao(chave: str, padrao: str | None = None) -> str | None:
