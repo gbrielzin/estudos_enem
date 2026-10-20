@@ -1103,5 +1103,42 @@ class TestPesquisa(_TestComBancoTemporario):
             self.assertEqual(len(conn.execute("SELECT comentario FROM respostas_pesquisa").fetchone()[0]), 500)
 
 
+class TestConstanciaNaOfensiva(_TestComBancoTemporario):
+    def setUp(self):
+        super().setUp()
+        self.id_q, _ = db.inserir_questao(
+            ano=2022, caderno="Azul", numero=141,
+            grande_area="Matematica", materia="Estatistica",
+            alternativa_correta="C",
+        )
+
+    def _registrar_ha(self, dias: int) -> None:
+        resultado = db.registrar_tentativa(self.id_q, "C")
+        data = (date.today() - timedelta(days=dias)).isoformat()
+        with db._conectar() as conn:
+            conn.execute(
+                "UPDATE tentativas_usuario SET data_tentativa = ? WHERE id_tentativa = ?",
+                (f"{data} 10:00:00", resultado["id_tentativa"]),
+            )
+
+    def test_banco_vazio_zera_constancia(self):
+        ofensiva = db.calcular_ofensiva()
+        self.assertEqual(ofensiva["dias_ativos_30"], 0)
+        self.assertEqual(ofensiva["dias_ativos_total"], 0)
+
+    def test_dia_perdido_zera_ofensiva_mas_nao_a_constancia(self):
+        for dias in (0, 1, 3, 40):
+            self._registrar_ha(dias)
+        ofensiva = db.calcular_ofensiva()
+        self.assertEqual(ofensiva["atual"], 2)
+        self.assertEqual(ofensiva["dias_ativos_30"], 3)
+        self.assertEqual(ofensiva["dias_ativos_total"], 4)
+
+    def test_varias_tentativas_no_mesmo_dia_contam_um_dia(self):
+        self._registrar_ha(0)
+        self._registrar_ha(0)
+        self.assertEqual(db.calcular_ofensiva()["dias_ativos_total"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()
