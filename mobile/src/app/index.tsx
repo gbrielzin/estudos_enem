@@ -691,6 +691,16 @@ function formatarTempo(ms: number): string {
   return `${minutos}:${String(segundos).padStart(2, '0')}`;
 }
 
+// Mostra de onde a questão vem em qualquer lista misturada: o aluno precisa
+// saber que está treinando com prova real (ideias_melhorias, 15/10/2026).
+function rotuloFonte(questao: NoTrilha['questoes'][number]): string {
+  if (questao.origem === 'banco_pratica') {
+    return `🧠 Banco de prática${questao.fonte ? ` · fonte: ${questao.fonte}` : ''}`;
+  }
+  const caderno = questao.caderno.charAt(0).toUpperCase() + questao.caderno.slice(1);
+  return `📄 ENEM ${questao.ano} · caderno ${caderno} · questão ${questao.numero_questao}`;
+}
+
 const CORES_FREQUENCIA: Record<TopicoResumo['frequencia'], { bgIcone: string; cor: string }> = {
   alta: { bgIcone: '#1F2937', cor: Brand.verde },
   media: { bgIcone: Brand.ouroBg, cor: Brand.ouro },
@@ -1384,7 +1394,7 @@ function QuestaoAtual({
       </View>
 
       <View style={styles.cardEnunciado}>
-        {questao.fonte && <Text style={styles.fonteTexto}>🧠 Banco de prática · fonte: {questao.fonte}</Text>}
+        <Text style={styles.fonteTexto}>{rotuloFonte(questao)}</Text>
         <Text style={styles.enunciadoTexto}>{corpo || questao.enunciado_texto}</Text>
         <FiguraEnunciado caminho={questao.enunciado_imagem_path} />
       </View>
