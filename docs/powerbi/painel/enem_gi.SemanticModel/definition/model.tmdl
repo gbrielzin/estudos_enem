@@ -1,0 +1,24 @@
+model Model
+	culture: pt-BR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: pt-BR
+	valueFilterBehavior: independent
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["VW_FATO_TENTATIVA","VW_DIM_QUESTAO"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table VW_FATO_TENTATIVA
+ref table DateTableTemplate_c76dd624-7d42-4395-88af-2c131cdbd7ab
+ref table LocalDateTable_e3abe0f7-82a1-4818-836c-083fce89a603
+ref table LocalDateTable_0e037dad-2d1b-4236-9525-a4400abe19cd
+ref table LocalDateTable_a8b63b47-582e-4db8-b081-9aedc0c752ff
+ref table VW_DIM_QUESTAO
+
+ref cultureInfo pt-BR
+

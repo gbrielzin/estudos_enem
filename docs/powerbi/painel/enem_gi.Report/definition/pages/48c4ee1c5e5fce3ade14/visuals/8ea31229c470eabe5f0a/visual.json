@@ -1,0 +1,83 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
+  "name": "8ea31229c470eabe5f0a",
+  "position": {
+    "x": 1270,
+    "y": 470,
+    "z": 7000,
+    "height": 600,
+    "width": 640,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "VW_DIM_QUESTAO"
+                    }
+                  },
+                  "Property": "MATERIA"
+                }
+              },
+              "queryRef": "VW_DIM_QUESTAO.MATERIA",
+              "nativeQueryRef": "MATERIA"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "VW_FATO_TENTATIVA"
+                    }
+                  },
+                  "Property": "Tentativas (amostra 10+)"
+                }
+              },
+              "queryRef": "VW_FATO_TENTATIVA.Tentativas (amostra 10+)",
+              "nativeQueryRef": "Tentativas (amostra 10+)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "VW_FATO_TENTATIVA"
+                    }
+                  },
+                  "Property": "% Acerto (amostra 10+)"
+                }
+              },
+              "queryRef": "VW_FATO_TENTATIVA.% Acerto (amostra 10+)",
+              "nativeQueryRef": "% Acerto (amostra 10+)"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "VW_FATO_TENTATIVA"
+                  }
+                },
+                "Property": "% Acerto (amostra 10+)"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

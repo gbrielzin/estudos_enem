@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "enem_gi"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "e70a8118-fc6d-4ed4-8568-0b9fcc4dda65"
+  }
+}

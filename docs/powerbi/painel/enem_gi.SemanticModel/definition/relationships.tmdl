@@ -1,0 +1,19 @@
+relationship 6dd743d5-19f6-4065-828c-76e7b8f4e373
+	joinOnDateBehavior: datePartOnly
+	fromColumn: VW_FATO_TENTATIVA.DATA_TENTATIVA
+	toColumn: LocalDateTable_e3abe0f7-82a1-4818-836c-083fce89a603.Date
+
+relationship 23ea5b4e-e574-4d0c-a8ed-c068ebf48ff3
+	joinOnDateBehavior: datePartOnly
+	fromColumn: VW_FATO_TENTATIVA.DATA
+	toColumn: LocalDateTable_0e037dad-2d1b-4236-9525-a4400abe19cd.Date
+
+relationship a1959acb-5ccb-4032-b672-6692ca73eb38
+	joinOnDateBehavior: datePartOnly
+	fromColumn: VW_FATO_TENTATIVA.SEMANA
+	toColumn: LocalDateTable_a8b63b47-582e-4db8-b081-9aedc0c752ff.Date
+
+relationship AutoDetected_e393ffef-280a-424d-9441-08204113bfe6
+	fromColumn: VW_FATO_TENTATIVA.ID_QUESTAO
+	toColumn: VW_DIM_QUESTAO.ID_QUESTAO
+
