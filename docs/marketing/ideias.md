@@ -1,16 +1,16 @@
 # Banco de ideias de conteúdo
 
-Cada ideia: gancho (3 s), pilar, público, de onde saiu. Status: 💡 ideia · 🎬 roteiro pronto · ✅ publicado.
+Cada ideia: gancho (3 s), pilar, público, de onde saiu. Status: 💡 ideia · 🎬 roteiro pronto · ✅ publicado. Calendário até o ENEM: [reta_final.md](reta_final.md).
 
 ## Pilar: Estudo (aluno — TikTok/Reels)
 
 | # | Gancho | Fonte | Status |
 |---|---|---|---|
-| E1 | "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." | sessão 25-26/09 (área x volume) | 💡 |
+| E1 | "Dobrou o diâmetro do docinho. Quantas vezes mais massa? Quase todo mundo responde 4." | sessão 25-26/09 (área x volume) | 🎬 (reta_final.md) |
 | E2 | "Porcentagem tem uma pergunta que resolve metade das questões: porcento DE QUÊ?" | sessão 25/09 (base da %) | 💡 |
 | E3 | "Por que a geladeira aberta ESQUENTA a cozinha" (carteiro do calor) | sessão 25/09 | 💡 |
 | E4 | "1 litro tem quantos cm³? O truque da seringa" (mililitro = centímetro cúbico) | sessão 26/09 | 💡 |
-| E5 | "Eu acertei a conta e marquei a errada. A armadilha do ×10 no ENEM" | sessão 25/09 (93 → 930) | 💡 |
+| E5 | "Eu acertei a conta e marquei a errada. A armadilha do ×10 no ENEM" | sessão 25/09 (93 → 930) | 🎬 (reta_final.md) |
 | E6 | "Quadrado de 11 a 19 de cabeça em 5 segundos" | sessão 24-26/09 | 💡 |
 | E7 | "Evaporar rouba calor: por que dia úmido é abafado" | sessão 24/09 | 💡 |
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { NumeroSobe } from '@/components/numero-sobe';
 import { Brand, Fontes, RaioCard } from '@/constants/brand';
 import {
   ProvaCorrigivel,
@@ -271,13 +272,15 @@ function TelaResultado({ resultado, onOutra }: { resultado: ResultadoCorrecao; o
 
       <View style={styles.cardPlacar}>
         <View style={styles.placarBloco}>
-          <Text style={styles.placarNumero}>
-            {resultado.acertos}/{resultado.total}
-          </Text>
+          <NumeroSobe valor={resultado.acertos} sufixo={`/${resultado.total}`} style={styles.placarNumero} />
           <Text style={styles.placarRotulo}>acertos</Text>
         </View>
         <View style={styles.placarBloco}>
-          <Text style={[styles.placarNumero, { color: Brand.ouro }]}>{resultado.nota_tri ?? '—'}</Text>
+          {resultado.nota_tri === null ? (
+            <Text style={[styles.placarNumero, { color: Brand.ouro }]}>—</Text>
+          ) : (
+            <NumeroSobe valor={Math.round(resultado.nota_tri)} style={[styles.placarNumero, { color: Brand.ouro }]} />
+          )}
           <Text style={styles.placarRotulo}>nota TRI (estimativa)</Text>
         </View>
       </View>
