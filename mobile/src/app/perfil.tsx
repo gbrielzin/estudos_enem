@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CardPesquisa } from '@/components/card-pesquisa';
@@ -110,6 +110,14 @@ export default function PerfilScreen() {
             revisão, os relatos e notas que você enviar, quando abre o app, que telas e recursos usa, por qual link chegou e
             o tipo de aparelho (ex.: Android · Chrome). Não pede e-mail nem telefone.
           </Text>
+          <View style={styles.linksLegais}>
+            <Text style={styles.linkLegal} accessibilityRole="link" onPress={() => Linking.openURL('/legal/privacidade.html')}>
+              Política de privacidade
+            </Text>
+            <Text style={styles.linkLegal} accessibilityRole="link" onPress={() => Linking.openURL('/legal/termos.html')}>
+              Termos de uso
+            </Text>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -164,8 +172,15 @@ const styles = StyleSheet.create({
     fontFamily: Fontes.corpo,
     fontSize: 12,
     lineHeight: 17,
-    color: Brand.textoApagado,
+    color: Brand.textoSuave,
     textAlign: 'center',
+  },
+  linksLegais: { flexDirection: 'row', justifyContent: 'center', gap: 16 },
+  linkLegal: {
+    fontFamily: Fontes.corpo,
+    fontSize: 13,
+    color: Brand.verde,
+    textDecorationLine: 'underline',
   },
   avisoErro: {
     padding: 12,
