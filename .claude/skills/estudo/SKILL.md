@@ -18,6 +18,10 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estu
 3. Veja as revisões vencidas do app (`estado_revisao` em `core/enem.db`, `proxima_revisao <= hoje`), priorizando as que vieram das sessões guiadas.
 4. Proponha o plano do dia em blocos, com horário. Prioridade pelos pesos do curso-alvo (ver memória `objetivo_faculdade_noturno_estagio`): **Matemática primeiro**, Natureza mantendo o mínimo, redação semanal. **Conteúdo novo é o eixo do dia** (pedido dele em 01/10). As revisões vencidas entram intercaladas e curtas, não como bloco de abertura. Escolha o conteúdo novo por incidência no corpus (`docs/padroes_de_prova_corpus.md`) entre os que nunca foram vistos.
 5. Abra com **recall de 1-2 min** (sem consultar): quadrados, apelidos de fórmula, nomes que escaparam na sessão anterior.
+6. **Abra o material do bloco sem ele pedir** (pedido dele em 15/10, pra não perder tempo): assim que o plano estiver combinado e a cada troca de bloco, abra com `Start-Process` o PDF da prova do bloco e, se ajudar, a pasta. Os PDFs ficam em `C:\Users\WIN\Desktop\Estudos_ENEM\PDF_ENEM\<ano>\`.
+   - Abra sempre o **PV limpo** (`<ano>_PV_impresso_D<n>_CD<x>.pdf`). **Nunca abra o GB** (gabarito, a correção é sua) nem os `.xopp`/`_anotado_` com as marcações dele, a não ser pra rever a correção.
+   - Material próprio (página/artifact do dia em `docs/materiais/`) também abre direto.
+   - Diga em uma linha o que abriu e qual arquivo usar.
 
 ## 2. Método dentro do bloco
 
@@ -45,6 +49,10 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estu
 
 - Acrescentar o bloco em `docs/sessao_estudo_chat.md` (o que foi feito, acertos, erros, padrões, erros do tutor).
 - Atualizar a linha do dia em `docs/registro_estudo.csv` (minutos acumulados, questões reais, acertos, obs.).
+- **Uma linha por questão em `docs/registro_questoes.csv`** (desde 15/10, pedido dele: "preciso de muitos dados, principalmente número"): data, hora, bloco, origem (real | variacao | pagina), fonte, número, tema, resposta, gabarito, resultado (sozinho | errou | ajuda | branco | chute_certo), segundos, obs. Vale pra questão real, variação e item de página. Tempo que ele não ditou fica vazio (pedir "4 E 3min"). Serve pra análise em Python/Tableau depois.
+  - Ditado completo (desde 15/10): `113 C 2min 3` = letra, tempo, **confiança** (1 chute, 2 dúvida, 3 certeza) → coluna `confianca_1a3`. Certeza 3 + errou = conceito errado fixado (prioridade máxima).
+  - Na correção, cada errada ganha **tipo_erro** (ele diz a letra, eu confirmo): **F** faltou fato/conteúdo, **V** vocabulário do enunciado, **M** sabia o conteúdo mas não soube montar/aplicar (ex.: 2018_153), **L** leitura/pegadinha, **C** conta, **T** tempo/chute. No app: F e V → `erro_de_conteudo`, L → `erro_de_pegadinha`, C → `erro_de_conta`; M e T só no CSV.
+  - F ou V: antes do kit, 1 pergunta-sonda de múltipla escolha ("já viu X?") pra separar "nunca viu" de "viu e não lembrou"; anotar em obs.
 - Registrar as questões reais no app com `db.registrar_tentativa(id_questao, letra)` — **com ajuda conta como erro** (`None`).
 - Esses arquivos são pessoais e estão no `.gitignore`: **nunca commitar**.
 
@@ -56,3 +64,5 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de estu
 ## 6. Fechamento do dia
 
 Resumo curto (tempo, o que saiu sozinho, o que ficou parcial) + **pauta de amanhã** escrita no fim de `docs/sessao_estudo_chat.md`.
+
+Antes de fechar, pergunte numa linha só os números do dia que faltam em `Desktop/Carreira/dados/diario_numeros.csv` (sono em horas e 1-5, energia, humor, minutos de dev/carreira/inglês/exercício, desvios) e preencha a linha do dia. O que ele não souber fica vazio.
