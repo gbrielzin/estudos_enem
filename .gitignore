@@ -57,3 +57,7 @@ docs/redacao_pesquisa/banco_1000/
 
 # Logs e extensões que o MCP do Playwright salva na raiz
 .playwright-mcp/
+docs/registro_questoes.csv
+
+# transcrições de terceiros (uso pessoal)
+docs/redacao_pesquisa/transcritor/saida/

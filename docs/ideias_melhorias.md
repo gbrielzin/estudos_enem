@@ -154,7 +154,7 @@ dos apps, só pelas descrições das lojas/notícias.
 
 **Por que este projeto:** cobre os 3 diferenciais que faltam no currículo, vistos nas vagas "elite" de 25/09 (Salesforce AI Builder Intern, BCG X AI Engineering Intern, AWS, Artefact Engenharia de Dados, 99 AI Transformation): **pipeline de dados automatizado**, **IA via API** (não só chat) e **cloud**. Tem uso real (achar a própria vaga).
 
-**Ponto de partida:** a coleta manual de 25/09 — script e amostra salvos fora do repo em `Desktop/radar_estagios_rascunho/` (`coleta_gupy.py`, `amostra_2026-09-25.json`, 104 estágios de TI).
+**Ponto de partida:** a coleta manual de 25/09 — script e amostra salvos fora do repo em `Desktop/Projetos/radar_estagios_rascunho/` (`coleta_gupy.py`, `amostra_2026-09-25.json`, 104 estágios de TI).
 
 **Regra de fonte:** só fontes abertas (busca pública da Gupy e similares). **Nada de raspagem do LinkedIn** num projeto público (termos de uso proíbem); LinkedIn só como conferência manual.
 
@@ -220,3 +220,152 @@ O que eles têm e dá pra fazer no ENEM GI com os **parâmetros TRI oficiais do 
 - **Ao concluir:** aviso de quantas estão em branco (“em branco conta como erro”).
 Diferencial possível: entregar de graça o que eles cobram (mapa térmico + custo do erro), já que o dado é público.
 Preço (09/10/2026): MaTRIx+ só vem no pacote “Revisão Enem CdM”, R$ 147 à vista ou 12x R$ 14,70, acesso até 30/11/2026, garantia de 7 dias. Âncora de “R$ 991” sem venda avulsa visível. Diferenciais anunciados: TRI “calculada, não estimada” com parâmetros do INEP, % de marcação por alternativa (microdados), TRI Lab (chance de acerto por faixa de nota), matriz de 9 perfis, link com SISU (simulador “em breve”).
+
+## Referência: Medly AI (análise 10/10/2026)
+
+App britânico de revisão pra GCSE/A-Level/IB com tutor de IA. Mesma proposta do ENEM GI (questão no formato da prova + correção na hora + tutor), outro mercado. Lançou em fev/2025, diz ter 400 mil usuários no Reino Unido com ~1h/dia de uso; seed de US$ 8 mi em ago/2026 (Felix Capital), indo pros EUA com SAT. Plano pago citado de £24,99/mês com versão grátis (preço visto em uma fonte só).
+
+O que eles têm e serve de ideia pra cá:
+- **Correção com IA de resposta escrita, com comentário no texto** → equivalente aqui é a redação corrigida por competência (C1-C5).
+- **Simulado nacional grátis com nota de corte** ("Medly Mocks") → simulado ENEM GI aberto em data marcada, com nota TRI estimada; serve de porta de entrada e gera dado.
+- **Questão organizada pelo conteúdo oficial da prova** → já temos (matriz/habilidade do INEP).
+- **Teste com grupo de controle** (efeito 0,33, maior em Biologia) → pro beta: medir quem usou x quem não usou antes de dizer "melhora a nota".
+- Ponto fraco apontado: sem vídeo, só texto/diálogo.
+
+O que nós temos e eles não: dado oficial do INEP (TRI, parâmetros dos itens, microdados de redação), foco no ENEM e preço pra quem tem pouco dinheiro.
+
+Fontes: [tech.eu](https://tech.eu/2026/08/19/medly-ai-raises-8m-to-bring-ai-powered-tutoring-to-more-students/), [The Next Web](https://thenextweb.com/news/medly-ai-8m-seed-felix-capital-gcse-tutoring), [EdTech Innovation Hub (teste)](https://www.edtechinnovationhub.com/news/medly-ai-trial-finds-significant-gcse-science-gains-across-all-three-subject), [Cognito (comparação)](https://cognito.org/blog/medly-ai-vs-save-my-exams), [App Store](https://apps.apple.com/gb/app/medly-ace-your-exams/id6670685314).
+
+**Atualização 10/10/2026: o Medly já chegou ao Brasil com ENEM** (https://www.medlyai.com/pt-br/exams). Concorrente direto agora:
+- Cobre as 4 áreas do ENEM + vestibulares + trilha universitária (sobe aula/slides e vira exercício e cartão de revisão).
+- **Simulados Medly ENEM '26 grátis**, com correção e colocação nacional (inscrição desde 23/09).
+- Tutor socrático (pergunta em vez de entregar; botões dica / conceito / passo a passo), plano de estudo em blocos de 15/30/60 min com data da prova.
+- **Preço: R$ 124,90/mês ou R$ 74,90/mês no anual (R$ 898,80).** Grátis pra começar.
+- **Não corrige redação**; avisa que não tem parceria com INEP/MEC; não mostra gamificação na página.
+- Onde o ENEM GI ainda se diferencia: preço pra quem tem pouco dinheiro, dado oficial do INEP (TRI dos itens, microdados de redação), questões reais com resolução própria + cadernos visuais/interativos, redação por competência, mascote/gamificação (Pipoco).
+
+## Referência: Kuadro (análise 10/10/2026)
+
+https://kuadro.com.br/ — cursinho online ENEM + vestibulares (Medicina, ITA/IME, Fuvest), desde 2015, de Bruno Werneck e Lucimara Anacleto (começou como canal no YouTube em 2011). Site feito em Lovable.
+- **Preço:** Extensivo 2027, 15-16 meses, 12x R$ 119 ("de R$ 1.848", "menos de R$ 3 por dia"); 22% off no anúncio.
+- **Planejador de Estudos** é a vitrine: a pessoa informa dias/horas, quanto domina cada matéria e o vestibular → tarefas do dia; matéria fraca e de peso alto vai pra frente; redação semanal reservada; simulado completo a cada 6 semanas; vira revisão com provas antigas na reta final; "ajuste automático" depois de simulado ("mandou bem em Química, +1h de Física").
+- Diagnóstico de fraquezas, correção de redação ilimitada (em até 48h), simulados com **nota TRI**, tira-dúvidas todo dia, mentoria em grupo a cada 15 dias, "método de estudo ativo baseado em resolução de questões".
+- Marketing: garantia "seguiu o plano e não passou, devolvemos 100%" (com regulamento), "+5,5k aprovados" (número deles), mural de aprovados com história de cada um, "clube das notas 900+" em redação.
+
+O que serve de ideia pro ENEM GI:
+- O **planejador do dia** é o que o app já tem em `gerar_plano_de_estudo()` (Streamlit) — falta levar pro mobile com a mesma cara: "hoje é terça, 2h30 livres, faltam 2 tarefas".
+- **Ajuste automático explicado em uma frase** depois de cada simulado (o motivo de cada bloco já existe no plano).
+- **Mural de resultados com história** → no beta, registrar a evolução de quem usa (com permissão) desde o 1º dia.
+- O método deles ("resolução de questões") é o mesmo do projeto; a diferença a mostrar é o **dado do INEP** e o preço.
+
+## Referência: PraticAI do Bernoulli (análise 10/10/2026)
+
+https://www.bernoulli.com.br/info/praticai/ — correção de redação com IA dentro da "Central Enem" do Bernoulli (o Kuadro cita experiência no Grupo Bernoulli).
+- Escreve na plataforma ou sobe arquivo; tema estilo ENEM ou livre; volta em **menos de 2 min** com nota por competência (C1-C5), marcações no texto, feedback, sugestões e plano de treino.
+- **Grátis com créditos mensais** (1 crédito por redação); planos pagos não aparecem na página. Avisa que a nota oficial é humana e que é ferramenta de treino.
+- Chegou por **anúncio no Instagram/Facebook**; os parâmetros do link mostram teste A/B ("CORRIJA-SUA-REDAÇÃO-COM-IA-EM-MINUTOS"), público 18-24 com interesse em ENEM, objetivo de captar contato (lead). Ou seja: redação corrigida grátis é **isca** pra vender o resto.
+
+Lição pro ENEM GI: corrigir redação com IA virou item básico (Bernoulli grátis, Kuadro ilimitada, Medly não faz). Não é diferencial sozinho. O que ainda pode ser: correção ligada ao **dado real** (o que os 900+ fazem por competência, dos microdados e das cartilhas do INEP em docs/redacao_pesquisa) e mostrar o padrão de erro da pessoa ao longo das redações, não só a nota de uma.
+
+## Referência: UniBF "materiais ENEM grátis" (10/10/2026)
+
+https://inscricao.unibf.com.br/enem — faculdade EaD (diz 100 mil formados, 1.200 cursos, foco em pós acelerada). Anúncio pago no Instagram → cadastro com nome, e-mail e **WhatsApp** → 9 materiais (dicas, revisão, simulado) liberados um por semana até a prova (08/11). Não fala de bolsa, nota ou ingresso: é captação de contato pra vender curso depois.
+Padrão que se repete (Bernoulli, Kuadro, UniBF): **material grátis de ENEM como isca + liberação semanal até o dia da prova**. Ideia pro ENEM Pipoco/beta: "1 caderno visual por semana até o ENEM" como série, com contagem regressiva — sem pedir WhatsApp.
+
+## Referência: Reta Final ProEnem (10/10/2026)
+
+https://retafinal.proenem.com.br/ — lives grátis de 26/10 a 15/11 (+30 h): temas que mais caem por matéria resolvidos ao vivo, revisão na véspera de cada dia de prova e gabarito extraoficial comentado no dia. Pede inscrição ("vagas limitadas"). Também anúncio pago no Instagram. Mesmo padrão de isca com data marcada; aqui o formato é **evento ao vivo** em vez de material semanal.
+
+## Referência: "Manual Anti-Atraso Enem 2026" (10/10/2026)
+
+https://manual-anti-atraso.vercel.app/ — infoproduto anônimo (só e-mail de suporte de outro domínio, site em subdomínio grátis da Vercel), anúncio pago no Facebook. **R$ 37** (Pix ou 3x): 400+ resumos de 5 min, mapas mentais, guia de fórmulas, "Rota dos 2 Domingos" (2 blocos por dia, redação no sábado, prova antiga cronometrada no domingo), bônus "Redação +900 com modelos" e "simulados com todas as provas oficiais" (que o INEP dá de graça). Sem nenhuma prova social; contagem regressiva, ancoragem "cursinho custa R$ 500", apelo à ansiedade; garantia de 7 dias. Datas contraditórias na própria página.
+Lição: na reta final o que vende é **alívio de ansiedade + roteiro do dia**, não conteúdo. Ponto de preço baixo (R$ 37) funciona com isca de contagem regressiva. O ENEM GI pode oferecer o roteiro diário de graça e com dado real.
+
+## Referência: enemgabarito.online/diagnostico (10/10/2026) — o mais parecido com o ENEM GI até agora
+
+Site não oficial, anônimo (sem CNPJ/responsável), anúncio pago no Instagram. **Diagnóstico grátis, sem cadastro: 25 questões reais em ~25 min** → nota estimada por área (exemplo: geral 612; LC 640, CH 590, CN 610, MT 560), **"faltam 85 pontos pra Enfermagem"** e quais áreas mais derrubam. Depois: plano grátis com **"vidas"** (limite estilo Duolingo) e áreas Plano, Simulado, SiSU, Redação, Desempenho. Preço não aparece.
+- Ponto fraco técnico: 25 questões nas 4 áreas dá ~6 por área. Estimar nota TRI com 6 itens tem erro enorme; o número parece preciso, mas não é.
+- Ideias pro ENEM GI: (1) **diagnóstico de entrada curto como porta de entrada** (onboarding) — o app já tem os parâmetros TRI oficiais dos itens (`tri_a/b/c`), então dá pra fazer a estimativa direito e **mostrar a margem de erro** ("entre 560 e 640"), o que vira diferencial honesto; (2) **"quanto falta pro seu curso"** usando as notas de corte do SiSU (pesquisa já feita em 21/09 pro objetivo dele); (3) o gancho é a **distância até o curso**, não a nota em si.
+
+## Referência: simulador-enem.lovable.app (10/10/2026)
+
+Simulado ENEM pago, anônimo, feito no **Lovable** (gerador de site por IA, subdomínio grátis), anúncio em **Reels** com campanhas "— Cópia — Cópia" (duplicando anúncio que funcionou). Fluxo: paga → acesso → questão → correção → explicação → resultado. Dois planos ("Simulador" e "Continue treinando"), preço só depois do clique. Prova social = prints de WhatsApp ("20 acertos em 48", "32 acertos e 417 pontos").
+Lição: o produto é **o mesmo fluxo que o ENEM GI já tem de graça**, e é vendido. Barreira de entrada pra fazer site virou zero (Lovable/Vercel); o que diferencia é dado (TRI oficial, banco real), método e confiança (quem está por trás, número honesto).
+
+## Ideia: motor que escolhe o formato da explicação (11/10/2026)
+
+Pedido do Gabriel durante o estudo (Q107 nitrosos: o desenho do caminho da comida destravou o que o fato solto não destravou). Hoje quem decide se a explicação vira desenho, roteiro de conta, tabela de eliminação ou glossário sou eu, na hora. A ideia é o app decidir isso sozinho:
+- **Filtro de perguntas por questão** (triagem): é processo com ordem/lugar (→ desenho do caminho)? é conta (→ roteiro com passos e dica de conta)? as alternativas se eliminam por função (→ tabela A–E)? o enunciado usa termo que o aluno não conhece (→ glossário antes)?
+- **Vizinhos mais próximos (embeddings + busca vetorial, k-NN):** transformar cada questão em vetor e achar as já explicadas mais parecidas; reaproveitar o formato que funcionou nelas (o "parâmetro mais próximo" que ele lembrou).
+- **RAG:** na hora de gerar a explicação, buscar no banco os trechos/explicações aprovadas das questões vizinhas e passar pro modelo como contexto, em vez de gerar do zero.
+- Sinal de "funcionou": acerto sozinho na variação depois da explicação (já registrado em `tentativas_usuario`). Base inicial: `docs/materiais/` (lote1_desenhado, q101_acustica, q107_nitrosos, cadernos) e `docs/materiais/explicacoes_por_erro.md`.
+- Liga com a ideia de "vídeo que explica essa questão" (RAG em transcrições, acima). Fazer **depois do ENEM**; antes, só anotar quais formatos funcionaram em cada questão.
+- Teste 11/10 na Q102: 5 ângulos em paralelo + juiz. O crítico ("o que as explicações comuns esquecem") achou a lacuna principal; o juiz pegou erro de analogia (tesoura × juntar). Custo ~125k tokens Sonnet, ~10 s cada. Vale pra montar explicação-modelo de questão difícil, não pra toda questão.
+
+## Ideia: "onde eu perco mais ponto" — erros × dificuldade TRI × matéria (11/10/2026)
+Pedido do Gabriel: pegar **todas** as questões que ele já errou (não só o Marco 1), cruzar o `tri_b` dos microdados (quanto menor, mais gente acertou → errar custa mais ponto e quebra a coerência TRI) com matéria/tópico e com a incidência no corpus, e ranquear o que aprofundar. Score sugerido por tópico: Σ(erros com b baixo) × incidência/ano × (1 se falta base / 0,5 se foi descuido). Coluna extra "pré-requisito" (ex.: Q94 travou por falta de ácido-base). Já foi feito à mão pro reestudo 2024 (lotes por b); generalizar pra todas as tentativas. Bom candidato a painel Tableau (rotina Python+Tableau) e a tela "o que estudar" no app.
+
+## Ideia: prova em ordem de dificuldade + lista por conteúdo (13/10/2026)
+Pedido do Gabriel em duas partes:
+1. **Ordenar as questões de uma prova pelo `tri_b`, da mais fácil pra mais difícil.** Serve pra treinar juntando acerto rápido, pra corrigir a prova começando pelas fáceis erradas e pra mostrar no app "esta foi a 17ª mais difícil de 45". Os dados já existem (`questoes.tri_b`).
+2. **Errou por falta de conteúdo → lista personalizada daquele conteúdo**, com questões REAIS inéditas do assunto em ordem de `tri_b`, depois do kit e das variações inventadas. Exemplo de logaritmo (13/10): 2019_154, 2019_137, 2020_149, 2023_152. A origem é uma dica de vídeo do TikTok (o vídeo era recente demais e não tinha transcrição).
+Hoje eu faço isso à mão no chat. No app, viraria um botão "treinar este conteúdo" na tela de correção.
+
+### Extensão (15/10/2026): desenho `Desktop/Lista_Exercicio_App.excalidraw`
+Ele desenhou o fluxo completo da ideia acima, e hoje foi o fluxo que deu certo no estudo (log 5/6, escala, parcelas):
+- **Banco novo = ranking por assunto:** todas as questões de um assunto, da mais fácil pra mais difícil (`tri_b`), além da ordem por prova.
+- **Errou a mais fácil → gera variações daquele tipo** pra repetir (é o `core/moldes.py`, que hoje tem só 4 moldes: carro elétrico, aquário, frenagem, pedágio).
+- **Cada questão real ganha as suas variações**, então a lista fica muito maior que o banco.
+- **Mira no erro recorrente** ("faz a questão que te faz errar um padrão"): dá pra usar `tentativas_usuario.tipo_erro` + tópico.
+- **Lacunas pra virar feature:** (1) `topico` é NULL nas 177 de MT 2019-2022, então o ranking por assunto precisa classificar essas antes; (2) variação gerada precisa da resposta CALCULADA por código (molde), nunca só por LLM; (3) as páginas HTML que eu faço no chat (q170_logaritmo, treino_escala_area_volume) são o protótipo da tela.
+- Quando: depois de 15/11. Até lá eu monto as listas à mão (docs/materiais/listas_focadas.md).
+
+### Fonte visível em toda questão (15/10/2026)
+Em lista misturada (por assunto, revisão, variações), **toda questão mostra de onde vem**: "ENEM 2018 · 2º dia · azul · Q153" e, se for variação, "variação da ENEM 2018 Q153". Motivo (relato dele): no ProEnem, mesmo filtrando por ENEM, as questões não mostravam ano/prova e ele não sabia se treinava com prova real, o que fazia o estudo parecer ineficaz. É dado que o banco já tem (`ano`, `caderno`, `numero_questao`, `origem`, `fonte`); conferir se todas as telas mostram.
+
+### Diagnóstico mais fundo do erro (15/10/2026)
+Pedido dele: rastrear se o erro é falta de conteúdo ou outra coisa. Hoje o app tem 3 tipos (`TIPOS_ERRO`: conta, pegadinha, conteúdo). Proposta, testada primeiro no `registro_questoes.csv`: (1) **confiança na hora de marcar** (1 chute, 2 dúvida, 3 certeza), porque certeza + erro = conceito errado fixado e acerto com confiança 1 = chute que não pode contar como sabido; (2) mais 3 tipos: **vocabulário** (não entendeu palavra do enunciado, comum em bio), **método** (sabia o conteúdo, não soube montar: ex. 2018_153) e **tempo/chute**; (3) pergunta-sonda nos erros de conteúdo ("já viu X?"), separando "nunca viu" de "viu e não lembrou". Painel depois: tipo de erro × tema × b.
+
+### Usuário beta nº 3 (15/10/2026), do grupo de programação
+Objetivo: **ProUni** em Engenharia de Software na Cruzeiro do Sul (plano B: pagar a FIAP). Pendente perguntar: matéria que mais erra, celular ou PC, se já fez simulado. Implicação pro app: nota ProUni = média simples das 5 áreas (redação pesa 1/5), então o perfil dele pede redação + base ampla, diferente do perfil "MT peso 4" do Gabriel. Prometido a ele: correção de redação "por lá" (conferir o que o app entrega hoje antes de liberar).
+
+### Recrutar usuários beta na reta final (15/10/2026)
+Insight dele: a reta final é o melhor momento pra achar usuário (todo mundo estudando agora). Canais: grupos (programação, ENEM), TikTok com vídeos normais do próprio estudo, e DM pra quem interagir ("quer me ajudar a testar?"). Vira história (build in public). Cuidados combinados: teto de usuários que dá pra atender (cada um exige código + suporte); prometer só o que o app entrega (beta, grátis, sem garantia de nota); coletar o mínimo de dado pessoal; tempo de projeto fora do bloco de estudo (hora das ideias). Medir: usuários, quem voltou no dia seguinte e na semana, questões respondidas por usuário.
+
+### Painel de admin de uso (15/10/2026) — próximo PR pequeno
+Ele mandou o link pro beta 3 e perguntou "como sei que ele acessou?". Hoje o app guarda por usuário só o que ele faz (tentativas com data/hora/duração, revisão, relatos), num banco próprio em /data/bancos/<nome>.db; não há registro de acesso nem tela pra ver. Proposta: endpoint protegido por token de admin (`/admin/uso`) que lê os bancos e devolve por usuário: 1ª e última atividade, nº de questões, % de acerto, voltou no dia seguinte (D1) e na semana (D7); + tela simples. Sem guardar dado novo (nada de IP/aparelho). Junto: 1 linha no app dizendo o que é guardado (LGPD/confiança).
+
+
+## Ideias de 20/10/2026 (vídeos de Instagram sobre IA, produto e marketing)
+
+Origem: 9 vídeos que o Gabriel mandou (transcrição colada), guardados com tags em `Desktop/ideias/inbox_videos/`. Os números
+e nomes de ferramenta vêm dos autores dos vídeos, sem prova no post. Prioridade combinada: ENEM (15/11) primeiro, poucos PRs,
+sem ferramenta nova paga.
+
+**Já feito em 20/10:**
+- Política de privacidade e termos de uso em `core/legal/` (servidos em `/legal/privacidade.html` e `/legal/termos.html`,
+  sem token, como os enunciados), link no rodapé do Perfil e teste em `test_api.py`. Contato LGPD preenchido com o e-mail dele
+  (PR #59, 25/10).
+- `docs/estilo.md`: regras de cor, contraste medido, tipografia, espaçamento, animação em ms e o que evitar, tiradas do
+  `brand.ts`. Achado: `textoApagado` (3,3:1) e `textoMuted` (2,5:1) reprovam AA para texto; o aviso de privacidade do Perfil foi
+  movido para `textoSuave` (5,2:1). Falta revisar onde mais esses dois tokens são usados para texto.
+
+**Fazer depois do ENEM, nesta ordem:**
+1. **Exclusão de dados (LGPD):** rota/botão "Excluir meus dados" que apaga tentativas, eventos, relatos e pesquisa do banco da
+   pessoa. Hoje a política manda pedir por contato. Destrutivo: precisa confirmação dupla.
+2. **Idade/menor de idade:** muitos usuários têm 16 a 17 anos. Decidir se pede ano de nascimento ou só mantém o aviso.
+3. **Funil e retenção com os eventos que já existem** (vídeos Duolingo e SaaS): visita → primeira questão → volta no dia 3 e no
+   dia 7; coortes por dia de primeira visita. Serve de exercício de SQL/Tableau para o portfólio. Sem rastrear localização nem Wi-Fi.
+4. **Acessibilidade:** `accessibilityLabel` nos ícones, texto alternativo nas figuras das questões, teste só com teclado.
+5. **Banner de cookies:** só se entrar analytics com cookie. Hoje o app usa só o código no armazenamento local.
+6. **Teste ponta a ponta no navegador (Playwright)** nas telas principais, quando o app estiver estável.
+7. **Pontos de contato:** mensagem de boas-vindas e canal claro de feedback (o NPS já existe).
+
+**Só observar / não fazer agora:** rastrear rede ou localização (LGPD, menores), OpenSpec, painel de agentes, instalar skills de
+terceiros sem ler o conteúdo inteiro, entrar em lista de espera de efeitos de vídeo.
+
+**Conteúdo do canal (não é do app):** técnica "hook repetido 3 vezes + revelação do produto no fim", série "dia N" com meta
+pública, efeitos Phone Mockup / Chart Grow / Pull Back Reveal, desafio de ganhar dinheiro depois do ENEM (orçamento e prazo
+fixos, números reais). Detalhe em `Desktop/ideias/inbox_videos/`.
+
+- **Gerador de escada de memorização (23/10/2026):** o aluno monta o próprio modelo de redação (introdução, D1, D2, conclusão) e o app gera o jogo de escrever do zero em fases (palavra-chave → frase → frases juntas), com cola que não conta acerto e registro de tentativas/erros/tempo. Protótipo do D1: https://claude.ai/artifact/4HErs8yvAhY72ZyJ1qGoEw. Ideia do Gabriel; fazer depois de 15/11.
