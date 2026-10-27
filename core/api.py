@@ -501,6 +501,11 @@ app.mount("/admin", admin, name="admin")
 PASTA_ENUNCIADOS = Path(__file__).parent / "enunciados"
 app.mount("/enunciados", StaticFiles(directory=PASTA_ENUNCIADOS, check_dir=False), name="enunciados")
 
+# Política de privacidade e termos de uso: páginas fixas, abertas pelo mesmo
+# motivo dos enunciados (um link comum não manda Authorization).
+PASTA_LEGAL = Path(__file__).parent / "legal"
+app.mount("/legal", StaticFiles(directory=PASTA_LEGAL, html=True, check_dir=False), name="legal")
+
 
 class _AppWeb(StaticFiles):
     """Export do Expo (web.output "static"): cada tela vira <rota>.html.

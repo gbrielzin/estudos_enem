@@ -512,6 +512,16 @@ class TestArquivosSemTrava(_TestComBancoTemporario):
             self.assertEqual(self.client.get(f"/enunciados/{figura.name}").status_code, 200)
             self.assertEqual(self.client.get("/health").status_code, 401)
 
+    def test_privacidade_e_termos_abrem_sem_token(self):
+        with patch.dict(os.environ, {"API_AUTH_TOKEN": "segredo-de-teste"}):
+            privacidade = self.client.get("/legal/privacidade.html")
+            termos = self.client.get("/legal/termos.html")
+            self.assertEqual(self.client.get("/health").status_code, 401)
+        self.assertEqual(privacidade.status_code, 200)
+        self.assertIn("Política de privacidade", privacidade.text)
+        self.assertEqual(termos.status_code, 200)
+        self.assertIn("Termos de uso", termos.text)
+
     def test_app_web_serve_tela_e_cai_no_index(self):
         from fastapi import FastAPI
         pasta = Path(self._pasta_temp) / "dist"
