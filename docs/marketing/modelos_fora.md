@@ -166,6 +166,36 @@ Legenda da observação: ⭐ você tem vantagem própria · 🔴 mercado lotado 
 | 99 | Correção de redação pro professor | professores e escolas | reaproveita a correção do ENEM GI |
 | 100 | Treinamento interno com quiz e certificado | empresas (onboarding, compliance) | a empresa paga, não o aluno |
 
+## Sazonalidade (hipótese, conferir datas oficiais e Google Trends)
+
+Três tipos de demanda:
+
+- **Pico fixo:** a prova tem data no ano. A procura sobe semanas antes e despenca no dia seguinte. Ex.: ENEM, AP, GCSE, Exames Nacionais.
+- **Ano todo, com ondas:** prova agendada quando a pessoa quer. A procura segue formatura, contratação, orçamento de empresa e ano novo. Ex.: AWS, CompTIA, NCLEX, cidadania, direção.
+- **Evento:** algo que só acontece de tempos em tempos e gera ferramenta de uso curto. Ex.: eleição, Copa, imposto de renda.
+
+| Mês | Provas e eventos que puxam procura |
+|---|---|
+| Jan | SISU e notas do ENEM (BR) · resoluções de ano novo: certificações de TI e idiomas |
+| Fev-Mar | volta às aulas (BR) · Carnaval derruba a procura no BR · início da declaração do IR (BR) |
+| Abr | prazo do imposto de renda (EUA, 15/04) · revisão final de AP |
+| Mai | AP (EUA) · GCSE e A-levels começam (UK) · IB (sessão de maio) · formatura de enfermagem nos EUA → NCLEX nos meses seguintes · fim do prazo do IR (BR) |
+| Jun-Jul | GCSE/A-levels terminam · EBAU (Espanha) · Exames Nacionais (Portugal) · férias no hemisfério norte |
+| Ago | resultados de A-levels e GCSE (UK) · volta às aulas EUA/Europa · Saber 11 calendário B (Colômbia) |
+| Set-Out | revisão de ENEM sobe · eleições em anos pares (BR em 2026 e 2028; EUA em novembro de 2026 e 2028) |
+| Nov | ENEM · IB (sessão de novembro) · Black Friday: promoção de curso e certificação · PAES (Chile, conferir) |
+| Dez | fim do ano fiscal: empresas gastam orçamento de treinamento · formatura de dezembro → NCLEX em jan-fev |
+
+**Estratégia:** juntar produtos com picos em meses diferentes deixa a receita mais estável. ENEM (BR, out-nov) + AP/GCSE (abr-jun) + certificação de TI (ano todo) cobre o calendário quase todo com o mesmo motor.
+
+**Regra do evento (o caso do site de eleição):** lançar 4 a 8 semanas antes do pico, ser grátis e fácil de compartilhar, e guardar o contato (e-mail, seguidor) pra levar esse público pro próximo evento. Sem isso, o público some junto com o evento.
+
+### Como conferir
+
+1. **Google Trends:** termo da prova, país certo, últimos 5 anos. Os picos se repetem? Em que mês começa a subir?
+2. **Calendário oficial** da prova (site do órgão que aplica).
+3. **Reddit da prova:** quando aparecem os posts "passei" e "faço semana que vem".
+
 ## Como validar cada linha
 
 1. **Loja de apps:** pesquisar a prova. Se os 3 primeiros apps têm nota abaixo de 4,3 ou menos de 5 mil avaliações, tem espaço.
