@@ -37,6 +37,7 @@ Nenhum conteúdo nasce do zero. Tudo sai de algo que já acontece:
 
 - [ideias.md](ideias.md) — banco de ideias por pilar e público.
 - [calendario.md](calendario.md) — quando postar o quê, pelo calendário do ENEM/SISU.
+- [modelos_fora.md](modelos_fora.md) — 100 provas e clientes onde o motor do ENEM GI pode ser reaproveitado, e como validar cada um.
 
 ## Regras (valem pra todo post)
 
