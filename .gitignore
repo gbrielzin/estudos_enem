@@ -57,3 +57,6 @@ docs/redacao_pesquisa/banco_1000/
 
 # Logs e extensões que o MCP do Playwright salva na raiz
 .playwright-mcp/
+
+# Avaliações de 1-2 estrelas das lojas (texto de terceiros, só análise local)
+docs/pesquisa_mercado/avaliacoes/
