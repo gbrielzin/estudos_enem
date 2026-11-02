@@ -220,3 +220,42 @@ O que eles têm e dá pra fazer no ENEM GI com os **parâmetros TRI oficiais do 
 - **Ao concluir:** aviso de quantas estão em branco (“em branco conta como erro”).
 Diferencial possível: entregar de graça o que eles cobram (mapa térmico + custo do erro), já que o dado é público.
 Preço (09/10/2026): MaTRIx+ só vem no pacote “Revisão Enem CdM”, R$ 147 à vista ou 12x R$ 14,70, acesso até 30/11/2026, garantia de 7 dias. Âncora de “R$ 991” sem venda avulsa visível. Diferenciais anunciados: TRI “calculada, não estimada” com parâmetros do INEP, % de marcação por alternativa (microdados), TRI Lab (chance de acerto por faixa de nota), matriz de 9 perfis, link com SISU (simulador “em breve”).
+
+## 10. Automação pós-ENEM / Hack Brasil (25/10/2026)
+Fazer de 16 a 30/11, em PRs pequenos, antes da entrega do Hack Brasil (30/11, trilha Educação). Ordem combinada:
+1. **Alerta de erro (Sentry, plano grátis):** erro no app manda e-mail na hora. Cerca de 30 min. Entra na demo: "eu sei quando quebra".
+2. **D4 virando pipeline:** em vez do botão de CSV, um GitHub Action exporta os dados anonimizados toda noite e o Tableau Public lê. Prova "Python + SQL + Tableau" das vagas de dados.
+3. **Resumo semanal automático:** toda segunda, uma rotina agendada lê o /admin/ e manda quantos usaram, onde travaram e o NPS. Vira post de build in public.
+4. **Triagem do botão "reportar" com IA:** a IA classifica o report (figura faltando, gabarito errado, explicação confusa) e abre uma issue no GitHub. Mantém o humano na decisão.
+
+Fora por enquanto: chatbot tutor dentro do app e agente que corrige questão sozinho (custa API, erra conteúdo, derruba confiança, mesmo motivo da D6).
+
+## Referência: heyclicky (análise 27/10/2026)
+Assistente de IA pra Mac/Windows (Farza Majeed, ex-buildspace, YC Spring 2026): atalho → print da tela → pergunta por voz → ele **desenha em cima da tela** mostrando o caminho. Num vídeo, foi mostrado em cima de uma prova. O que vale levar pro ENEM GI, em ordem:
+1. **"Travei" desenhado na própria questão:** o aluno toca em "travei" e a questão ganha marcações em etapas (grifa a pista, circula o dado, risca o distrator), sem dar o gabarito de cara. As anotações são feitas antes, por questão, no estilo dos cadernos visuais, e não por IA ao vivo (mesmo motivo de deixar o chatbot tutor de fora no §10).
+2. **Pista antes da resposta:** primeiro aponta onde olhar, depois mostra a conta, e só no fim a alternativa. Cada nível aberto é registrado (dado pro "quanto de ajuda precisou").
+3. **Só olha quando chamado:** argumento de privacidade pro B2B (escola).
+Preço deles (27/10): grátis 25 conversas/mês, Pro US$ 20 (50% off pra estudante no 1º mês), Max US$ 100. Usar como referência de "limite por mês + desconto de estudante".
+
+## Ideia: índice de aulas públicas por tema (27/10/2026, pós-15/11)
+Lives longas de professores (ex.: Pedro Assad, biologia em 10h; canal de MT com live de 2 dias) têm muito conteúdo bom, mas ninguém acha o trecho certo. Ideia: **indexar** (tema do app → vídeo + minuto exato), sem copiar o conteúdo. O app manda o aluno pro trecho de 3 min que explica o erro dele, e o tráfego vai pro criador (abre porta pra parceria em vez de conflito).
+- Nome técnico: extração/estruturação de conhecimento (transcrição → dados organizados por tema); no produto, é **curadoria + indexação**. Scale AI faz outra coisa: rotula dados pra treinar IA.
+- Não fazer: republicar resumo/transcrição de aula de terceiro dentro do app (direito autoral; o resumo pessoal em docs/materiais é uso de estudo, não vai pro produto).
+- Exemplo do formato: docs/materiais/extracao_live_bio_assad.md (só para estudo pessoal).
+
+## Ideia: benefício ENEM pago por empresa, B2B2C (28/10/2026, pós-15/11)
+A empresa paga e o funcionário ou a família usa, como no Wellhub. O dinheiro de quem pode pagar (escola particular, empresa) banca o aluno que usa de graça (modelo Duolingo).
+- **Pacote "ENEM para a família":** vale pro **filho** do funcionário que vai fazer o ENEM e pro **próprio funcionário** que terminou o médio e nunca entrou na faculdade. Argumento pro RH: "você paga só a preparação, que é barata; a faculdade vem do Sisu (pública), do Prouni (bolsa) ou do FIES". Quem não terminou o médio passa antes pelo Encceja.
+- **Ordem combinada:** aluno grátis (já existe), depois escola particular (prospecção do PR), depois empresa (só com 1-2 escolas usando, pra ter prova). Pais entram pelo relatório da escola, sem produto próprio. Governo fica fora (licitação lenta, exige empresa estruturada).
+- **Produto:** uma plataforma, uma tela por tipo de cliente. Falta o conceito de "organização" (escola/empresa) ligando os bancos por pessoa (adr/0010).
+- **Regra LGPD:** a empresa vê **só número agregado** ("40 pessoas, 300 h"), nunca nota individual, ainda mais de menor. A escola vê o individual, com consentimento em contrato.
+- **Riscos:** o público dentro de cada empresa é pequeno (só quem tem filho de 15 a 18 anos, por isso o pacote inclui o funcionário); o orçamento de benefícios já está ocupado com saúde, alimentação e academia; adulto estuda diferente (pouco tempo, à noite, precisa revisar o básico; é a Persona 3).
+- **Mom Test com RH (3 conversas):** "Algum funcionário já pediu ajuda pra entrar na faculdade? O que vocês fizeram?" · "Vocês já fizeram algo pela educação dos filhos dos funcionários?" · "Que benefício de educação vocês pagam hoje, e quanto?"
+
+### Referências
+- **Wellhub (ex-Gympass):** fundada em 2012 em SP (Cesar Carvalho, Vinicius Ferriani, João Thayro). Começou B2C (passe diário de academia) e virou B2B (benefício corporativo). Unicórnio em 2019 (SoftBank, US$ 300 mi); US$ 2,2 bi em 2021 e US$ 2,4 bi depois. Mudou a sede pra NY em 2018. Lição: **a virada de B2C pra B2B foi o que fez escalar.**
+- **Guild (EUA):** a empresa paga a faculdade e os cursos dos funcionários (Walmart: o funcionário paga US$ 1/dia, ou US$ 365/ano, e o resto é da empresa). US$ 1 bi em 2019, US$ 3,75 bi em 2021, US$ 4,4 bi em 2022. Depois demitiu 172 pessoas em 2023 e 25% da equipe em 2024; no mercado secundário a estimativa caiu pra ~US$ 1,3 bi (fonte fraca). A fundadora, Rachel Romer Carlson, saiu depois de um AVC. Lição: **o modelo vende, mas crescer rápido demais custou duas rodadas de demissão e boa parte do valor.**
+- Fontes: forbes.com.br (Cesar Carvalho, ago/2025), braziljournal.com (rodada de US$ 2,4 bi), techcrunch.com (Guild, 02/06/2021), en.wikipedia.org/wiki/Guild_Education.
+
+## Ideia: "explique o que entendeu" em partes (28/10/2026, pós-15/11)
+Explicar o texto inteiro de uma vez trava no começo (Gabriel, 28/10). Formato: 1 pergunta por elo da cadeia (problema → personagens → ...), resposta curta por voz, o app mostra só a palavra-âncora do próximo elo; no fim, uma explicação corrida juntando tudo. Escada: parte → cadeia com âncoras → cadeia sem âncoras.
