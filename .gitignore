@@ -50,10 +50,10 @@ docs/diario_aprendizados.md
 docs/entrevista.md
 
 # Cartilhas do INEP baixadas e textos extraídos (material de terceiros, só consulta local)
-docs/redacao_pesquisa/cartilhas/
+docs/redacao_pesquisa/02_fontes/cartilhas/
 
 # Banco de redações nota 1000 (texto de terceiros, só análise local)
-docs/redacao_pesquisa/banco_1000/
+docs/redacao_pesquisa/03_dados/banco_1000/
 
 # Logs e extensões que o MCP do Playwright salva na raiz
 .playwright-mcp/

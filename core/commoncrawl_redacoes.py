@@ -7,7 +7,7 @@ coleta, e guardamos só a lista de URLs candidatas. Ler o HTML arquivado é um
 passo separado (fica pra quando a lista mostrar que vale).
 
 Uso (da pasta core/):
-    python commoncrawl_redacoes.py ../docs/redacao_pesquisa/banco_1000/commoncrawl_urls.csv
+    python commoncrawl_redacoes.py ../docs/redacao_pesquisa/03_dados/banco_1000/commoncrawl_urls.csv
 """
 from __future__ import annotations
 

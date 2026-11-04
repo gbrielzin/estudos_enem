@@ -50,7 +50,7 @@ Regra que acompanha todas: só página pública, respeitar bloqueio e termo de u
 |---|---|---|
 | **Pipeline reprodutível** | Script que refaz o dado do zero com um comando | ✅ `coleta_redacoes.py` |
 | **Teste com dado sintético** | Testar o extrator sem pôr dado de terceiro no repo | ✅ `test_coleta_redacoes.py` |
-| **Cartão de dados (data card)** | Documento de fontes, licença e limites | ✅ `docs/redacao_pesquisa/fontes.md` |
+| **Cartão de dados (data card)** | Documento de fontes, licença e limites | ✅ `docs/redacao_pesquisa/02_fontes/fontes.md` |
 | **GitHub Actions** | Rodar teste e coleta automática na nuvem | ✅ CI do projeto |
 | **ADR** | Registro de decisão de arquitetura | ✅ `adr/` |
 

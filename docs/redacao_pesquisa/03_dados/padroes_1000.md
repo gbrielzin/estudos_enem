@@ -43,7 +43,7 @@ Nota de método: Mbembe e Chomsky não aparecem nos textos completos (2019-2024)
 
 ## Primeira análise (50 redações)
 
-Banco local (fora do git, texto de terceiros): `docs/redacao_pesquisa/banco_1000/redacoes_1000.db`, tabela `redacoes`.
+Banco local (fora do git, texto de terceiros): `docs/redacao_pesquisa/03_dados/banco_1000/redacoes_1000.db`, tabela `redacoes`.
 - **34 redações das cartilhas do INEP** (texto completo + comentário oficial): ENEM 2018 (7), 2021 (7), 2023 (10), 2024 (10). A cartilha com as de 2022 (povos tradicionais) tem a fonte do PDF embaralhada e ficou de fora.
 - **16 redações de portal** (só o esqueleto: abertura, 2 causas, repertórios de D1/D2, proposta, com link): ENEM 2023 (10) e 2025 (6), resumidas do Estratégia Vestibulares.
 

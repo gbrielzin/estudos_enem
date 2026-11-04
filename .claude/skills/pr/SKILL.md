@@ -24,7 +24,7 @@ Antes de tudo, siga o passo 0 de `docs/modelo_por_tarefa.md` com a linha de PR (
 
 1. `git status` e `git branch --show-current`. Se estiver em `master`, crie `feat-<assunto>` / `fix-<assunto>` / `docs-<assunto>` a partir de `origin/master`.
 2. **1 PR = 1 assunto.** Se o working tree mistura assuntos (ex.: código + pesquisa), separe em branches/PRs diferentes e diga quais.
-3. **Nunca adicionar**: `.env`, `mobile/.env`, `core/enem.db`, `core/corpus_analise.db`, `docs/registro_estudo.csv`, `docs/sessao_estudo_chat.md`, `docs/plano_*`, `docs/linkedin_projeto.md`, `docs/redacao_pesquisa/banco_1000/`, `docs/redacao_pesquisa/cartilhas/`. Confira com `git status --short` e `git check-ignore` antes do `git add` (adicione por caminho, nunca `git add -A`).
+3. **Nunca adicionar**: `.env`, `mobile/.env`, `core/enem.db`, `core/corpus_analise.db`, `docs/registro_estudo.csv`, `docs/sessao_estudo_chat.md`, `docs/plano_*`, `docs/linkedin_projeto.md`, `docs/redacao_pesquisa/03_dados/banco_1000/`, `docs/redacao_pesquisa/02_fontes/cartilhas/`. Confira com `git status --short` e `git check-ignore` antes do `git add` (adicione por caminho, nunca `git add -A`).
 
 ## 2. Checagens locais (as mesmas do CI em `.github/workflows/`)
 

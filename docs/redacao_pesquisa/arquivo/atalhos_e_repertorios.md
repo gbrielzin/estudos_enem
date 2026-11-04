@@ -1,6 +1,6 @@
 # Atalhos de alto retorno + análise dos repertórios do Gabriel (2026-09-25)
 
-Pedido: "métodos sujos", ou seja, o que dá mais resultado com pouco esforço, tirado de relatos de quem tirou nota alta, aplicado aos repertórios que ele já usa. Complementa [metodo_960.md](metodo_960.md) e [../pesquisa_estrategia_de_prova.md](../pesquisa_estrategia_de_prova.md) (TRI, chute, tempo de prova, que já estão lá).
+Pedido: "métodos sujos", ou seja, o que dá mais resultado com pouco esforço, tirado de relatos de quem tirou nota alta, aplicado aos repertórios que ele já usa. Complementa [metodo_960.md](../02_fontes/metodo_960.md) e [../pesquisa_estrategia_de_prova.md](../../pesquisa_estrategia_de_prova.md) (TRI, chute, tempo de prova, que já estão lá).
 
 ## 1. Os repertórios dele, um por um
 

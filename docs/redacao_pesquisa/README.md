@@ -1,57 +1,33 @@
-# Pesquisa: redação do ENEM (correção, notas altas, modelo pronto)
+# Redação: índice da área
 
-Começada em 2026-09-25. Objetivo: entender como a redação é corrigida de verdade, o que as redações nota 1000 têm em comum e onde o "modelo coringa" ajuda ou atrapalha — base pra treinar e, no futuro, pra uma correção por IA que imite o corretor humano.
+Área separada do resto do projeto (como um time dentro de uma empresa): tem as suas **regras**, as suas **fontes**, os seus **dados**, o seu **histórico de treinos**, as suas **decisões** e as suas **ferramentas**. A estrutura é a mesma para qualquer área (ver `../_estrutura_de_area.md`).
 
-## Material coletado
+Prazo: ENEM em 15/11/2026. Meta da redação: 900+ pensando o mínimo possível.
 
-`cartilhas/` (fora do git, só consulta local): Cartilha do Participante do INEP de **2019, 2022, 2023, 2024, 2025 e 2026** em PDF e em texto extraído (`.txt`). Cada uma traz a matriz de referência, as 5 competências e **redações nota 1000 comentadas pelo INEP** (blocos "COMENTÁRIO"). A de 2026 baixada é a versão para participantes surdos (`cartilha_enem_2026_da.pdf`); falta a versão geral de 2026. Faltam 2020 e 2021 (links antigos deram 404).
+## Onde está o quê
 
-## Como a correção funciona
-
-- Cada redação é corrigida por **dois corretores independentes**. Cada um dá de 0 a 200 em cada uma das **5 competências** (em degraus de 40), somando até 1000. A nota final é a **média** dos dois.
-- **Discrepância**: diferença maior que **100 pontos no total** ou maior que **80 pontos em qualquer competência** → vai pra um **terceiro corretor**. Se ainda assim não resolver, uma **banca** (supervisor + 2) dá a nota final.
-- **Ritmo**: um corretor corrige de **50 a 100 redações por dia** (até 150), durante uns dois meses. Na prática são poucos minutos por texto — o corretor reconhece rápido estrutura, tese e proposta; o que não está claro na leitura rápida tende a não pontuar.
-
-## Tendência recente: a correção ficou mais dura no repertório
-
-| Edição | Redações nota 1000 |
-|---|---|
-| 2023 | 60 |
-| 2024 | 12 |
-| 2025 | **10** (menor da série histórica) |
-
-- Em 2025 a média nacional da redação caiu ~6%, e a **Competência 2** (tema, repertório sociocultural, tipo textual) foi a que mais caiu: **−11,1%** em relação a 2024.
-- A **cartilha de 2025** usa como exemplo negativo o conceito de "instituições zumbis", do Bauman, aplicado sem explicação — chama isso de enfeite teórico e de **"repertório de bolso"**. Orientação: explicar o conteúdo citado e articular com a tese.
-- A **cartilha de 2026** dá nome oficial: **"repertório memorizado"**. Memorizar **não é problema em si**; o problema é inserir a referência decorada em qualquer tema, sem ligação com a tese e sem explicar — aí ela parece artificial e não faz o texto progredir.
-
-## O que isso quer dizer pro "modelo coringa"
-
-| Parte do modelo | Risco | O que fazer |
+| Pasta | O que tem | Abra quando... |
 |---|---|---|
-| Estrutura fixa (intro → D1 → D2 → conclusão) | **Baixo.** A cartilha não pune estrutura previsível | Manter |
-| Repertório fixo (ex.: Constituição, Bauman) usado em todo tema | **Alto em C2/C3** desde 2025 | Ter um **banco de repertórios por eixo temático** e, em cada um, uma frase que **explica** a referência e a **liga ao recorte** do tema |
-| Tese genérica ("é preciso refletir...") | Alto em C2/C3 | Tese com o **recorte exato** da proposta + os 2 motivos que vão virar D1 e D2 |
-| Proposta de intervenção genérica | Médio em C5 | 5 elementos (agente, ação, meio, finalidade, detalhamento) **ligados aos problemas dos D1 e D2** |
+| `01_regras/` | **`REGRAS_REDACAO.md` = a única fonte da verdade** (modelo, D1, D2, conclusão, regras de trabalho). Peças de apoio: `modelo_caderno.md`, `d1_padrao_crase.md`, `pecas_*`, `mapa_eixos.md`, `roteiro_aluno.md`, `rubrica_bloco.md` | for treinar, copiar para o caderno ou corrigir um texto |
+| `02_fontes/` | Cartilhas do INEP, análise de canais e dicas, `pesquisa_inicial.md`, `metodo_960.md`. Transcrições dos vídeos ficam em `06_ferramentas/transcritor/saida/` | for conferir uma opinião antes de mudar uma regra |
+| `03_dados/` | `banco_1000/` (redações nota 1000, fora do git), `banco_temas/` (109 temas inventados), `padroes_1000.md` | for medir uma ideia contra as redações reais |
+| `04_treinos/` | Um arquivo por dia: o que foi treinado, o placar a frio, os erros, os textos corrigidos. `metricas.csv` guarda os números comparáveis | for ver a evolução ou registrar um treino |
+| `05_decisoes/` | **Uma ficha por decisão** (problema, alternativas, decisão, número antes/depois, limite). `evidencias/` guarda os testes completos | for lembrar por que uma regra é como é, ou contar numa entrevista |
+| `06_ferramentas/` | `transcritor/` (baixa transcrições de vídeos) | for baixar mais fontes |
+| `arquivo/` | Versões superadas (guardadas, não apagadas) | quase nunca |
 
-**Calibragem da nota:** correção de plataforma/professor pode ser mais generosa que a do INEP, principalmente em C2 (é comum a nota oficial vir bem abaixo da nota dos treinos). Antes de contar com a nota dos treinos no planejamento, vale corrigir redações novas **contra os comentários das cartilhas** (o padrão do INEP), competência por competência.
+## Regras desta área
+1. **Só `01_regras/REGRAS_REDACAO.md` manda.** Se um arquivo antigo contradiz, vale ele (os conflitos abertos estão na seção 8 dele).
+2. Mudou uma regra? Atualiza o `REGRAS_REDACAO.md` e abre uma ficha em `05_decisoes/` com o número.
+3. Todo treino ou teste vira arquivo em `04_treinos/` + linha em `metricas.csv` (e em `../registro_estudo.csv` quando houver minutos).
+4. Veredito de nota meu (do Claude) é **avaliação minha, não do INEP**; vale a comparação, não o número absoluto.
+5. Opinião de canal: os canais confiáveis valem na letra; o resto passa pelo filtro (banco + cartilha). Lista em `../_geral/` quando existir (hoje em `02_fontes/dicas_canais.md`).
 
-## Ideia: correção por IA que imita o corretor humano
+## Estado em 04/11/2026
+- Conclusão K4 decidida (ver `05_decisoes/D-001`).
+- Cena do D2 em 1 de 6 limpa a frio: é o gargalo até a prova.
+- 9 conflitos de regra esperando decisão dele: `01_regras/REGRAS_REDACAO.md` seção 8.
+- Redação completa "do zero" (ENEM 2024) ainda por fazer.
 
-1. **Dois "corretores" independentes** (duas chamadas separadas, sem ver a nota do outro), cada um dando 0-200 por competência em degraus de 40 e justificando com a grade da cartilha.
-2. **Regra de discrepância do INEP**: se diferirem >100 no total ou >80 numa competência, chamar um terceiro.
-3. **Calibrar com as redações nota 1000 das cartilhas** (devem dar 1000) e com redações de nota conhecida, pra medir se a IA está generosa ou rigorosa.
-4. Leitura "rápida" como o corretor: primeiro julgar pelo que salta aos olhos (tese, tópicos frasais, repertório explicado, proposta completa), depois o detalhe.
-
-## Pendências
-
-- Relatos de quem tirou 900+ com modelo (Reddit/YouTube): a busca não trouxe fonte confiável; tentar busca direta em fóruns e canais de professores.
-- Extrair cada redação nota 1000 das cartilhas pra um arquivo próprio (tema, ano, parágrafos, repertórios usados) e mapear padrões: tipo de repertório, como a tese é escrita, tamanho, conectivos.
-- Baixar a versão geral da cartilha 2026.
-
-## Fontes
-
-- Cartilha 2025 (INEP): https://download.inep.gov.br/publicacoes/institucionais/avaliacoes_e_exames_da_educacao_basica/a_redacao_no_enem_2025_cartilha_do_participante.pdf
-- Cartilha 2026, página do INEP: https://www.gov.br/inep/pt-br/centrais-de-conteudo/acervo-linha-editorial/publicacoes-institucionais/avaliacoes-e-exames-da-educacao-basica/a-redacao-do-enem-2026-cartilha-do-a-participante
-- Processo de correção (INEP): https://www.gov.br/inep/pt-br/centrais-de-conteudo/noticias/enem/conheca-o-processo-de-correcao-das-redacoes
-- Discrepância e ritmo dos corretores: https://www.otempo.com.br/enem/2025/2025/11/14/quem-corrige-a-redacao-do-enem-saiba-criterios · https://www.cnnbrasil.com.br/educacao/redacao-do-enem-perguntas-e-respostas-sobre-a-correcao/
-- Nota 1000 por ano e queda da C2: https://www.otempo.com.br/educacao/2026/6/23/enem-2025-redacoes-nota-1-000-despencam-e-atingem-menor-marca-da-serie-historica-veja-os-numeros · https://projetomedicina.com.br/noticias/enem-2025-10-notas-mil-redacao-microdados-inep/ · https://www.cnnbrasil.com.br/educacao/levantamento-indica-queda-de-6-nas-notas-de-redacao-do-enem-em-2025/
+## Histórico da reorganização
+04/11/2026: 23 itens soltos na raiz viraram as 6 pastas acima. Apagados só dois arquivos gerados (`temas.json`, `redacoes_montadas.md`): os scripts `gerar.py` e `montar.py` os recriam idênticos (conferido por hash). O resto foi movido, não apagado.
