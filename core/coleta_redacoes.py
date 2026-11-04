@@ -7,14 +7,14 @@ com um comando quando sair edição nova (ex.: notas 1000 de cada janeiro).
 
 Os TEXTOS são de terceiros (alunos, INEP, cartilha Redação a Mil): ficam só
 na pasta do banco, que está no .gitignore, e servem pra análise local. O que
-vai pro git é este código e `docs/redacao_pesquisa/fontes.md` (de onde vem
+vai pro git é este código e `docs/redacao_pesquisa/02_fontes/fontes.md` (de onde vem
 cada coisa e o que pode ou não ser guardado).
 
 Módulo independente: não importa db.py nem nada de UI. `pymupdf` só é
 importado na hora de converter PDF em texto.
 
 Uso (da pasta core/):
-    python coleta_redacoes.py ../docs/redacao_pesquisa/banco_1000
+    python coleta_redacoes.py ../docs/redacao_pesquisa/03_dados/banco_1000
 """
 from __future__ import annotations
 
@@ -429,7 +429,7 @@ def construir_banco(pasta: Path, destino: Path | None = None) -> dict:
 
 
 # ------------------------------------------------------------
-# Estatísticas (alimentam docs/redacao_pesquisa/padroes_1000.md)
+# Estatísticas (alimentam docs/redacao_pesquisa/03_dados/padroes_1000.md)
 # ------------------------------------------------------------
 
 REPERTORIOS = {

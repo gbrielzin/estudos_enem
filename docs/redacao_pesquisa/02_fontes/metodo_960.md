@@ -15,7 +15,7 @@
 
 ---
 
-Pedido do Gabriel: entender **como estudaram** quem tirou 960-1000, levando em conta que ele **já tem** 2 estruturas fixas (só trocam os repertórios) e 4 repertórios fixos. Nota oficial 2025 = 700; treinos ~880. Contexto de correção e da crítica do INEP ao "repertório memorizado": [README.md](README.md).
+Pedido do Gabriel: entender **como estudaram** quem tirou 960-1000, levando em conta que ele **já tem** 2 estruturas fixas (só trocam os repertórios) e 4 repertórios fixos. Nota oficial 2025 = 700; treinos ~880. Contexto de correção e da crítica do INEP ao "repertório memorizado": [README.md](pesquisa_inicial.md).
 
 Cada iteração: 3 perguntas novas → achados com fonte e confiança → 1-3 ações pro método dele. Relato de aluno é **anedótico** (1 pessoa), marcado como tal.
 

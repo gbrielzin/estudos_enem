@@ -1,0 +1,8 @@
+data,tema_id,tempo_s,nucleo_ok,direito,falha,atitude,lugar,agente,observacao
+2026-10-29,24,,,travou,travou,,,,"grupo idoso ok; não imaginou cena (tema abstrato) -> golpe/vazamento, lei sem fiscalização (LGPD)"
+2026-10-29,34,,,trabalho (gab saúde),,,,,"grupo trabalhador rural ok; a cena dele era fumaça -> direito vem do dano (saúde); evitar 'nordestinos'"
+2026-10-29,91,,,segurança,cena dos pais (D2),,,,"misturou D1/D2: pais batendo = pessoa comum; D1 = Conselho Tutelar sem profissional"
+2026-10-29,16,,,educação,P (gab N),,,,"perda fraca (perde aula); ensino superior -> não entra na faculdade; não usar 'favelado'"
+2026-10-29,27,,,trabalho ✓,mercado/IA (D1 pede Estado: N),,,,"grupo universitário ok; cena culpou a IA e não o Estado; perda vaga"
+2026-10-29,37,,,não nomeou (gab moradia),prevenção (N) ✓,,,,"grupo periferia ok (melhor: morador de área de risco); perda concreta ✓ casa e bens"
+2026-10-29,43,,,igualdade (gab trabalho),L ✓,,,,"cena ok (homem ganha mais); perda vaga (não valorizadas); com sono"

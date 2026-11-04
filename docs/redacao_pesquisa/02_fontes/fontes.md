@@ -1,10 +1,10 @@
 # Banco de redações nota alta: fontes e regras
 
 Cartão de dados do banco montado por `core/coleta_redacoes.py`. O banco
-(`docs/redacao_pesquisa/banco_1000/`) e as cartilhas baixadas
-(`docs/redacao_pesquisa/cartilhas/`) ficam **fora do git**: são textos de
+(`docs/redacao_pesquisa/03_dados/banco_1000/`) e as cartilhas baixadas
+(`docs/redacao_pesquisa/02_fontes/cartilhas/`) ficam **fora do git**: são textos de
 terceiros, guardados só pra análise local. No git vão o código, este arquivo
-e as conclusões em [padroes_1000.md](padroes_1000.md), sem copiar redação.
+e as conclusões em [padroes_1000.md](../03_dados/padroes_1000.md), sem copiar redação.
 
 ## Fontes
 
@@ -36,14 +36,14 @@ Instagram exige login). Nada de conta comprada, VPN ou contornar bloqueio.
 
 ## Como rodar
 
-Pré-requisito: os PDFs em `docs/redacao_pesquisa/cartilhas/` (cartilhas do
-INEP) e `docs/redacao_pesquisa/banco_1000/redamil/redamil_v1.pdf` ...
+Pré-requisito: os PDFs em `docs/redacao_pesquisa/02_fontes/cartilhas/` (cartilhas do
+INEP) e `docs/redacao_pesquisa/03_dados/banco_1000/redamil/redamil_v1.pdf` ...
 `redamil_v7.pdf`, mais os CSVs feitos à mão em `banco_1000/manual/`
 (`esqueletos.csv`, `relatos.csv`, `aberturas_cartilhas.csv`).
 
 ```
 cd core
-python coleta_redacoes.py ../docs/redacao_pesquisa/banco_1000
+python coleta_redacoes.py ../docs/redacao_pesquisa/03_dados/banco_1000
 ```
 
 Reconstrói `redacoes_1000.db` do zero e imprime contagem por edição,

@@ -15,7 +15,7 @@ português; se o dataset não tiver o original, o resultado vem vazio, e isso
 é informação: o YouTube-Commons não serve de fonte de texto de redação em PT.
 
 Uso (da pasta core/):
-    python youtube_commons_redacao.py ../docs/redacao_pesquisa/banco_1000/youtube_commons.csv
+    python youtube_commons_redacao.py ../docs/redacao_pesquisa/03_dados/banco_1000/youtube_commons.csv
 """
 from __future__ import annotations
 

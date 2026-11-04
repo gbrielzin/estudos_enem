@@ -55,4 +55,4 @@ O molde dele (2 estruturas fixas, D1 = Estado, D2 = sociedade/mídia, CF/88 na a
 4. **#7 e #25 correção e revisão da C1**: confirma o dado dos microdados de 2025 (96% dos 960-980 não tiram 200 em C1). Caçar só os erros recorrentes dele.
 5. **Não adotar**: título, "ação inédita" como regra e contagem de "1 desvio" — não pontuam ou não são regra oficial.
 
-Relacionados: [padroes_1000.md](padroes_1000.md) (o que as 342 redações e os microdados mostram), [metodo_960.md](metodo_960.md), [dicas_obscuras.md](dicas_obscuras.md), [atalhos_e_repertorios.md](atalhos_e_repertorios.md).
+Relacionados: [padroes_1000.md](../03_dados/padroes_1000.md) (o que as 342 redações e os microdados mostram), [metodo_960.md](metodo_960.md), [dicas_obscuras.md](dicas_obscuras.md), [atalhos_e_repertorios.md](../arquivo/atalhos_e_repertorios.md).
