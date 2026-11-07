@@ -1,4 +1,6 @@
-# Lacunas e propostas para o Lote 2 (NÃO EXECUTADAS)
+# Lacunas e propostas (atualizado após o Lote 2; itens abaixo NÃO EXECUTADOS)
+
+O Lote 2 (SIM_011..017) cobriu as trilhas 10, 11 e 16 (de forma híbrida). Restam sem simulação: 8, 25 e 28.
 
 ## Trilhas ainda sem simulação
 8 Empresa tradicional · 10 Marketplace · 11 Franquias · 16 Gestão e liderança · 25 Saúde e HealthTech (como negócio próprio) · 28 Indústria e infraestrutura.

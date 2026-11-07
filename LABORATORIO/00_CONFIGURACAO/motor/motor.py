@@ -12,7 +12,7 @@ Z = lambda: [0.0]*10
 DEFAULTS = dict(SAL=Z(), OTH=Z(), OUT=Z(), REV=Z(), GM=Z(), OM=Z(), TAX=Z(), PL=Z(), DIV=Z(), WC=Z(),
     CAPEX=Z(), EQ=Z(), INJ=Z(), DEBT_IN=Z(), DEBT_PAY=Z(), OWN=[1.0]*10, VM=Z(), REC=Z(),
     assets_inv=Z(), assets_g=0.08, assets_y=0.0, liab_in=Z(), liab_pay=Z(), shutdown=None,
-    living_mult=1.0, creep=0.40)
+    living_mult=1.0, creep=0.40, div_share=False)  # div_share=True: dividendo pessoal = dividendo * participação
 
 SCEN = {"pessimista": dict(rev_m=0.6, om_d=-0.05, sal_m=0.88, val_m=0.6),
         "base":       dict(rev_m=1.0, om_d=0.0,   sal_m=1.0,  val_m=1.0),
@@ -52,7 +52,8 @@ def run(p, rev_m=1.0, om_d=0.0, sal_m=1.0, val_m=1.0):
         if baixa:
             cash = debt = wc_prev = cumcapex = 0.0; book = 0.0; dead = True
         pl_net = pl*0.85
-        div_net = div - 0.10*max(0, div-600)
+        div_p = div*(p['OWN'][y] if p['div_share'] else 1.0)
+        div_net = div_p - 0.10*max(0, div_p-600)
         ay = assets*p['assets_y']
         inc = p['SAL'][y]*sal_m + p['OTH'][y] + BOLSA[y] + pl_net + div_net + ay
         living = max(L[y]*p['living_mult'], p['creep']*inc)

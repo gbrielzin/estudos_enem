@@ -119,7 +119,7 @@ def escreve_sim(sid):
     md.append(f"**Competências adquiridas:** {t['comp']}\n\n**Sacrifícios exigidos:** {t['sacrificios']}\n")
     md.append("## 7. Avaliação (0–10)\nNos critérios 12, 13 e 14 nota alta = pior.\n\n| # | Critério | Nota | Justificativa |\n|---|---|---|---|")
     for i, (n, j) in enumerate(SC[sid]): md.append(f"| {i+1} | {CRIT[i]} | {n} | {j} |")
-    md.append(f"\n**Equilíbrio geral (média dos 15 critérios, com 12–14 invertidos):** {equilibrio(sid):.2f}\n")
+    md.append(f"\n**Equilíbrio geral (média dos {len(SC[sid])} critérios, com 12–14 invertidos):** {equilibrio(sid):.2f}\n")
     open(fp, "w", encoding="utf-8").write("\n".join(md))
     json.dump({k: [{kk: (round(vv, 2) if isinstance(vv, float) else vv) for kk, vv in r.items()} for r in sc[k]["rows"]] for k in sc},
               open(os.path.join(d, "dados_v1.json"), "w"), ensure_ascii=False, indent=1)
