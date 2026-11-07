@@ -1,0 +1,11 @@
+id;nome;pers;stake;adj;adj_real;renda_mensal_a10;renda_acum;caixa_emp;fat_a10;adj_pess;adj_otim;equilibrio
+SIM_001;Carreira corporativa até empresa global;550;0;550;354;19.6;1036;0;0;401;736;5.53
+SIM_002;Do flip de iPhone à marca de eletrônicos reformados;252;1920;1596;1028;11.9;760;0;6000;736;3526;3.87
+SIM_003;Agência de automação com IA que vira SaaS vertical;659;7350;5804;3737;43.9;1319;477;3500;2094;12324;5.80
+SIM_004;Startup B2C com capital de risco que fecha;72;0;72;46;13.3;716;0;0;3;150;3.20
+SIM_005;Carreira + poupança e aquisição de empresa de TI;142;1275;1034;666;8.5;695;0;1700;381;2168;4.93
+SIM_006;Dev remoto em dólar que vira investidor-anjo;1309;0;1309;843;28.8;1707;0;0;1143;1514;6.47
+SIM_007;EdTech do ENEM: do app B2C ao contrato com escolas;915;9240;7383;4754;51.8;1644;751;4200;2647;15455;6.00
+SIM_008;Consultoria de dados que vira holding com imóveis;796;3525;3264;2102;30.1;1284;188;2350;1564;6815;5.67
+SIM_009;Portfólio de micro-projetos sem foco;624;315;844;544;17.2;1042;0;210;555;1438;5.00
+SIM_010;AgTech para cooperativas de café no Espírito Santo;329;5510;4186;2695;15.3;782;0;2400;1685;8469;5.00
