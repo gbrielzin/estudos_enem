@@ -22,8 +22,16 @@ for sid in T3:
     B.T[sid] = T3[sid]
     sc = scenarios(P3[sid]); B.R[sid] = sc
     for k in sc: sc[k]["has_co"] = any(v > 0 for v in P3[sid].get("REV", [0]))
+from params_lote4 import P as P4
+from sims_texto4 import T as T4
+for sid in T4:
+    for i, c in enumerate(T4[sid]["cap"]):
+        c["sit"] = f"{AGES[i]} anos. " + re.sub(r"^\d+-\d+ anos\. ", "", c["sit"])
+    B.T[sid] = T4[sid]
+    sc = scenarios(P4[sid]); B.R[sid] = sc
+    for k in sc: sc[k]["has_co"] = any(v > 0 for v in P4[sid].get("REV", [0]))
 B.CRIT.append("Experiência de vida")
-for sid in list(T2) + list(T3):
+for sid in list(T2) + list(T3) + list(T4):
     a = B.auto_scores(sid)
     m = [(int(x.split("|")[0]), x.split("|", 1)[1]) for x in B.T[sid]["notas"]]
     B.SC[sid] = a + m
@@ -43,20 +51,20 @@ B.equilibrio = lambda sid: equil([n for n, _ in B.SC[sid]])
 f0, R, T = B.f0, B.R, B.T
 
 if __name__ == "__main__":
-    for sid in sorted(T3): B.escreve_sim(sid)
+    for sid in sorted(T4): B.escreve_sim(sid)
     ids = sorted(R)
     # consolidado lote 2
-    L = ["# Resultados financeiros consolidados — Lote 3 (cenário base, R$ mil nominais)\n",
+    L = ["# Resultados financeiros consolidados — Lote 4 (cenário base, R$ mil nominais)\n",
          "Dividendos proporcionais à participação (div_share=True); participação valorada como valor da empresa − dívida líquida (ev_net_debt=True). Patrimônio ajustado = pessoal líquido + 70% do valor da participação.\n",
          "| ID | Trajetória | Patrimônio pessoal líquido | Valor da participação | Patrimônio ajustado | Ajustado (R$ de hoje) | Renda mensal A10 | Renda acumulada | Menor patrimônio pessoal no caminho | Pessimista (ajust.) | Otimista (ajust.) |", "|---|---|---|---|---|---|---|---|---|---|---|"]
-    for sid in sorted(T3):
+    for sid in sorted(T4):
         b = R[sid]["base"]; mn = min(r["pers"] for r in b["rows"])
         L.append(f"| {sid} | {T[sid]['nome']} | {f0(b['pers'])} | {f0(b['stake'])} | {f0(b['adj'])} | {f0(b['adj_real'])} | {b['inc_m']:.1f} | {f0(b['inc_ac'])} | {f0(mn)} | {f0(R[sid]['pessimista']['adj'])} | {f0(R[sid]['otimista']['adj'])} |")
-    open(os.path.join(LAB, "04_RESULTADOS_FINANCEIROS", "consolidado_lote3.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
+    open(os.path.join(LAB, "04_RESULTADOS_FINANCEIROS", "consolidado_lote4.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
     # ranking v2
     def top(key, n=3): return sorted(ids, key=key, reverse=True)[:n]
     eq1 = lambda s: equil(S16[s]); eq2 = lambda s: equil(S16[s], 2.0)
-    out = ["# Rankings v3 — 20 simulações, 16 critérios (inclui Experiência de vida)\n",
+    out = ["# Rankings v4 — 29 simulações, 16 critérios (inclui Experiência de vida)\n",
            "O critério 16 é novo. As 10 simulações do Lote 1 receberam a nota 16 a posteriori (`notas_criterio16_lote1.md`) e seus arquivos v1 não foram alterados. Peso padrão: igual aos demais critérios. Para teste de sensibilidade, o ranking com peso 2× também é mostrado.\n"]
     rows = [("equilíbrio geral (peso igual, 16 critérios)", eq1, lambda s: f"{eq1(s):.2f}"),
             ("equilíbrio geral com experiência em peso 2×", eq2, lambda s: f"{eq2(s):.2f}"),
@@ -75,12 +83,12 @@ if __name__ == "__main__":
     out.append("\n## Notas completas (0–10), 16 critérios\n\n| ID | " + " | ".join(str(i+1) for i in range(16)) + " |\n|---|" + "---|"*16)
     for sid in ids: out.append(f"| {sid} | " + " | ".join(map(str, S16[sid])) + " |")
     out.append("\nColunas: " + "; ".join(f"{i+1} {B.CRIT[i]}" for i in range(16)) + ". Em 12, 13 e 14 nota alta = pior (invertidas no equilíbrio).")
-    open(os.path.join(LAB, "06_RANKINGS", "ranking_v3_20_simulacoes.md"), "w", encoding="utf-8").write("\n".join(out) + "\n")
+    open(os.path.join(LAB, "06_RANKINGS", "ranking_v4_29_simulacoes.md"), "w", encoding="utf-8").write("\n".join(out) + "\n")
     # índice
-    L = ["# Índice geral de simulações\n", "| ID | Nome | Lote | Trilhas | Horizonte | Versão | Status | Patrimônio ajustado (base, R$ mil) | Experiência (16) | Equilíbrio v3 |", "|---|---|---|---|---|---|---|---|---|---|"]
+    L = ["# Índice geral de simulações\n", "| ID | Nome | Lote | Trilhas | Horizonte | Versão | Status | Patrimônio ajustado (base, R$ mil) | Experiência (16) | Equilíbrio v4 |", "|---|---|---|---|---|---|---|---|---|---|"]
     for sid in ids:
-        L.append(f"| [{sid}](03_SIMULACOES/{sid}/v1.md) | {T[sid]['nome']} | {1 if sid<='SIM_010' else (2 if sid<='SIM_017' else 3)} | {', '.join(map(str, T[sid]['trilhas']))} | 10 anos | v1 | concluída | {f0(R[sid]['base']['adj'])} | {S16[sid][15]} | {eq1(sid):.2f} |")
-    L.append("\nRankings v3: [06_RANKINGS/ranking_v3_20_simulacoes.md](06_RANKINGS/ranking_v3_20_simulacoes.md) · Ranking v2 (17 simulações): [06_RANKINGS/ranking_v2_com_experiencia.md](06_RANKINGS/ranking_v2_com_experiencia.md) · Ranking v1 (Lote 1, 15 critérios): [06_RANKINGS/ranking_lote1_v1.md](06_RANKINGS/ranking_lote1_v1.md) · Consolidados: [Lote 1](04_RESULTADOS_FINANCEIROS/consolidado_lote1.md), [Lote 2](04_RESULTADOS_FINANCEIROS/consolidado_lote2.md), [Lote 3](04_RESULTADOS_FINANCEIROS/consolidado_lote3.md)")
+        L.append(f"| [{sid}](03_SIMULACOES/{sid}/v1.md) | {T[sid]['nome']} | {1 if sid<='SIM_010' else (2 if sid<='SIM_017' else (3 if sid<='SIM_020' else 4))} | {', '.join(map(str, T[sid]['trilhas']))} | 10 anos | v1 | concluída | {f0(R[sid]['base']['adj'])} | {S16[sid][15]} | {eq1(sid):.2f} |")
+    L.append("\nRankings v4: [06_RANKINGS/ranking_v4_29_simulacoes.md](06_RANKINGS/ranking_v4_29_simulacoes.md) · Ranking v3 (20 simulações): [06_RANKINGS/ranking_v3_20_simulacoes.md](06_RANKINGS/ranking_v3_20_simulacoes.md) · Ranking v2 (17 simulações): [06_RANKINGS/ranking_v2_com_experiencia.md](06_RANKINGS/ranking_v2_com_experiencia.md) · Ranking v1 (Lote 1, 15 critérios): [06_RANKINGS/ranking_lote1_v1.md](06_RANKINGS/ranking_lote1_v1.md) · Consolidados: [Lote 1](04_RESULTADOS_FINANCEIROS/consolidado_lote1.md), [Lote 2](04_RESULTADOS_FINANCEIROS/consolidado_lote2.md), [Lote 3](04_RESULTADOS_FINANCEIROS/consolidado_lote3.md), [Lote 4](04_RESULTADOS_FINANCEIROS/consolidado_lote4.md)")
     open(os.path.join(LAB, "INDICE.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
     # catálogo
     uso = {n: [] for n in B.NOMES_TRILHAS}

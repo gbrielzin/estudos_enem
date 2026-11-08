@@ -96,7 +96,12 @@ def escreve_sim(sid):
           f"- **Data:** {HOJE} · **Horizonte:** 10 anos (19→29 anos) · **Moeda:** R$ mil nominais\n- **Trilhas:** {tr}\n- **Hipótese estratégica:** {t['hip']}\n- **Estratégia inicial:** {t['estrategia']}\n- **Probabilidade subjetiva do desfecho-base:** {pct(t['prob'])} (estimativa do laboratório, sem base estatística)\n",
           "> Os números vêm do motor financeiro (`00_CONFIGURACAO/motor`). São cenários de simulação, não previsão.\n",
           "## 1. Premissas\n- Personagem-base fictício: ver `01_PERFIL_E_PREMISSAS/A_personagem_base.md`.\n- Aprovação no ENEM com bolsa em SP **assumida** (variável de controle; teste sem bolsa em `08_CENARIOS_ALTERNATIVOS`).\n- Inflação 4,5% a.a.; retorno da carteira pessoal 10% a.a. líquido; dívida empresarial 14%; dívida pessoal 12%.\n- Desconto de iliquidez de 30% sobre participação em empresa privada no cálculo do patrimônio ajustado.\n- Pró-labore com 15% de encargos; dividendos tributados em 10% apenas acima de R$600 mil/ano (simplificação).\n"]
-    md.append("## 2. Histórico cronológico\n")
+    if t.get("apostas"):
+        md.append("## 2. Apostas e critérios de abandono (portões de decisão)\n")
+        md.append("| Aposta | Custo | Critério de abandono (definido antes) | Resultado |\n|---|---|---|---|")
+        for a_ in t["apostas"]: md.append("| " + " | ".join(a_) + " |")
+        md.append("")
+    md.append("## 2.1 Histórico cronológico\n" if t.get("apostas") else "## 2. Histórico cronológico\n")
     spans = [(0, 2), (2, 5), (5, 8), (8, 10)]
     for i, (a, z) in enumerate(spans):
         c = t["cap"][i]; last = rows[z-1]

@@ -24,3 +24,6 @@ Usado em todas as simulações. Construído a partir da entrevista inicial; **n�
 - Custo de vida em SP: R$ 24 mil/ano no ano 1 até R$ 108 mil/ano no ano 10 (crescimento com a idade), com ajuste por estilo de vida da trajetória.
 - Inflação 4,5% a.a.; carteira pessoal 10% a.a. líquido; dívida empresarial 14%; dívida pessoal 12%.
 - Cenários: pessimista, base e otimista por multiplicadores explícitos (ver `00_CONFIGURACAO/motor/motor.py`).
+
+## Adendo v2 (2026-11-08): racionalidade de risco
+Por pedido do usuário, a partir do Lote 4 o personagem é racional: não abandona tudo para apostar em uma coisa. Testa 3 apostas baratas, define critérios de abandono antes, mantém o emprego até a empresa se sustentar e só então reduz a dedicação ao salário. Nichos de startup passam a ser explorados em paralelo (Lote 4). Os Lotes 1 a 3 permanecem como estavam, incluindo trajetórias de maior risco para contraste.
