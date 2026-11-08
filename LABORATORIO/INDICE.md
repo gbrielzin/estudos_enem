@@ -1,6 +1,6 @@
 # Índice geral de simulações
 
-| ID | Nome | Lote | Trilhas | Horizonte | Versão | Status | Patrimônio ajustado (base, R$ mil) | Experiência (16) | Equilíbrio v2 |
+| ID | Nome | Lote | Trilhas | Horizonte | Versão | Status | Patrimônio ajustado (base, R$ mil) | Experiência (16) | Equilíbrio v3 |
 |---|---|---|---|---|---|---|---|---|---|
 | [SIM_001](03_SIMULACOES/SIM_001/v1.md) | Carreira corporativa até empresa global | 1 | 13, 14, 15, 19 | 10 anos | v1 | concluída | 550 | 5 | 5.50 |
 | [SIM_002](03_SIMULACOES/SIM_002/v1.md) | Do flip de iPhone à marca de eletrônicos reformados | 1 | 9, 29 | 10 anos | v1 | concluída | 1.596 | 3 | 3.81 |
@@ -19,5 +19,8 @@
 | [SIM_015](03_SIMULACOES/SIM_015/v1.md) | Atlética como mercado: plataforma de eventos e pagamentos | 2 | 10, 26, 5 | 10 anos | v1 | concluída | 3.917 | 9 | 5.00 |
 | [SIM_016](03_SIMULACOES/SIM_016/v1.md) | Carreira com franquia gerida por gerente | 2 | 11, 13, 19 | 10 anos | v1 | concluída | 581 | 6 | 5.06 |
 | [SIM_017](03_SIMULACOES/SIM_017/v1.md) | Controle: carreira de gestão com expatriação aos EUA | 2 | 13, 14, 16, 29 | 10 anos | v1 | concluída | 421 | 9 | 5.75 |
+| [SIM_018](03_SIMULACOES/SIM_018/v1.md) | Sócio de distribuidora tradicional e digitalização | 3 | 8, 13, 12 | 10 anos | v1 | concluída | 565 | 5 | 4.44 |
+| [SIM_019](03_SIMULACOES/SIM_019/v1.md) | HealthTech de faturamento de convênios com sócio médico | 3 | 25, 4, 20 | 10 anos | v1 | concluída | 2.254 | 4 | 4.62 |
+| [SIM_020](03_SIMULACOES/SIM_020/v1.md) | Manutenção preditiva para a indústria pesada capixaba | 3 | 28, 4, 27 | 10 anos | v1 | concluída | 2.653 | 5 | 4.38 |
 
-Rankings v2: [06_RANKINGS/ranking_v2_com_experiencia.md](06_RANKINGS/ranking_v2_com_experiencia.md) · Ranking v1 (Lote 1, 15 critérios): [06_RANKINGS/ranking_lote1_v1.md](06_RANKINGS/ranking_lote1_v1.md) · Consolidados: [Lote 1](04_RESULTADOS_FINANCEIROS/consolidado_lote1.md), [Lote 2](04_RESULTADOS_FINANCEIROS/consolidado_lote2.md)
+Rankings v3: [06_RANKINGS/ranking_v3_20_simulacoes.md](06_RANKINGS/ranking_v3_20_simulacoes.md) · Ranking v2 (17 simulações): [06_RANKINGS/ranking_v2_com_experiencia.md](06_RANKINGS/ranking_v2_com_experiencia.md) · Ranking v1 (Lote 1, 15 critérios): [06_RANKINGS/ranking_lote1_v1.md](06_RANKINGS/ranking_lote1_v1.md) · Consolidados: [Lote 1](04_RESULTADOS_FINANCEIROS/consolidado_lote1.md), [Lote 2](04_RESULTADOS_FINANCEIROS/consolidado_lote2.md), [Lote 3](04_RESULTADOS_FINANCEIROS/consolidado_lote3.md)

@@ -12,7 +12,7 @@ Z = lambda: [0.0]*10
 DEFAULTS = dict(SAL=Z(), OTH=Z(), OUT=Z(), REV=Z(), GM=Z(), OM=Z(), TAX=Z(), PL=Z(), DIV=Z(), WC=Z(),
     CAPEX=Z(), EQ=Z(), INJ=Z(), DEBT_IN=Z(), DEBT_PAY=Z(), OWN=[1.0]*10, VM=Z(), REC=Z(),
     assets_inv=Z(), assets_g=0.08, assets_y=0.0, liab_in=Z(), liab_pay=Z(), shutdown=None,
-    living_mult=1.0, creep=0.40, div_share=False)  # div_share=True: dividendo pessoal = dividendo * participação
+    living_mult=1.0, creep=0.40, div_share=False, ev_net_debt=False)  # div_share=True: dividendo pessoal = dividendo * participação
 
 SCEN = {"pessimista": dict(rev_m=0.6, om_d=-0.05, sal_m=0.88, val_m=0.6),
         "base":       dict(rev_m=1.0, om_d=0.0,   sal_m=1.0,  val_m=1.0),
@@ -47,7 +47,8 @@ def run(p, rev_m=1.0, om_d=0.0, sal_m=1.0, val_m=1.0):
         cash = cash_pre - sweep - div
         baixa = (p['shutdown'] == y)
         val = 0.0 if (dead or baixa) else rev*p['VM'][y]*val_m
-        stake = p['OWN'][y]*val
+        eqv = max(0.0, val - debt + cash) if p['ev_net_debt'] else val   # valor patrimonial = EV - dívida líquida
+        stake = p['OWN'][y]*eqv
         book = cash + wc + cumcapex - debt
         if baixa:
             cash = debt = wc_prev = cumcapex = 0.0; book = 0.0; dead = True
@@ -70,7 +71,7 @@ def run(p, rev_m=1.0, om_d=0.0, sal_m=1.0, val_m=1.0):
             lop=lop, imp=imp, juros=interest, net=net, fcf=fcf, wc=wc, cash=cash if not baixa else 0.0,
             pl=pl_net, div=div, inc=inc, living=living, sav=sav, wealth=wealth, assets=assets,
             pers=pers, debt_emp=debt if not baixa else 0.0, debt_pess=liab+max(0, -wealth),
-            own=p['OWN'][y], val=val, stake=stake, book=book, baixa=baixa,
+            own=p['OWN'][y], val=val, eqv=eqv, flag_ev=p['ev_net_debt'], stake=stake, book=book, baixa=baixa,
             fat_ac=acc['fat'], lop_ac=acc['lop'], net_ac=acc['net'], div_ac=acc['div'], inc_ac=acc['inc'], pl_ac=acc['pl']))
     f = rows[-1]
     out = dict(rows=rows, pers=f['pers'], stake=f['stake'], adj=f['pers']+(1-STAKE_HAIRCUT)*f['stake'],

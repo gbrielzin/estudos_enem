@@ -2,6 +2,8 @@
 
 O Lote 2 (SIM_011..017) cobriu as trilhas 10, 11 e 16 (de forma híbrida). Restam sem simulação: 8, 25 e 28.
 
+**Atualização (2026-11-08):** o Lote 3 (SIM_018, 019 e 020) cobriu as trilhas 8, 25 e 28. As 30 trilhas têm agora ao menos uma simulação. Sobram apenas os testes de crise e de decisão abaixo, ainda não executados.
+
 ## Trilhas ainda sem simulação
 8 Empresa tradicional · 10 Marketplace · 11 Franquias · 16 Gestão e liderança · 25 Saúde e HealthTech (como negócio próprio) · 28 Indústria e infraestrutura.
 
