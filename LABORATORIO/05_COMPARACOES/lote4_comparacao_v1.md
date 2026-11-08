@@ -36,7 +36,7 @@ Mesma probabilidade de sucesso `p` (estimativa subjetiva do laboratório) para o
 | SIM_028 | 30% | 2.718 | 943 | 791 | 866 |
 | SIM_029 | 20% | 6.007 | 1.348 | 1.115 | 1.259 |
 
-Leitura: com as mesmas chances, o ganho do estilo em estágios é pequeno em valor esperado (diferença de fracasso: R$ 111 mil por tentativa) e o estilo continua melhor mesmo com p reduzida. A diferença grande está no risco: o pior caso cai de uma dívida pessoal e anos de recuperação para uma perda de cerca de R$ 25 mil. Isso é um modelo com probabilidades subjetivas; não é estatística.
+Leitura (corrigida): com a mesma chance de sucesso, o estilo em estágios tem valor esperado ligeiramente maior (diferença de fracasso: R$ 111 mil por tentativa). Se parar cedo reduzir em 20% a chance relativa de sucesso, o valor esperado do estilo em estágios fica **abaixo** do de tudo em uma aposta em todos os nichos (por exemplo SIM_021: 1.561 contra 1.827). Portanto, o argumento a favor dos estágios é de **risco, não de valor esperado**: o pior caso cai de dívida pessoal e anos de recuperação para uma perda de cerca de R$ 25 mil. Quem maximiza só o valor esperado e tolera a ruína pode preferir concentrar; quem quer preservar opções (seu caso, pelo que você descreveu) prefere os estágios. Isso depende de probabilidades subjetivas minhas; não é estatística.
 
 ## Mesma ambição, decisões diferentes (SIM_004 × SIM_029 × SIM_024)
 
