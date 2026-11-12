@@ -29,6 +29,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -36,6 +37,7 @@ from pydantic import BaseModel
 
 import db
 import moldes
+import seguranca
 import uso_admin
 
 # Carrega o .env da raiz do projeto pra dentro de os.environ -- é assim
@@ -81,6 +83,28 @@ def caminho_banco_usuario(nome: str) -> Path:
     return pasta_bancos() / f"{nome}.db"
 
 
+def _pessoa_pelo_codigo(authorization: str | None, usuarios: dict[str, str]) -> str | None:
+    """Nome da pessoa dona do código no header, ou None. Compara com
+    `hmac.compare_digest` (tempo constante), nunca com `==`."""
+    recebido = (authorization or "").encode("utf-8")
+    for codigo, nome in usuarios.items():
+        if hmac.compare_digest(recebido, f"Bearer {codigo}".encode("utf-8")):
+            return nome
+    return None
+
+
+def _identificar_pessoa(authorization: str | None) -> str | None:
+    """Quem é, para o limite de requisições contar por pessoa e não por
+    IP (seguranca.py). Só identifica: quem barra é _verificar_autenticacao."""
+    usuarios = usuarios_configurados()
+    if usuarios:
+        return _pessoa_pelo_codigo(authorization, usuarios)
+    token = os.environ.get("API_AUTH_TOKEN")
+    if token and hmac.compare_digest((authorization or "").encode("utf-8"), f"Bearer {token}".encode("utf-8")):
+        return "dono"
+    return None
+
+
 async def _verificar_autenticacao(authorization: str | None = Header(default=None)) -> None:
     """Trava por chave (Bearer token). Dois modos:
 
@@ -99,14 +123,14 @@ async def _verificar_autenticacao(authorization: str | None = Header(default=Non
     recebido = (authorization or "").encode("utf-8")
     usuarios = usuarios_configurados()
     if usuarios:
-        for codigo, nome in usuarios.items():
-            if hmac.compare_digest(recebido, f"Bearer {codigo}".encode("utf-8")):
-                caminho = caminho_banco_usuario(nome)
-                if not caminho.exists():
-                    raise HTTPException(status_code=503, detail=f"Banco de '{nome}' ainda não foi criado.")
-                db._BANCO_DA_REQUISICAO.set(caminho)
-                return
-        raise HTTPException(status_code=401, detail="Código de acesso ausente ou inválido.")
+        nome = _pessoa_pelo_codigo(authorization, usuarios)
+        if nome is None:
+            raise HTTPException(status_code=401, detail="Código de acesso ausente ou inválido.")
+        caminho = caminho_banco_usuario(nome)
+        if not caminho.exists():
+            raise HTTPException(status_code=503, detail=f"Banco de '{nome}' ainda não foi criado.")
+        db._BANCO_DA_REQUISICAO.set(caminho)
+        return
 
     token_esperado = os.environ.get("API_AUTH_TOKEN")
     if not token_esperado:
@@ -131,6 +155,38 @@ def _origens_cors() -> list[str]:
 
 
 app = FastAPI(title="ENEM GI API", dependencies=[Depends(_verificar_autenticacao)])
+
+
+def _classificar_rota(metodo: str, caminho: str) -> str | None:
+    """Tipo de rota para o limite de requisições (ver
+    seguranca.LIMITES_POR_MINUTO). Rota da API = 1º pedaço do caminho é o
+    de alguma rota declarada aqui; o resto (app web, figuras, /legal) é
+    arquivo. /health entra como leitura: ele também passa pela trava de
+    chave, e rota com trava sem limite viraria porta de força bruta."""
+    if caminho == "/admin" or caminho.startswith("/admin/"):
+        return "admin"
+    primeiro = caminho.strip("/").split("/", 1)[0]
+    if primeiro in _prefixos_api():
+        return "leitura" if metodo in ("GET", "HEAD", "OPTIONS") else "escrita"
+    return "arquivos"
+
+
+def _prefixos_api() -> set[str]:
+    if not _PREFIXOS_API:
+        _PREFIXOS_API.update(
+            r.path.strip("/").split("/", 1)[0] for r in app.routes if isinstance(r, APIRoute)
+        )
+    return _PREFIXOS_API
+
+
+_PREFIXOS_API: set[str] = set()
+
+# Limite de requisições + trava de força bruta + headers de segurança +
+# log de segurança (seguranca.py, docs/seguranca_api.md). Adicionado ANTES
+# do CORS de propósito: o último middleware adicionado é o de fora, então
+# o CORS envolve este e o 429 também sai com Access-Control-Allow-Origin
+# (sem isso o navegador esconde o 429 do app web como erro de rede).
+app.add_middleware(seguranca.MiddlewareSeguranca, classificar=_classificar_rota, identificar=_identificar_pessoa)
 
 # CORS restrito às origens de _origens_cors() (antes era "*"; ver a
 # atualização de 2026-09-26 no adr/0009).
@@ -481,6 +537,14 @@ def uso() -> list[dict]:
     API_USUARIOS, só as pessoas configuradas (ver uso_admin.resumo_uso)."""
     nomes = list(usuarios_configurados().values()) or None
     return uso_admin.resumo_uso(pasta_bancos(), nomes)
+
+
+@admin.get("/seguranca", dependencies=[Depends(_verificar_admin)])
+def eventos_seguranca() -> list[dict]:
+    """Últimos eventos do log de segurança (429, chave errada, admin
+    negado), mais novo primeiro. Ficam em memória: zera quando o servidor
+    reinicia; o histórico completo fica nos logs da Railway (stdout)."""
+    return seguranca.eventos_recentes()
 
 
 # Rota do Starlette, não do FastAPI: não passa pela trava das pessoas.
