@@ -36,6 +36,10 @@ from fastapi.testclient import TestClient
 # o resto da suíte testa rota e validação, não a trava, então roda no
 # modo de desenvolvimento. TestAutenticacao controla as variáveis na mão.
 os.environ.setdefault("API_PERMITIR_SEM_TOKEN", "1")
+# Mesmo raciocínio para o limite de requisições (seguranca.py): a suíte
+# antiga faz muitas chamadas seguidas do mesmo "IP" e muitos 401 de
+# propósito. TestLimiteDeRequisicoes liga o limite na mão.
+os.environ.setdefault("API_RATE_LIMIT_DESLIGADO", "1")
 
 import api  # noqa: E402
 import db  # noqa: E402
@@ -581,6 +585,219 @@ class TestMoldes(_TestComBancoTemporario):
 
     def test_molde_inexistente_da_404(self):
         self.assertEqual(self.client.get("/moldes/nao_existe/variacao").status_code, 404)
+
+
+# ============================================================
+# Segurança (seguranca.py, docs/seguranca_api.md): limite de requisições,
+# trava de força bruta, IP atrás do proxy, headers e log.
+# ============================================================
+
+import seguranca  # noqa: E402
+
+
+class _TestComLimiteLigado(_TestComDuasPessoas):
+    """Liga o limite (a suíte desliga por padrão) com números pequenos,
+    para estourar com poucas requisições, e zera os contadores."""
+
+    LIMITES = {"leitura": 3, "escrita": 2, "admin": 2, "arquivos": 3}
+    CHAVE_ADMIN = "chave-do-admin-0123456789"
+
+    def setUp(self):
+        super().setUp()
+        seguranca.limpar_estado()
+        env = {**self.env, "API_ADMIN_TOKEN": self.CHAVE_ADMIN, "API_CONFIAR_PROXY": "0"}
+        patches = [
+            patch.dict(os.environ, env),
+            patch.dict(seguranca.LIMITES_POR_MINUTO, self.LIMITES),
+            patch.object(seguranca._logger, "disabled", True),  # sem linha JSON na saída do teste
+        ]
+        for p in patches:
+            p.start()
+            self.addCleanup(p.stop)
+        os.environ.pop("API_RATE_LIMIT_DESLIGADO", None)
+        self.addCleanup(seguranca.limpar_estado)
+
+    def _get(self, codigo, caminho="/streak", **extra):
+        headers = {"Authorization": f"Bearer {codigo}", **extra.pop("headers", {})}
+        return self.client.get(caminho, headers=headers, **extra)
+
+
+class TestLimiteDeRequisicoes(_TestComLimiteLigado):
+    def test_estourar_o_limite_da_429_com_retry_after(self):
+        for _ in range(3):
+            self.assertEqual(self._get(self.CODIGO_ANA).status_code, 200)
+        resposta = self._get(self.CODIGO_ANA)
+        self.assertEqual(resposta.status_code, 429)
+        self.assertGreaterEqual(int(resposta.headers["Retry-After"]), 1)
+        self.assertLessEqual(int(resposta.headers["Retry-After"]), seguranca.JANELA_SEGUNDOS)
+        self.assertIn("detail", resposta.json())
+
+    def test_limite_de_escrita_e_separado_do_de_leitura(self):
+        self.assertEqual(self._responder(self.CODIGO_ANA, "A").status_code, 200)
+        self.assertEqual(self._responder(self.CODIGO_ANA, "B").status_code, 200)
+        self.assertEqual(self._responder(self.CODIGO_ANA, "C").status_code, 429)
+        # Escrita esgotada não come a cota de leitura.
+        self.assertEqual(self._get(self.CODIGO_ANA).status_code, 200)
+        # E a tentativa recusada não chegou no banco.
+        self.assertEqual(len(self._tentativas("ana")), 2)
+
+    def test_limite_conta_por_pessoa_e_nao_por_ip(self):
+        # Ana e Bia no mesmo IP (mesma wifi): uma esgotar não trava a outra.
+        for _ in range(3):
+            self._get(self.CODIGO_ANA)
+        self.assertEqual(self._get(self.CODIGO_ANA).status_code, 429)
+        self.assertEqual(self._get(self.CODIGO_BIA).status_code, 200)
+
+    def test_arquivos_tem_limite_proprio(self):
+        for _ in range(3):
+            self.assertNotEqual(self.client.get("/enunciados/nao_existe.png").status_code, 429)
+        self.assertEqual(self.client.get("/enunciados/nao_existe.png").status_code, 429)
+        self.assertEqual(self._get(self.CODIGO_ANA).status_code, 200)
+
+    def test_janela_desliza_e_retry_after_diminui(self):
+        agora = [1000.0]
+        limitador = seguranca.LimitadorJanela(relogio=lambda: agora[0])
+        self.assertIsNone(limitador.tentar("x", 2, 60))
+        agora[0] += 20
+        self.assertIsNone(limitador.tentar("x", 2, 60))
+        self.assertEqual(limitador.tentar("x", 2, 60), 40)
+        agora[0] += 41  # a 1ª saiu da janela, a 2ª ainda não
+        self.assertIsNone(limitador.tentar("x", 2, 60))
+        self.assertEqual(limitador.tentar("x", 2, 60), 19)
+
+
+class TestForcaBruta(_TestComLimiteLigado):
+    LIMITES = {"leitura": 1000, "escrita": 1000, "admin": 1000, "arquivos": 1000}
+
+    def test_chave_errada_repetida_bloqueia_o_ip_mesmo_com_a_chave_certa(self):
+        for i in range(seguranca.FALHAS_AUTH_MAX):
+            self.assertEqual(self._get(f"chute-{i:02d}-xxxxxxxxxx").status_code, 401)
+        bloqueada = self._get(self.CODIGO_ANA)
+        # Acertar depois do bloqueio também é 429: senão o 200 avisaria o robô.
+        self.assertEqual(bloqueada.status_code, 429)
+        self.assertGreater(int(bloqueada.headers["Retry-After"]), seguranca.JANELA_SEGUNDOS)
+
+    def test_bloqueio_vale_para_o_admin_e_para_o_health(self):
+        for i in range(seguranca.FALHAS_AUTH_MAX):
+            self._get(f"chute-{i:02d}-xxxxxxxxxx", caminho="/health")
+        self.assertEqual(self._get(self.CHAVE_ADMIN, caminho="/admin/uso").status_code, 429)
+
+    def test_poucos_erros_nao_bloqueiam(self):
+        for i in range(seguranca.FALHAS_AUTH_MAX - 1):
+            self._get(f"chute-{i:02d}-xxxxxxxxxx")
+        self.assertEqual(self._get(self.CODIGO_ANA).status_code, 200)
+
+    def test_log_registra_erro_sem_guardar_a_chave(self):
+        chute = "chute-secreto-que-nao-pode-vazar"
+        self._get(chute, caminho="/streak", params={"t": "segredo-na-url"}, headers={"User-Agent": "robo/1.0"})
+        eventos = seguranca.eventos_recentes()
+        self.assertEqual(len(eventos), 1)
+        evento = eventos[0]
+        self.assertEqual(evento["tipo"], "chave_errada")
+        self.assertEqual(evento["rota"], "/streak")
+        self.assertEqual(evento["user_agent"], "robo/1.0")
+        self.assertIsNotNone(evento["ip"])
+        self.assertIsNotNone(evento["horario"])
+        texto = json.dumps(eventos)
+        self.assertNotIn(chute, texto)
+        self.assertNotIn("segredo-na-url", texto)
+
+
+class TestIpAtrasDoProxy(_TestComLimiteLigado):
+    LIMITES = {"leitura": 2, "escrita": 2, "admin": 2, "arquivos": 2}
+
+    def _figura(self, **headers):
+        return self.client.get("/enunciados/nao_existe.png", headers=headers)
+
+    def test_sem_proxy_confiavel_header_de_ip_e_ignorado(self):
+        # Trocar X-Real-IP / X-Forwarded-For a cada chamada não "troca de IP".
+        self._figura(**{"X-Real-IP": "1.1.1.1", "X-Forwarded-For": "1.1.1.1"})
+        self._figura(**{"X-Real-IP": "2.2.2.2", "X-Forwarded-For": "2.2.2.2"})
+        self.assertEqual(self._figura(**{"X-Real-IP": "3.3.3.3", "X-Forwarded-For": "3.3.3.3"}).status_code, 429)
+
+    def test_atras_da_railway_usa_x_real_ip(self):
+        with patch.dict(os.environ, {"API_CONFIAR_PROXY": "1"}):
+            self._figura(**{"X-Real-IP": "1.1.1.1"})
+            self._figura(**{"X-Real-IP": "1.1.1.1"})
+            self.assertEqual(self._figura(**{"X-Real-IP": "1.1.1.1"}).status_code, 429)
+            # Outro cliente de verdade (a borda escreveu outro IP) tem cota própria.
+            self.assertNotEqual(self._figura(**{"X-Real-IP": "2.2.2.2"}).status_code, 429)
+
+    def test_x_forwarded_for_nunca_e_usado(self):
+        with patch.dict(os.environ, {"API_CONFIAR_PROXY": "1"}):
+            for ip in ("9.9.9.1", "9.9.9.2"):
+                self._figura(**{"X-Real-IP": "1.1.1.1", "X-Forwarded-For": ip})
+            self.assertEqual(
+                self._figura(**{"X-Real-IP": "1.1.1.1", "X-Forwarded-For": "9.9.9.3"}).status_code, 429
+            )
+
+    def test_ip_do_cliente(self):
+        self.assertEqual(seguranca.ip_do_cliente("10.0.0.5", "8.8.8.8", confiar=False), "10.0.0.5")
+        self.assertEqual(seguranca.ip_do_cliente("10.0.0.5", "8.8.8.8", confiar=True), "8.8.8.8")
+        self.assertEqual(seguranca.ip_do_cliente("10.0.0.5", "nao-e-ip", confiar=True), "10.0.0.5")
+        self.assertEqual(seguranca.ip_do_cliente("10.0.0.5", None, confiar=True), "10.0.0.5")
+
+    def test_x_real_ip_repetido_vale_o_ultimo(self):
+        # Cliente manda o dele; se o proxy acrescentar em vez de trocar, o do proxy vem por último.
+        scope = {"headers": [(b"x-real-ip", b"6.6.6.6"), (b"x-real-ip", b"8.8.8.8")]}
+        self.assertEqual(seguranca._header(scope, b"x-real-ip", ultimo=True), "8.8.8.8")
+
+    def test_confia_no_proxy_sozinho_so_na_railway(self):
+        with patch.dict(os.environ, {}, clear=False):
+            for var in ("API_CONFIAR_PROXY", "RAILWAY_ENVIRONMENT_ID", "RAILWAY_PROJECT_ID"):
+                os.environ.pop(var, None)
+            self.assertFalse(seguranca.confiar_no_proxy())
+            os.environ["RAILWAY_PROJECT_ID"] = "abc"
+            self.assertTrue(seguranca.confiar_no_proxy())
+            os.environ["API_CONFIAR_PROXY"] = "0"
+            self.assertFalse(seguranca.confiar_no_proxy())
+
+
+class TestHeadersDeSeguranca(_TestComLimiteLigado):
+    LIMITES = {"leitura": 1, "escrita": 1, "admin": 1, "arquivos": 1}
+
+    def _confere(self, resposta):
+        self.assertEqual(resposta.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(resposta.headers["X-Frame-Options"], "DENY")
+        self.assertEqual(resposta.headers["Referrer-Policy"], "strict-origin-when-cross-origin")
+        self.assertIn("frame-ancestors 'none'", resposta.headers["Content-Security-Policy"])
+
+    def test_headers_em_200_401_429_e_arquivo(self):
+        ok = self._get(self.CODIGO_ANA)
+        self.assertEqual(ok.status_code, 200)
+        self._confere(ok)
+        negado = self._get("errado-errado-errado")
+        self.assertEqual(negado.status_code, 401)
+        self._confere(negado)
+        estourou = self._get(self.CODIGO_ANA)
+        self.assertEqual(estourou.status_code, 429)
+        self._confere(estourou)
+        self._confere(self.client.get("/legal/privacidade.html"))
+
+    def test_headers_mesmo_com_limite_desligado(self):
+        with patch.dict(os.environ, {"API_RATE_LIMIT_DESLIGADO": "1"}):
+            self._confere(self._get(self.CODIGO_ANA))
+
+
+class TestLogDeSegurancaNoAdmin(_TestComLimiteLigado):
+    def test_admin_negado_e_429_aparecem_no_painel(self):
+        self.assertEqual(self._get("chave-errada-do-admin-xx", caminho="/admin/uso").status_code, 401)
+        for _ in range(4):
+            self._get(self.CODIGO_ANA)  # leitura = 3: a 4a estoura
+        seguranca.limitador.limpar()  # o painel também tem limite; zera para ler
+        resposta = self._get(self.CHAVE_ADMIN, caminho="/admin/seguranca")
+        self.assertEqual(resposta.status_code, 200)
+        tipos = [e["tipo"] for e in resposta.json()]
+        self.assertEqual(tipos, ["limite_excedido", "admin_negado"])  # mais novo primeiro
+
+    def test_429_repetido_vira_uma_linha_so(self):
+        for _ in range(10):
+            self._get(self.CODIGO_ANA)
+        tipos = [e["tipo"] for e in seguranca.eventos_recentes()]
+        self.assertEqual(tipos.count("limite_excedido"), 1)
+
+    def test_log_de_seguranca_exige_chave_de_admin(self):
+        self.assertEqual(self._get(self.CODIGO_ANA, caminho="/admin/seguranca").status_code, 401)
 
 
 if __name__ == "__main__":

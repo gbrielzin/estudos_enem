@@ -35,7 +35,7 @@
   .nao { color: var(--vermelho); }
   .legenda { font-size: 13px; margin-top: 12px; }
   h2 { font-size: 16px; margin: 20px 0 8px; }
-  #comentarios[hidden] { display: none; }
+  #comentarios[hidden], #seguranca[hidden] { display: none; }
   .funil { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
   .funil[hidden] { display: none; }  /* sem isto o display: grid vence o hidden */
   .etapa { background: var(--card); border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; }
@@ -66,6 +66,16 @@
   <div id="comentarios" hidden>
     <h2>O que disseram</h2>
     <ul id="lista_comentarios"></ul>
+  </div>
+  <div id="seguranca" hidden>
+    <h2>Segurança</h2>
+    <p>Últimos bloqueios (429), chaves erradas e acessos negados ao painel, mais novo primeiro. Zera quando o servidor reinicia; o histórico completo fica nos logs da Railway.</p>
+    <div class="tabela">
+      <table>
+        <thead><tr><th>Horário (UTC)</th><th>Tipo</th><th>IP</th><th>Rota</th><th>Detalhe</th><th>User-Agent</th></tr></thead>
+        <tbody id="linhas_seguranca"></tbody>
+      </table>
+    </div>
   </div>
   <p class="legenda">Sessão: uso com menos de 30 min parado. Min até 1ª: da 1ª abertura até a 1ª questão respondida. Origem: o ?origem= do 1º link que a pessoa abriu. Nota: última resposta de "de 0 a 10, indicaria?"; NPS = % que deu 9-10 menos % que deu 0-6. Atividade = abrir o app ou responder questão. D1: voltou no dia seguinte ao primeiro uso. D7: voltou em algum dia da semana seguinte. "—": ainda não dá pra saber. Linha em laranja: abriu e não respondeu nenhuma questão. Código de acesso inválido não aparece aqui (a API recusa antes de saber quem é).</p>
 </main>
@@ -131,6 +141,30 @@
     return texto ? texto.slice(0, 16).replace('T', ' ') : '—';
   }
 
+  // Log de segurança (/admin/seguranca): falha aqui não derruba o painel de uso.
+  async function mostrarSeguranca(chave) {
+    const bloco = document.getElementById('seguranca');
+    const corpo = document.getElementById('linhas_seguranca');
+    corpo.replaceChildren();
+    bloco.hidden = true;
+    try {
+      const resposta = await fetch('/admin/seguranca', { headers: { Authorization: 'Bearer ' + chave }, cache: 'no-store' });
+      const eventos = await resposta.json().catch(() => null);
+      if (!resposta.ok || !Array.isArray(eventos)) return;
+      for (const e of eventos.slice(0, 100)) {
+        const tr = document.createElement('tr');
+        tr.append(celula(data(e.horario)), celula(e.tipo), celula(e.ip), celula(e.metodo + ' ' + e.rota), celula(e.detalhe || '—'), celula(e.user_agent || '—'));
+        corpo.append(tr);
+      }
+      if (!eventos.length) {
+        const tr = document.createElement('tr');
+        tr.append(celula('Nenhum evento desde o último reinício.'));
+        corpo.append(tr);
+      }
+      bloco.hidden = false;
+    } catch (erro) { /* painel de uso continua */ }
+  }
+
   document.getElementById('form').addEventListener('submit', async (evento) => {
     evento.preventDefault();
     aviso.className = '';
@@ -140,6 +174,7 @@
     document.getElementById('tabela').hidden = true;
     document.getElementById('funil').hidden = true;
     document.getElementById('comentarios').hidden = true;
+    document.getElementById('seguranca').hidden = true;
     linhas.replaceChildren();
     try {
       const resposta = await fetch('/admin/uso', {
@@ -176,6 +211,7 @@
         linhas.append(tr);
       }
       mostrarFunil(corpo);
+      mostrarSeguranca(document.getElementById('chave').value);
       document.getElementById('tabela').hidden = false;
       aviso.textContent = corpo.length ? corpo.length + ' pessoa(s).' : 'Nenhum banco encontrado.';
     } catch (erro) {
